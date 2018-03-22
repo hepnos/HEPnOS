@@ -13,11 +13,13 @@ namespace hepnos {
 namespace fs = boost::filesystem;
 
 class FileSubRun;
+class FileDataStore;
 
 class FileEvent : public ProductAccessor<FileProductAccessorBackend> {
 
     private:
 
+        friend class FileDataStore;
         friend class FileSubRun;
         friend class FileObjectIterator<FileEvent>;
 
@@ -40,6 +42,24 @@ class FileEvent : public ProductAccessor<FileProductAccessorBackend> {
         , _eventNumber(eventNumber)
         , _path(dir) {
             createRefAndSetID();
+        }
+
+        FileEvent(const std::string& dir)
+        : ProductAccessor<FileProductAccessorBackend>(dir)
+        , _eventNumber(0)
+        , _path(dir) {
+            if(_path.back() != '/') _path += std::string("/");
+            std::size_t i,j;
+            j = _path.size()-1;
+            if(_path[j] == '/') j--;
+            i = j;
+            while(_path[i] != '/') i--;
+            i += 1;
+            while(_path[i] == '0') i++;
+            j += 1;
+            std::string eventDir(&dir[i], j-i);
+            if(eventDir.size() > 0)
+                _eventNumber = std::stoi(eventDir);
         }
 
         FileEvent()

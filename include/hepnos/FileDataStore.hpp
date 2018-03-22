@@ -43,6 +43,15 @@ public:
             return FileNamespace();
     }
 
+    event_type getEventByID(std::uint64_t id) {
+        std::stringstream ss;
+        ss << _path << ".ref/" << std::setfill('0') << std::setw(20) << id;
+        std::string link = ss.str();
+        if(!fs::exists(link)) return FileEvent();
+        std::string p = fs::canonical(link).string();
+        return FileEvent(p);
+    }
+
 private:
 
     std::string _path;
