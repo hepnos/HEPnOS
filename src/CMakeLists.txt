@@ -55,4 +55,4 @@ install (FILES "${CMAKE_CURRENT_BINARY_DIR}/hepnos-config.cmake"
          DESTINATION ${hepnos-pkg} )
 install (DIRECTORY ../include/hepnos
          DESTINATION include
-         FILES_MATCHING PATTERN "*.h")
+         FILES_MATCHING PATTERN "*.hpp")
