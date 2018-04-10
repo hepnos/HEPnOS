@@ -8,6 +8,7 @@ int main(int argc, char** argv) {
 
     DataStore datastore(argv[1]);
     DataSet dataset = datastore.createDataSet("myproject");
+    auto it = datastore.find("myproject");
 
     return 0;
 }

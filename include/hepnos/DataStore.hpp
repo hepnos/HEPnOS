@@ -59,9 +59,11 @@ class DataStore::const_iterator {
 
     protected:
 
-        DataStore* m_datastore;
+        class Impl;
+        std::unique_ptr<Impl> m_impl;
 
         const_iterator(DataStore& ds);
+        const_iterator(DataStore& ds, const DataSet& current);
 
     public:
 
@@ -94,6 +96,7 @@ class DataStore::iterator : public DataStore::const_iterator {
     private:
 
         iterator(DataStore& ds);
+        iterator(DataStore& ds, const DataSet& current);
 
     public:
 

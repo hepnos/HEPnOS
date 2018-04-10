@@ -11,9 +11,11 @@ class DataSet {
 
     private:
 
+        DataSet();
+
         DataSet(DataStore& ds, uint8_t level, const std::string& name);
 
-        DataStore&  m_datastore;
+        DataStore*  m_datastore;
         uint8_t     m_level;
         std::string m_name;
 };
