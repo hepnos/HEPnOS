@@ -1,5 +1,5 @@
 # list of source files
-set(hepnos-server-src hepnos-server.c)
+set(hepnos-src DataStore.cpp DataSet.cpp) 
 
 # load package helper for generating cmake CONFIG packages
 include (CMakePackageConfigHelpers)
@@ -16,9 +16,9 @@ set (HEPNOS_VERSION_PATCH 0)
 set (hepnos-vers "${HEPNOS_VERSION_MAJOR}.${HEPNOS_VERSION_MINOR}")
 set (HEPNOS_VERSION "${hepnos-vers}.${HEPNOS_VERSION_PATCH}")
 
-#add_library(hepnos ${hepnos-src})
-#target_link_libraries (hepnos mercury margo)
-#target_include_directories (hepnos PUBLIC $<INSTALL_INTERFACE:include>)
+add_library(hepnos ${hepnos-src})
+target_link_libraries (hepnos mercury margo yaml-cpp sdskv-client bake-client ch-placement)
+target_include_directories (hepnos PUBLIC $<INSTALL_INTERFACE:include>)
 
 # local include's BEFORE, in case old incompatable .h files in prefix/include
 #target_include_directories (hepnos BEFORE PUBLIC
