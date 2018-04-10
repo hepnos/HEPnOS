@@ -26,7 +26,7 @@ class DataStore {
 
         iterator find(const std::string& datasetName);
 
-        inline const_iterator find(const std::string& datasetName) const;
+        const_iterator find(const std::string& datasetName) const;
 
         iterator begin();
 

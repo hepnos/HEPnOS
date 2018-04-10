@@ -20,7 +20,7 @@ class DataStore::Impl {
         sdskv_client_t                       m_sdskv_client;
         bake_client_t                        m_bake_client;
         std::vector<sdskv_provider_handle_t> m_sdskv_ph;
-        std::vector<sdskv_database_id_t>     m_sdskv_db; // XXX to fill
+        std::vector<sdskv_database_id_t>     m_sdskv_db;
         struct ch_placement_instance*        m_chi_sdskv;
         std::vector<bake_provider_handle_t>  m_bake_ph;
         struct ch_placement_instance*        m_chi_bake;
@@ -95,6 +95,16 @@ class DataStore::Impl {
                     }
                 }
             }
+            // loop over sdskv providers and get the database id
+            for(auto ph : m_sdskv_ph) {
+                sdskv_database_id_t db_id;
+                ret = sdskv_open(ph, "hepnosdb", &db_id);
+                if(ret != SDSKV_SUCCESS) {
+                    cleanup();
+                    throw Exception("sdskv_open failed to open database");
+                }
+                m_sdskv_db.push_back(db_id);
+            }
             // initialize ch-placement for the SDSKV providers
             m_chi_sdskv = ch_placement_initialize("hash_lookup3", m_sdskv_ph.size(), 4, 0);
             // get list of bake provider handles
@@ -147,8 +157,10 @@ class DataStore::Impl {
             }
             sdskv_client_finalize(m_sdskv_client);
             bake_client_finalize(m_bake_client);
-            ch_placement_finalize(m_chi_sdskv);
-            ch_placement_finalize(m_chi_bake);
+            if(m_chi_sdskv)
+                ch_placement_finalize(m_chi_sdskv);
+            if(m_chi_bake)
+                ch_placement_finalize(m_chi_bake);
             if(m_mid) margo_finalize(m_mid);
         }
 
