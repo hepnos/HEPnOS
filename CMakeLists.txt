@@ -46,4 +46,4 @@ find_package (yaml-cpp REQUIRED)
 
 add_subdirectory (src)
 add_subdirectory (test)
-#add_subdirectory (bin)
+add_subdirectory (bin)
