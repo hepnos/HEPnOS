@@ -271,6 +271,11 @@ DataStore::iterator DataStore::find(const std::string& datasetName) {
     return iterator(*this, DataSet(*this, 1, datasetName));
 }
 
+DataSet DataStore::operator[](const std::string& datasetName) const {
+    auto it = find(datasetName);
+    return std::move(*it);
+}
+
 DataStore::const_iterator DataStore::find(const std::string& datasetName) const {
     DataStore::iterator it = const_cast<DataStore*>(this)->find(datasetName);
     return it;

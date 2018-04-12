@@ -24,6 +24,8 @@ class DataStore {
     
         ~DataStore();
 
+        DataSet operator[](const std::string& datasetName) const;
+
         class iterator;
         class const_iterator;
 

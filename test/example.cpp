@@ -58,5 +58,7 @@ int main(int argc, char** argv) {
         dataset4.load(key, value);
         std::cout << "load(\"matthieu\") = " << value << std::endl;
     }
+    std::cout << "====== Testing operator[] =========" << std::endl;
+    std::cout << "datastore[\"myproject\"].fullname() = " << datastore["myproject"].fullname() << std::endl;
     return 0;
 }
