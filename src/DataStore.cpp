@@ -12,19 +12,23 @@
 
 namespace hepnos {
 
+////////////////////////////////////////////////////////////////////////////////////////////
+// DataStore::Impl implementation
+////////////////////////////////////////////////////////////////////////////////////////////
+
 class DataStore::Impl {
     public:
 
-        DataStore&                           m_parent;
-        margo_instance_id                    m_mid;
-        sdskv_client_t                       m_sdskv_client;
-        bake_client_t                        m_bake_client;
-        std::vector<sdskv_provider_handle_t> m_sdskv_ph;
-        std::vector<sdskv_database_id_t>     m_sdskv_db;
-        struct ch_placement_instance*        m_chi_sdskv;
-        std::vector<bake_provider_handle_t>  m_bake_ph;
-        struct ch_placement_instance*        m_chi_bake;
-        const DataStore::iterator            m_end;
+        DataStore&                           m_parent;       // parent DataStore
+        margo_instance_id                    m_mid;          // Margo instance
+        sdskv_client_t                       m_sdskv_client; // SDSKV client
+        bake_client_t                        m_bake_client;  // BAKE client
+        std::vector<sdskv_provider_handle_t> m_sdskv_ph;     // list of SDSKV provider handlers
+        std::vector<sdskv_database_id_t>     m_sdskv_db;     // list of SDSKV database ids
+        struct ch_placement_instance*        m_chi_sdskv;    // ch-placement instance for SDSKV
+        std::vector<bake_provider_handle_t>  m_bake_ph;      // list of BAKE provider handlers
+        struct ch_placement_instance*        m_chi_bake;     // ch-placement instance for BAKE
+        const DataStore::iterator            m_end;          // iterator for the end() of the DataStore
 
         Impl(DataStore& parent)
         : m_parent(parent)
@@ -228,6 +232,10 @@ class DataStore::Impl {
         }
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////
+// DataStore implementation
+////////////////////////////////////////////////////////////////////////////////////////////
+
 DataStore::DataStore(const std::string& configFile) 
 : m_impl(std::make_unique<DataStore::Impl>(*this)) {
     m_impl->init(configFile);
@@ -255,23 +263,12 @@ DataStore::iterator DataStore::find(const std::string& datasetName) {
     if(datasetName.find('/') != std::string::npos) {
         throw Exception("Invalid character '/' in dataset name");
     }
-    DataStoreEntryPtr entry = make_datastore_entry(0, datasetName);
-    // find which sdskv provider to contact
-    uint64_t h = std::hash<std::string>()(datasetName);
-    unsigned long provider_idx;
-    ch_placement_find_closest(m_impl->m_chi_sdskv, h, 1, &provider_idx);
-    // find the size of the value, as a way to check if the key exists
-    auto ph = m_impl->m_sdskv_ph[provider_idx];
-    auto db_id = m_impl->m_sdskv_db[provider_idx];
-    hg_size_t vsize;
-    ret = sdskv_length(ph, db_id, entry->raw(), entry->length(), &vsize);
-    if(ret == SDSKV_ERR_UNKNOWN_KEY) {
-        return end();
+    std::vector<char> data;
+    bool b = load(1, "", datasetName, data);
+    if(!b) {
+        return m_impl->m_end;
     }
-    if(ret != SDSKV_SUCCESS) {
-        throw Exception("Error occured when calling sdskv_length");
-    }
-    return iterator(*this, DataSet(*this, 0, datasetName));
+    return iterator(*this, DataSet(*this, 1, datasetName));
 }
 
 DataStore::const_iterator DataStore::find(const std::string& datasetName) const {
@@ -280,7 +277,10 @@ DataStore::const_iterator DataStore::find(const std::string& datasetName) const 
 }
 
 DataStore::iterator DataStore::begin() {
-    return iterator(*this);
+    DataSet ds(*this, 1, "");
+    ds = ds.next();
+    if(ds.valid()) return iterator(*this, ds);
+    else return end();
 }
 
 DataStore::iterator DataStore::end() {
@@ -292,119 +292,290 @@ DataStore::const_iterator DataStore::cbegin() const {
 }
 
 DataStore::const_iterator DataStore::cend() const {
-    return m_impl->m_end;
+    return const_cast<DataStore*>(this)->end();
 }
 
 DataStore::iterator DataStore::lower_bound(const std::string& lb) {
-    // TODO
+    std::string lb2 = lb;
+    size_t s = lb2.size();
+    lb2[s-1] -= 1; // sdskv_list_keys's start_key is exclusive
+    iterator it = find(lb2);
+    if(it != end()) {
+        // we found something before the specified lower bound
+        ++it;
+        return it;
+    }
+    DataSet ds(*this, 1, lb2);
+    ds = ds.next();
+    if(!ds.valid()) return end();
+    else return iterator(*this, ds);
 }
 
 DataStore::const_iterator DataStore::lower_bound(const std::string& lb) const {
-    // TODO
+    iterator it = const_cast<DataStore*>(this)->lower_bound(lb);
+    return it;
 }
 
 DataStore::iterator DataStore::upper_bound(const std::string& ub) {
-    // TODO
+    DataSet ds(*this, 1, ub);
+    ds = ds.next();
+    if(!ds.valid()) return end();
+    else return iterator(*this, ds);
 }
 
 DataStore::const_iterator DataStore::upper_bound(const std::string& ub) const {
-    // TODO
+    iterator it = const_cast<DataStore*>(this)->upper_bound(ub);
+    return it;
 }
 
 DataSet DataStore::createDataSet(const std::string& name) {
     if(name.find('/') != std::string::npos) {
         throw Exception("Invalid character '/' in dataset name");
     }
-    DataStoreEntryPtr entry = make_datastore_entry(0, name);
-    // find which sdskv provider to contact
-    uint64_t h = std::hash<std::string>()(name);
-    unsigned long provider_idx;
-    ch_placement_find_closest(m_impl->m_chi_sdskv, h, 1, &provider_idx);
-    // store the key
+    store(1, "", name, std::vector<char>());
+    return DataSet(*this, 1, name);
+}
+
+bool DataStore::load(uint8_t level, const std::string& containerName,
+        const std::string& objectName, std::vector<char>& data) const {
+    int ret;
+    // build full name
+    std::stringstream ss;
+    if(!containerName.empty())
+        ss << containerName << "/";
+    ss << objectName;
+    // hash the name to get the provider id
+    long unsigned provider_idx = 0;
+    if(level != 0) {
+        uint64_t h = std::hash<std::string>()(containerName);
+        ch_placement_find_closest(m_impl->m_chi_sdskv, h, 1, &provider_idx);
+    } else {
+        // use the complete name for final objects (level 255)
+        uint64_t h = std::hash<std::string>()(ss.str());
+        ch_placement_find_closest(m_impl->m_chi_sdskv, h, 1, &provider_idx);
+    }
+    // make corresponding datastore entry
+    DataStoreEntryPtr entry = make_datastore_entry(level, ss.str());
     auto ph = m_impl->m_sdskv_ph[provider_idx];
     auto db_id = m_impl->m_sdskv_db[provider_idx];
-    int ret = sdskv_put(ph, db_id, entry->raw(), entry->length(), NULL, 0);
-    if(ret != SDSKV_SUCCESS) {
-        throw Exception("Could not create DataSet (sdskv error)");
+    // find the size of the value, as a way to check if the key exists
+    hg_size_t vsize;
+    std::cerr << "[LOG] load (level=" << (int)level
+        << ", container=\"" << containerName << "\", object=\""
+        << objectName << "\")" << std::endl;
+    ret = sdskv_length(ph, db_id, entry->raw(), entry->length(), &vsize);
+    if(ret == SDSKV_ERR_UNKNOWN_KEY) {
+        return false;
     }
-    return DataSet(*this, 0, name);
+    if(ret != SDSKV_SUCCESS) {
+        throw Exception("Error occured when calling sdskv_length");
+    }
+    // read the value
+    data.resize(vsize);
+    ret = sdskv_get(ph, db_id, entry->raw(), entry->length(), data.data(), &vsize);
+    if(ret != SDSKV_SUCCESS) {
+        throw Exception("Error occured when calling sdskv_get");
+    }
+    return true;
 }
+
+bool DataStore::store(uint8_t level, const std::string& containerName,
+        const std::string& objectName, const std::vector<char>& data) {
+    // build full name
+    std::stringstream ss;
+    if(!containerName.empty())
+        ss << containerName << "/";
+    ss << objectName;
+    // hash the name to get the provider id
+    long unsigned provider_idx = 0;
+    if(level != 0) {
+        uint64_t h = std::hash<std::string>()(containerName);
+        ch_placement_find_closest(m_impl->m_chi_sdskv, h, 1, &provider_idx);
+    } else {
+        // use the complete name for final objects (level 0)
+        uint64_t h = std::hash<std::string>()(ss.str());
+        ch_placement_find_closest(m_impl->m_chi_sdskv, h, 1, &provider_idx);
+    }
+    // make corresponding datastore entry
+    DataStoreEntryPtr entry = make_datastore_entry(level, ss.str());
+    auto ph = m_impl->m_sdskv_ph[provider_idx];
+    auto db_id = m_impl->m_sdskv_db[provider_idx];
+    std::cerr << "[LOG] store (level=" << (int)level
+        << ", container=\"" << containerName << "\", object=\""
+        << objectName << "\")" << std::endl;
+    int ret = sdskv_put(ph, db_id, entry->raw(), entry->length(), data.data(), data.size());
+    if(ret != SDSKV_SUCCESS) {
+        throw Exception("Could not put key/value pair in SDSKV (sdskv_put error)");
+    }
+    return true;
+}
+
+size_t DataStore::nextKeys(uint8_t level, const std::string& containerName,
+        const std::string& lower,
+        std::vector<std::string>& keys, size_t maxKeys) const {
+    int ret;
+    if(level == 0) return 0; // cannot iterate at object level
+    // build full name from lower bound key
+    std::stringstream ss;
+    if(!containerName.empty())
+        ss << containerName << "/";
+    ss << lower;
+    // hash the name to get the provider id
+    long unsigned provider_idx = 0;
+    uint64_t h = std::hash<std::string>()(containerName);
+    ch_placement_find_closest(m_impl->m_chi_sdskv, h, 1, &provider_idx);
+    // make an entry for the lower bound
+    DataStoreEntryPtr lb_entry = make_datastore_entry(level, ss.str());
+    // create data structures to receive keys
+    std::vector<DataStoreEntryPtr> keys_ent;
+    std::vector<void*>             keys_ptr(maxKeys);
+    std::vector<hg_size_t>         keys_len(maxKeys);
+    for(unsigned i=0; i < maxKeys; i++) {
+        keys_ent.push_back(make_datastore_entry(level, 1024));
+        keys_ptr[i] = keys_ent[i]->raw();
+        keys_len[i] = sizeof(DataStoreEntry) + 1024;
+    }
+    // get provider and database
+    auto ph = m_impl->m_sdskv_ph[provider_idx];
+    auto db_id = m_impl->m_sdskv_db[provider_idx];
+    // issue an sdskv_list_keys
+    hg_size_t max_keys = maxKeys;
+    std::cerr << "[LOG] list keys (level=" << (int)level
+        << ", container=\"" << containerName << "\", greaterthan=\""
+        << lower << "\")" << std::endl;
+    ret = sdskv_list_keys(ph, db_id, lb_entry->raw(), lb_entry->length(),
+                          keys_ptr.data(), keys_len.data(), &max_keys);
+    if(ret != HG_SUCCESS) {
+        throw Exception("Error occured when calling sdskv_list_keys");
+    }
+    unsigned i = max_keys - 1;
+    if(max_keys == 0) return 0;
+    // remove keys that don't have the same level or the same prefix
+    std::string prefix = containerName + "/";
+    keys.resize(0);
+    for(unsigned i = 0; i < max_keys; i++) {
+        if(keys_ent[i]->m_level != level) {
+            max_keys = i;
+            break;
+        }
+        if(!containerName.empty()) {
+            size_t lenpre = prefix.size();
+            size_t lenstr = strlen(keys_ent[i]->m_fullname);
+            if(lenstr < lenpre) {
+                max_keys = i;
+                break;
+            }
+            if(strncmp(prefix.c_str(), keys_ent[i]->m_fullname, lenpre) != 0) {
+                max_keys = i;
+                break;
+            }
+        }
+        keys.push_back(keys_ent[i]->m_fullname);
+    }
+    // set the resulting keys
+    return max_keys;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// DataStore::const_iterator::Impl implementation
+////////////////////////////////////////////////////////////////////////////////////////////
 
 class DataStore::const_iterator::Impl {
     public:
         DataStore* m_datastore;
         DataSet    m_current_dataset;
-        bool       m_is_valid;
 
         Impl(DataStore& ds)
         : m_datastore(&ds)
         , m_current_dataset()
-        , m_is_valid(false) {}
+        {}
 
         Impl(DataStore& ds, const DataSet& dataset)
         : m_datastore(&ds)
         , m_current_dataset(dataset)
-        , m_is_valid(true) {}
+        {}
 
         Impl(const Impl& other)
         : m_datastore(other.m_datastore)
         , m_current_dataset(other.m_current_dataset) 
-        , m_is_valid(other.m_is_valid) {}
+        {}
+
+        bool operator==(const Impl& other) const {
+            return m_datastore == other.m_datastore
+                && m_current_dataset == other.m_current_dataset;
+        }
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////
+// DataStore::const_iterator::Impl implementation
+////////////////////////////////////////////////////////////////////////////////////////////
 
 DataStore::const_iterator::const_iterator(DataStore& ds)
-: m_impl(std::make_unique<Impl>(ds)) {
-}
+: m_impl(std::make_unique<Impl>(ds)) {}
 
 DataStore::const_iterator::const_iterator(DataStore& ds, const DataSet& dataset)
-: m_impl(std::make_unique<Impl>(ds, dataset)) {
-}
+: m_impl(std::make_unique<Impl>(ds, dataset)) {}
 
-DataStore::const_iterator::~const_iterator() {
-    // TODO
-}
+DataStore::const_iterator::~const_iterator() {}
 
 DataStore::const_iterator::const_iterator(const DataStore::const_iterator& other) 
-: m_impl(std::make_unique<Impl>(*other.m_impl)) {
-}
+: m_impl(std::make_unique<Impl>(*other.m_impl)) {}
 
 DataStore::const_iterator::const_iterator(DataStore::const_iterator&& other) 
-: m_impl(std::move(other.m_impl)) {
-    // TODO
+: m_impl(std::move(other.m_impl)) {}
+
+DataStore::const_iterator& DataStore::const_iterator::operator=(const DataStore::const_iterator& other) {
+    if(&other == this) return *this;
+    m_impl = std::make_unique<Impl>(*other.m_impl);
+    return *this;
 }
 
-DataStore::const_iterator& DataStore::const_iterator::operator=(const DataStore::const_iterator&) {
-    // TODO
-}
-
-DataStore::const_iterator& DataStore::const_iterator::operator=(DataStore::const_iterator&&) {
-    // TODO
+DataStore::const_iterator& DataStore::const_iterator::operator=(DataStore::const_iterator&& other) {
+    if(&other == this) return *this;
+    m_impl = std::move(other.m_impl);
+    return *this;
 }
 
 DataStore::const_iterator::self_type DataStore::const_iterator::operator++() {
-    // TODO
+    if(!m_impl) {
+        throw Exception("Trying to increment an invalid iterator");
+    }
+    m_impl->m_current_dataset = m_impl->m_current_dataset.next();
+    return *this;
 }
 
 DataStore::const_iterator::self_type DataStore::const_iterator::operator++(int) {
-    // TODO
+    const_iterator copy = *this;
+    ++(*this);
+    return copy;
 }
 
 const DataStore::const_iterator::reference DataStore::const_iterator::operator*() {
-    // TODO
+    if(!m_impl) {
+        throw Exception("Trying to dereference an invalid iterator");
+    }
+    return m_impl->m_current_dataset;
 }
 
 const DataStore::const_iterator::pointer DataStore::const_iterator::operator->() {
-    // TODO
+    if(!m_impl) return nullptr;
+    return &(m_impl->m_current_dataset);
 }
 
 bool DataStore::const_iterator::operator==(const self_type& rhs) const {
-    // TODO
+    if(!m_impl && !rhs.m_impl)  return true;
+    if(m_impl  && !rhs.m_impl)  return false;
+    if(!m_impl && rhs.m_impl)   return false;
+    return *m_impl == *(rhs.m_impl);
 }
 
 bool DataStore::const_iterator::operator!=(const self_type& rhs) const {
-    // TODO
+    return !(*this == rhs);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// DataStore::iterator implementation
+////////////////////////////////////////////////////////////////////////////////////////////
 
 DataStore::iterator::iterator(DataStore& ds, const DataSet& current)
 : const_iterator(ds, current) {}
@@ -412,19 +583,13 @@ DataStore::iterator::iterator(DataStore& ds, const DataSet& current)
 DataStore::iterator::iterator(DataStore& ds)
 : const_iterator(ds) {}
 
-DataStore::iterator::~iterator() {
-    // TODO
-}
+DataStore::iterator::~iterator() {}
 
 DataStore::iterator::iterator(const DataStore::iterator& other)
-: const_iterator(other) {
-    // TODO
-}
+: const_iterator(other) {}
 
 DataStore::iterator::iterator(DataStore::iterator&& other) 
-: const_iterator(std::move(other)) {
-    // TODO
-}
+: const_iterator(std::move(other)) {}
 
 DataStore::iterator& DataStore::iterator::operator=(const DataStore::iterator& other) {
     if(this == &other) return *this;
@@ -439,11 +604,11 @@ DataStore::iterator& DataStore::iterator::operator=(DataStore::iterator&& other)
 }
 
 DataStore::iterator::reference DataStore::iterator::operator*() {
-    // TODO
+    return const_cast<reference>(const_iterator::operator*());
 }
 
 DataStore::iterator::pointer DataStore::iterator::operator->() {
-    // TODO
+    return const_cast<pointer>(const_iterator::operator->());
 }
 
 }

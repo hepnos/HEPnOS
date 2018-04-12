@@ -3,6 +3,8 @@
 
 #include <cstring>
 #include <cstdlib>
+#include <cstdint>
+#include <memory>
 
 namespace hepnos {
 
@@ -36,9 +38,16 @@ typedef std::unique_ptr<DataStoreEntry, DataStoreEntryDeleter> DataStoreEntryPtr
 
 inline DataStoreEntryPtr make_datastore_entry(uint8_t level, const std::string& name) {
     size_t s = sizeof(DataStoreEntry) + name.size();
-    DataStoreEntry* entry = static_cast<DataStoreEntry*>(malloc(s));
+    DataStoreEntry* entry = static_cast<DataStoreEntry*>(calloc(1,s));
     entry->m_level = level;
     strcpy(entry->m_fullname, name.c_str());
+    return DataStoreEntryPtr(entry, DataStoreEntryDeleter());
+}
+
+inline DataStoreEntryPtr make_datastore_entry(uint8_t level, size_t nameSize) {
+    size_t s = sizeof(DataStoreEntry) + nameSize;
+    DataStoreEntry* entry = static_cast<DataStoreEntry*>(calloc(1,s));
+    entry->m_level = level;
     return DataStoreEntryPtr(entry, DataStoreEntryDeleter());
 }
 

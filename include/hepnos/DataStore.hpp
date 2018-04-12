@@ -1,6 +1,7 @@
 #ifndef __HEPNOS_DATA_STORE_H
 #define __HEPNOS_DATA_STORE_H
 
+#include <vector>
 #include <string>
 #include <memory>
 
@@ -9,6 +10,8 @@ namespace hepnos {
 class DataSet;
 
 class DataStore {
+
+    friend class DataSet;
 
     public:
 
@@ -50,6 +53,16 @@ class DataStore {
 
         class Impl;
         std::unique_ptr<Impl> m_impl;
+
+        bool load(uint8_t level, const std::string& containerName,
+                  const std::string& objectName, std::vector<char>& data) const;
+
+        bool store(uint8_t level, const std::string& containerName,
+                   const std::string& objectName, const std::vector<char>& data);
+
+        size_t nextKeys(uint8_t level, const std::string& containerName,
+                    const std::string& lower,
+                    std::vector<std::string>& keys, size_t maxKeys) const;
 };
 
 class DataStore::const_iterator {

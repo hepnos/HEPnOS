@@ -87,6 +87,7 @@ int main(int argc, char *argv[])
     ret = sdskv_provider_register(mid, sdskv_mplex_id, SDSKV_ABT_POOL_DEFAULT, &sdskv_prov);
     ASSERT(ret == 0, "sdskv_provider_register() failed (ret = %d)\n", ret);
 
+    // XXX creating the database - this should come from a config file
     sdskv_database_id_t db_id;
     ret = sdskv_provider_add_database(sdskv_prov, "hepnosdb",  KVDB_MAP, SDSKV_COMPARE_DEFAULT,  &db_id);
     ASSERT(ret == 0, "sdskv_provider_add_database() failed (ret = %d)\n", ret);
