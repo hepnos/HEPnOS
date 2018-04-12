@@ -1,6 +1,7 @@
 #ifndef __HEPNOS_DATA_SET_H
 #define __HEPNOS_DATA_SET_H
 
+#include <memory>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -17,8 +18,6 @@ class DataSet {
 
     private:
 
-        DataSet();
-
         DataSet(DataStore& ds, uint8_t level, const std::string& fullname);
 
         DataSet(DataStore& ds, uint8_t level, const std::string& container, const std::string& name);
@@ -27,28 +26,25 @@ class DataSet {
 
         bool loadBuffer(const std::string& key, std::vector<char>& buffer) const;
 
-        DataStore*   m_datastore;
-        uint8_t      m_level;
-        std::string  m_container;
-        std::string  m_name;
+        class Impl;
+
+        std::unique_ptr<Impl> m_impl;
 
     public:
 
-        const std::string& name() const {
-            return m_name;
-        }
+        DataSet();
 
-        const std::string container() const {
-            return m_container;
-        }
+        DataSet(const DataSet&);
+        DataSet(DataSet&&);
+        DataSet& operator=(const DataSet&);
+        DataSet& operator=(DataSet&&);
+        ~DataSet();
 
-        std::string fullname() const {
-            std::stringstream ss;
-            if(m_container.size() != 0)
-                ss << m_container << "/";
-            ss << m_name;
-            return ss.str();
-        }
+        const std::string& name() const;
+
+        const std::string& container() const;
+
+        std::string fullname() const;
 
         DataSet next() const;
 
