@@ -43,31 +43,6 @@ class DataSet {
      */
     DataSet(DataStore* ds, uint8_t level, const std::string& container, const std::string& name);
 
-    /**
-     * @brief Stores binary data associated with a particular key into this DataSet.
-     * This function will return true if the key did not already exist and the
-     * write succeeded. It will return false otherwise.
-     *
-     * @param key Key.
-     * @param buffer Binary data to insert.
-     *
-     * @return trye if the key did not already exist and the write succeeded,
-     *      false otherwise.
-     */
-    bool storeBuffer(const std::string& key, const std::vector<char>& buffer);
-
-    /**
-     * @brief Loads binary data associated with a particular key from the DataSet.
-     * This function will return true if the key exists and the read succeeded.
-     * It will return false otherwise.
-     * 
-     * @param key Key.
-     * @param buffer Buffer in which to put the binary data.
-     *
-     * @return true if the key exists and the read succeeded,
-     *      false otherwise.
-     */
-    bool loadBuffer(const std::string& key, std::vector<char>& buffer) const;
 
     /**
      * @brief Implementation class (used for the Pimpl idiom).
@@ -163,6 +138,32 @@ class DataSet {
     bool valid() const;
 
     /**
+     * @brief Stores binary data associated with a particular key into this DataSet.
+     * This function will return true if the key did not already exist and the
+     * write succeeded. It will return false otherwise.
+     *
+     * @param key Key.
+     * @param buffer Binary data to insert.
+     *
+     * @return trye if the key did not already exist and the write succeeded,
+     *      false otherwise.
+     */
+    bool storeRawData(const std::string& key, const std::vector<char>& buffer);
+
+    /**
+     * @brief Loads binary data associated with a particular key from the DataSet.
+     * This function will return true if the key exists and the read succeeded.
+     * It will return false otherwise.
+     * 
+     * @param key Key.
+     * @param buffer Buffer in which to put the binary data.
+     *
+     * @return true if the key exists and the read succeeded,
+     *      false otherwise.
+     */
+    bool loadRawData(const std::string& key, std::vector<char>& buffer) const;
+
+    /**
      * @brief Stores a key/value pair into the DataSet.
      * The type of the key should have operator<< available
      * to stream it into a std::stringstream for the purpose
@@ -188,7 +189,7 @@ class DataSet {
         }
         std::string serialized = ss_value.str();
         std::vector<char> buffer(serialized.begin(), serialized.end());
-        return storeBuffer(key, buffer);
+        return storeRawData(key, buffer);
     }
 
     /**
@@ -209,7 +210,7 @@ class DataSet {
     template<typename K, typename V>
     bool load(const K& key, V& value) const {
         std::vector<char> buffer;
-        if(!loadBuffer(key, buffer)) {
+        if(!loadRawData(key, buffer)) {
             return false;
         }
         try {

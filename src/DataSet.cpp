@@ -66,7 +66,7 @@ bool DataSet::valid() const {
 
 }
 
-bool DataSet::storeBuffer(const std::string& key, const std::vector<char>& buffer) {
+bool DataSet::storeRawData(const std::string& key, const std::vector<char>& buffer) {
     if(!valid()) {
         throw Exception("Calling store() on invalid DataSet");
     }
@@ -74,7 +74,7 @@ bool DataSet::storeBuffer(const std::string& key, const std::vector<char>& buffe
     return m_impl->m_datastore->m_impl->store(0, fullname(), key, buffer);
 }
 
-bool DataSet::loadBuffer(const std::string& key, std::vector<char>& buffer) const {
+bool DataSet::loadRawData(const std::string& key, std::vector<char>& buffer) const {
     if(!valid()) {
         throw Exception("Calling load() on invalid DataSet");
     }
