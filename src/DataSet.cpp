@@ -108,6 +108,11 @@ std::string DataSet::fullname() const {
     return ss.str();
 }
 
-
+DataSet DataSet::createDataSet(const std::string& name) {
+    if(name.find('/') != std::string::npos) {
+        throw Exception("Invalid character '/' in dataset name");
+    }
+    m_impl->m_datastore->store(m_impl->m_level+1, fullname(), name, std::vector<char>());
+}
 
 }

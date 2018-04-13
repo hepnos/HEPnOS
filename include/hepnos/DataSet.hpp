@@ -242,6 +242,23 @@ class DataSet {
      * entry in the HEPnOS service, true otherwise.
      */
     bool operator!=(const DataSet& other) const;
+
+    /**
+     * @brief Creates a dataset with a given name inside the
+     * DataSet. This name must not have the '/' and '#' characters.
+     * A DataSet object pointing to the created dataset is returned.
+     * If a dataset with this name already exists in the DataStore, 
+     * it is not created, but a DataSet object pointing to the 
+     * existing one is returned instead.
+     *
+     * @param name Name of DataSet.
+     *
+     * @return A DataSet instance pointing to the created dataset.
+     */
+    DataSet createDataSet(const std::string& name);
+
+    typedef DataStore::const_iterator const_dataset_iterator;
+    typedef DataStore::iterator dataset_iterator;
 };
 
 }
