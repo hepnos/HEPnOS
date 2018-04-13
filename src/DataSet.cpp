@@ -21,8 +21,8 @@ class DataSet::Impl {
 DataSet::DataSet()
 : m_impl(std::make_unique<DataSet::Impl>(nullptr, 0, "", "")) {}
 
-DataSet::DataSet(DataStore& ds, uint8_t level, const std::string& fullname)
-: m_impl(std::make_unique<DataSet::Impl>(&ds, level, "", "")) {
+DataSet::DataSet(DataStore* ds, uint8_t level, const std::string& fullname)
+: m_impl(std::make_unique<DataSet::Impl>(ds, level, "", "")) {
     size_t p = fullname.find_last_of('/');
     if(p == std::string::npos) {
         m_impl->m_name = fullname;
@@ -32,8 +32,8 @@ DataSet::DataSet(DataStore& ds, uint8_t level, const std::string& fullname)
     }
 }
 
-DataSet::DataSet(DataStore& ds, uint8_t level, const std::string& container, const std::string& name) 
-: m_impl(std::make_unique<DataSet::Impl>(&ds, level, container, name)) {}
+DataSet::DataSet(DataStore* ds, uint8_t level, const std::string& container, const std::string& name) 
+: m_impl(std::make_unique<DataSet::Impl>(ds, level, container, name)) {}
 
 DataSet::DataSet(const DataSet& other)
 : m_impl(std::make_unique<DataSet::Impl>(*other.m_impl)) {}
@@ -57,7 +57,7 @@ DataSet DataSet::next() const {
     size_t s = m_impl->m_datastore->nextKeys(
             m_impl->m_level, m_impl->m_container, m_impl->m_name, keys, 1);
     if(s == 0) return DataSet();
-    return DataSet(*(m_impl->m_datastore), m_impl->m_level, m_impl->m_container, keys[0]);
+    return DataSet(m_impl->m_datastore, m_impl->m_level, m_impl->m_container, keys[0]);
 }
 
 bool DataSet::valid() const {
@@ -112,8 +112,9 @@ DataSet DataSet::createDataSet(const std::string& name) {
     if(name.find('/') != std::string::npos) {
         throw Exception("Invalid character '/' in dataset name");
     }
-    m_impl->m_datastore->store(m_impl->m_level+1, fullname(), name, std::vector<char>());
-    return DataSet(*(m_impl->m_datastore), 1, fullname(), name);
+    std::string parent = fullname();
+    m_impl->m_datastore->store(m_impl->m_level+1, parent, name, std::vector<char>());
+    return DataSet(m_impl->m_datastore, m_impl->m_level+1, parent, name);
 }
 
 DataSet DataSet::operator[](const std::string& datasetName) const {
@@ -127,11 +128,12 @@ DataSet::iterator DataSet::find(const std::string& datasetName) {
         throw Exception("Invalid character '/' in dataset name");
     }
     std::vector<char> data;
-    bool b = m_impl->m_datastore->load(m_impl->m_level+1, fullname(), datasetName, data);
+    std::string parent = fullname();
+    bool b = m_impl->m_datastore->load(m_impl->m_level+1, parent, datasetName, data);
     if(!b) {
         return m_impl->m_datastore->end();
     }
-    return iterator(*(m_impl->m_datastore), DataSet(*(m_impl->m_datastore), 1, fullname(), datasetName));
+    return iterator(DataSet(m_impl->m_datastore, m_impl->m_level+1, parent, datasetName));
 }
 
 DataSet::const_iterator DataSet::find(const std::string& datasetName) const {
@@ -140,9 +142,9 @@ DataSet::const_iterator DataSet::find(const std::string& datasetName) const {
 }
 
 DataSet::iterator DataSet::begin() {
-    DataSet ds(*(m_impl->m_datastore), m_impl->m_level+1, fullname(),"");
+    DataSet ds(m_impl->m_datastore, m_impl->m_level+1, fullname(),"");
     ds = ds.next();
-    if(ds.valid()) return iterator(*(m_impl->m_datastore), ds);
+    if(ds.valid()) return iterator(ds);
     else return end();
 }
 
@@ -168,10 +170,10 @@ DataSet::iterator DataSet::lower_bound(const std::string& lb) {
         ++it;
         return it;
     }
-    DataSet ds(*(m_impl->m_datastore), m_impl->m_level+1, fullname(), lb2);
+    DataSet ds(m_impl->m_datastore, m_impl->m_level+1, fullname(), lb2);
     ds = ds.next();
     if(!ds.valid()) return end();
-    else return iterator(*(m_impl->m_datastore), ds);
+    else return iterator(ds);
 }
 
 DataSet::const_iterator DataSet::lower_bound(const std::string& lb) const {
@@ -180,10 +182,10 @@ DataSet::const_iterator DataSet::lower_bound(const std::string& lb) const {
 }
 
 DataSet::iterator DataSet::upper_bound(const std::string& ub) {
-    DataSet ds(*(m_impl->m_datastore), m_impl->m_level+1, fullname(), ub);
+    DataSet ds(m_impl->m_datastore, m_impl->m_level+1, fullname(), ub);
     ds = ds.next();
     if(!ds.valid()) return end();
-    else return iterator(*(m_impl->m_datastore), ds);
+    else return iterator(ds);
 }
 
 DataSet::const_iterator DataSet::upper_bound(const std::string& ub) const {

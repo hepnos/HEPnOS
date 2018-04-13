@@ -19,7 +19,6 @@ namespace hepnos {
 class DataStore::Impl {
     public:
 
-        DataStore&                           m_parent;       // parent DataStore
         margo_instance_id                    m_mid;          // Margo instance
         sdskv_client_t                       m_sdskv_client; // SDSKV client
         bake_client_t                        m_bake_client;  // BAKE client
@@ -30,14 +29,13 @@ class DataStore::Impl {
         struct ch_placement_instance*        m_chi_bake;     // ch-placement instance for BAKE
         const DataStore::iterator            m_end;          // iterator for the end() of the DataStore
 
-        Impl(DataStore& parent)
-        : m_parent(parent)
-        , m_mid(MARGO_INSTANCE_NULL)
+        Impl(DataStore* parent)
+        : m_mid(MARGO_INSTANCE_NULL)
         , m_sdskv_client(SDSKV_CLIENT_NULL)
         , m_chi_sdskv(nullptr)
         , m_bake_client(BAKE_CLIENT_NULL)
         , m_chi_bake(nullptr)
-        , m_end(parent) {}
+        , m_end() {}
 
         void init(const std::string& configFile) {
             int ret;
@@ -237,7 +235,7 @@ class DataStore::Impl {
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 DataStore::DataStore(const std::string& configFile) 
-: m_impl(std::make_unique<DataStore::Impl>(*this)) {
+: m_impl(std::make_unique<DataStore::Impl>(this)) {
     m_impl->init(configFile);
 }
 
@@ -260,15 +258,16 @@ DataStore::~DataStore() {
 
 DataStore::iterator DataStore::find(const std::string& datasetName) {
     int ret;
-    if(datasetName.find('/') != std::string::npos) {
-        throw Exception("Invalid character '/' in dataset name");
+    if(datasetName.find('/') != std::string::npos
+    || datasetName.find('%') != std::string::npos) {
+        throw Exception("Invalid character ('/' or '%') in dataset name");
     }
     std::vector<char> data;
     bool b = load(1, "", datasetName, data);
     if(!b) {
         return m_impl->m_end;
     }
-    return iterator(*this, DataSet(*this, 1, datasetName));
+    return iterator(DataSet(this, 1, datasetName));
 }
 
 DataSet DataStore::operator[](const std::string& datasetName) const {
@@ -282,9 +281,9 @@ DataStore::const_iterator DataStore::find(const std::string& datasetName) const 
 }
 
 DataStore::iterator DataStore::begin() {
-    DataSet ds(*this, 1, "", "");
+    DataSet ds(this, 1, "", "");
     ds = ds.next();
-    if(ds.valid()) return iterator(*this, ds);
+    if(ds.valid()) return iterator(std::move(ds));
     else return end();
 }
 
@@ -293,7 +292,7 @@ DataStore::iterator DataStore::end() {
 }
 
 DataStore::const_iterator DataStore::cbegin() const {
-    return const_iterator(const_cast<DataStore*>(this)->begin());
+    return const_cast<DataStore*>(this)->begin();
 }
 
 DataStore::const_iterator DataStore::cend() const {
@@ -310,10 +309,10 @@ DataStore::iterator DataStore::lower_bound(const std::string& lb) {
         ++it;
         return it;
     }
-    DataSet ds(*this, 1, "", lb2);
+    DataSet ds(this, 1, "", lb2);
     ds = ds.next();
     if(!ds.valid()) return end();
-    else return iterator(*this, ds);
+    else return iterator(std::move(ds));
 }
 
 DataStore::const_iterator DataStore::lower_bound(const std::string& lb) const {
@@ -322,10 +321,10 @@ DataStore::const_iterator DataStore::lower_bound(const std::string& lb) const {
 }
 
 DataStore::iterator DataStore::upper_bound(const std::string& ub) {
-    DataSet ds(*this, 1, "", ub);
+    DataSet ds(this, 1, "", ub);
     ds = ds.next();
     if(!ds.valid()) return end();
-    else return iterator(*this, ds);
+    else return iterator(std::move(ds));
 }
 
 DataStore::const_iterator DataStore::upper_bound(const std::string& ub) const {
@@ -334,11 +333,12 @@ DataStore::const_iterator DataStore::upper_bound(const std::string& ub) const {
 }
 
 DataSet DataStore::createDataSet(const std::string& name) {
-    if(name.find('/') != std::string::npos) {
-        throw Exception("Invalid character '/' in dataset name");
+    if(name.find('/') != std::string::npos
+    || name.find('%') != std::string::npos) {
+        throw Exception("Invalid character ('/' or '%') in dataset name");
     }
     store(1, "", name, std::vector<char>());
-    return DataSet(*this, 1, "", name);
+    return DataSet(this, 1, "", name);
 }
 
 bool DataStore::load(uint8_t level, const std::string& containerName,
@@ -487,27 +487,26 @@ size_t DataStore::nextKeys(uint8_t level, const std::string& containerName,
 
 class DataStore::const_iterator::Impl {
     public:
-        DataStore* m_datastore;
         DataSet    m_current_dataset;
 
-        Impl(DataStore& ds)
-        : m_datastore(&ds)
-        , m_current_dataset()
+        Impl()
+        : m_current_dataset()
         {}
 
-        Impl(DataStore& ds, const DataSet& dataset)
-        : m_datastore(&ds)
-        , m_current_dataset(dataset)
+        Impl(const DataSet& dataset)
+        : m_current_dataset(dataset)
+        {}
+
+        Impl(DataSet&& dataset)
+        : m_current_dataset(std::move(dataset))
         {}
 
         Impl(const Impl& other)
-        : m_datastore(other.m_datastore)
-        , m_current_dataset(other.m_current_dataset) 
+        : m_current_dataset(other.m_current_dataset) 
         {}
 
         bool operator==(const Impl& other) const {
-            return m_datastore == other.m_datastore
-                && m_current_dataset == other.m_current_dataset;
+            return m_current_dataset == other.m_current_dataset;
         }
 };
 
@@ -515,11 +514,14 @@ class DataStore::const_iterator::Impl {
 // DataStore::const_iterator::Impl implementation
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-DataStore::const_iterator::const_iterator(DataStore& ds)
-: m_impl(std::make_unique<Impl>(ds)) {}
+DataStore::const_iterator::const_iterator()
+: m_impl(std::make_unique<Impl>()) {}
 
-DataStore::const_iterator::const_iterator(DataStore& ds, const DataSet& dataset)
-: m_impl(std::make_unique<Impl>(ds, dataset)) {}
+DataStore::const_iterator::const_iterator(const DataSet& dataset)
+: m_impl(std::make_unique<Impl>(dataset)) {}
+
+DataStore::const_iterator::const_iterator(DataSet&& dataset)
+: m_impl(std::make_unique<Impl>(std::move(dataset))) {}
 
 DataStore::const_iterator::~const_iterator() {}
 
@@ -582,11 +584,14 @@ bool DataStore::const_iterator::operator!=(const self_type& rhs) const {
 // DataStore::iterator implementation
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-DataStore::iterator::iterator(DataStore& ds, const DataSet& current)
-: const_iterator(ds, current) {}
+DataStore::iterator::iterator(const DataSet& current)
+: const_iterator(current) {}
 
-DataStore::iterator::iterator(DataStore& ds)
-: const_iterator(ds) {}
+DataStore::iterator::iterator(DataSet&& current)
+: const_iterator(std::move(current)) {}
+
+DataStore::iterator::iterator()
+: const_iterator() {}
 
 DataStore::iterator::~iterator() {}
 

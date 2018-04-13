@@ -281,19 +281,24 @@ class DataStore::const_iterator {
     /**
      * @brief Constructor. Creates a const_iterator pointing
      * to an invalid DataSet.
-     *
-     * @param ds DataStore creating this const_iterator.
      */
-    const_iterator(DataStore& ds);
+    const_iterator();
 
     /**
      * @brief Constructor. Creates a const_iterator pointing
      * to a given DataSet. The DataSet may or may not be valid. 
      *
-     * @param ds DataStore creating this const_iterator.
      * @param current DataSet to make the const_iterator point to.
      */
-    const_iterator(DataStore& ds, const DataSet& current);
+    const_iterator(const DataSet& current);
+
+    /**
+     * @brief Constructor. Creates a const_iterator pointing
+     * to a given DataSet. The DataSet may or may not be valid. 
+     *
+     * @param current DataSet to make the const_iterator point to.
+     */
+    const_iterator(DataSet&& current);
 
     public:
 
@@ -408,20 +413,26 @@ class DataStore::iterator : public DataStore::const_iterator {
     /**
      * @brief Constructor. Builds an iterator pointing to an
      * invalid DataSet.
-     *
-     * @param ds DataStore creating the iterator.
      */
-    iterator(DataStore& ds);
+    iterator();
 
     /**
      * @brief Constructor. Builds an iterator pointing to
      * an existing DataSet. The DataSet may or may not be
      * valid.
      *
-     * @param ds DataStore creating the iterator.
      * @param current DataSet to point to.
      */
-    iterator(DataStore& ds, const DataSet& current);
+    iterator(const DataSet& current);
+
+    /**
+     * @brief Constructor. Builds an iterator pointing to
+     * an existing DataSet. The DataSet may or may not be
+     * valid.
+     *
+     * @param current DataSet to point to.
+     */
+    iterator(DataSet&& current);
 
     public:
 

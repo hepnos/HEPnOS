@@ -31,7 +31,7 @@ class DataSet {
      * @param level Level of nesting.
      * @param fullname Full name of the DataSet.
      */
-    DataSet(DataStore& ds, uint8_t level, const std::string& fullname);
+    DataSet(DataStore* ds, uint8_t level, const std::string& fullname);
 
     /**
      * @brief Constructor.
@@ -41,7 +41,7 @@ class DataSet {
      * @param container Full name of the parent DataSet ("" if no parent).
      * @param name Name of the DataSet.
      */
-    DataSet(DataStore& ds, uint8_t level, const std::string& container, const std::string& name);
+    DataSet(DataStore* ds, uint8_t level, const std::string& container, const std::string& name);
 
     /**
      * @brief Stores binary data associated with a particular key into this DataSet.
