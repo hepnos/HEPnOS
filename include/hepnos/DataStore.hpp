@@ -60,7 +60,7 @@ class DataStore {
     ~DataStore();
 
     /**
-     * @brief Accesses an existint DataSet using the []
+     * @brief Accesses an existing DataSet using the []
      * operator. If no DataSet correspond to the provided name,
      * the function returns a DataSet instance d such that
      * d.valid() is false.
@@ -268,6 +268,7 @@ class DataStore::const_iterator {
 
     friend class DataStore::Impl;
     friend class DataStore;
+    friend class DataSet;
 
     protected:
 
@@ -400,6 +401,7 @@ class DataStore::iterator : public DataStore::const_iterator {
 
     friend class DataStore::Impl;
     friend class DataStore;
+    friend class DataSet;
 
     private:
 

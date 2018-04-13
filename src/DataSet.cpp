@@ -116,4 +116,79 @@ DataSet DataSet::createDataSet(const std::string& name) {
     return DataSet(*(m_impl->m_datastore), 1, fullname(), name);
 }
 
+DataSet DataSet::operator[](const std::string& datasetName) const {
+    auto it = find(datasetName);
+    return std::move(*it);
+}
+
+DataSet::iterator DataSet::find(const std::string& datasetName) {
+    int ret;
+    if(datasetName.find('/') != std::string::npos) {
+        throw Exception("Invalid character '/' in dataset name");
+    }
+    std::vector<char> data;
+    bool b = m_impl->m_datastore->load(m_impl->m_level+1, fullname(), datasetName, data);
+    if(!b) {
+        return m_impl->m_datastore->end();
+    }
+    return iterator(*(m_impl->m_datastore), DataSet(*(m_impl->m_datastore), 1, fullname(), datasetName));
+}
+
+DataSet::const_iterator DataSet::find(const std::string& datasetName) const {
+    iterator it = const_cast<DataSet*>(this)->find(datasetName);
+    return it;
+}
+
+DataSet::iterator DataSet::begin() {
+    DataSet ds(*(m_impl->m_datastore), m_impl->m_level+1, fullname(),"");
+    ds = ds.next();
+    if(ds.valid()) return iterator(*(m_impl->m_datastore), ds);
+    else return end();
+}
+
+DataSet::iterator DataSet::end() {
+    return m_impl->m_datastore->end();
+}
+
+DataSet::const_iterator DataSet::cbegin() const {
+    return const_iterator(const_cast<DataSet*>(this)->begin());
+}
+
+DataSet::const_iterator DataSet::cend() const {
+    return m_impl->m_datastore->cend();
+}
+
+DataSet::iterator DataSet::lower_bound(const std::string& lb) {
+    std::string lb2 = lb;
+    size_t s = lb2.size();
+    lb2[s-1] -= 1; // sdskv_list_keys's start_key is exclusive
+    iterator it = find(lb2);
+    if(it != end()) {
+        // we found something before the specified lower bound
+        ++it;
+        return it;
+    }
+    DataSet ds(*(m_impl->m_datastore), m_impl->m_level+1, fullname(), lb2);
+    ds = ds.next();
+    if(!ds.valid()) return end();
+    else return iterator(*(m_impl->m_datastore), ds);
+}
+
+DataSet::const_iterator DataSet::lower_bound(const std::string& lb) const {
+    iterator it = const_cast<DataSet*>(this)->lower_bound(lb);
+    return it;
+}
+
+DataSet::iterator DataSet::upper_bound(const std::string& ub) {
+    DataSet ds(*(m_impl->m_datastore), m_impl->m_level+1, fullname(), ub);
+    ds = ds.next();
+    if(!ds.valid()) return end();
+    else return iterator(*(m_impl->m_datastore), ds);
+}
+
+DataSet::const_iterator DataSet::upper_bound(const std::string& ub) const {
+    iterator it = const_cast<DataSet*>(this)->upper_bound(ub);
+    return it;
+}
+
 }

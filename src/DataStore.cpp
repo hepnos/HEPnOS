@@ -282,7 +282,7 @@ DataStore::const_iterator DataStore::find(const std::string& datasetName) const 
 }
 
 DataStore::iterator DataStore::begin() {
-    DataSet ds(*this, 1, "");
+    DataSet ds(*this, 1, "", "");
     ds = ds.next();
     if(ds.valid()) return iterator(*this, ds);
     else return end();
@@ -293,7 +293,7 @@ DataStore::iterator DataStore::end() {
 }
 
 DataStore::const_iterator DataStore::cbegin() const {
-    return const_iterator(const_cast<DataStore&>(*this));
+    return const_iterator(const_cast<DataStore*>(this)->begin());
 }
 
 DataStore::const_iterator DataStore::cend() const {
@@ -310,7 +310,7 @@ DataStore::iterator DataStore::lower_bound(const std::string& lb) {
         ++it;
         return it;
     }
-    DataSet ds(*this, 1, lb2);
+    DataSet ds(*this, 1, "", lb2);
     ds = ds.next();
     if(!ds.valid()) return end();
     else return iterator(*this, ds);
@@ -322,7 +322,7 @@ DataStore::const_iterator DataStore::lower_bound(const std::string& lb) const {
 }
 
 DataStore::iterator DataStore::upper_bound(const std::string& ub) {
-    DataSet ds(*this, 1, ub);
+    DataSet ds(*this, 1, "", ub);
     ds = ds.next();
     if(!ds.valid()) return end();
     else return iterator(*this, ds);

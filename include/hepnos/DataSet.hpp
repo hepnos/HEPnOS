@@ -257,8 +257,131 @@ class DataSet {
      */
     DataSet createDataSet(const std::string& name);
 
-    typedef DataStore::const_iterator const_dataset_iterator;
-    typedef DataStore::iterator dataset_iterator;
+    typedef DataStore::const_iterator const_iterator;
+    typedef DataStore::iterator iterator;
+
+    /**
+     * @brief Accesses an existing DataSet using the []
+     * operator. If no DataSet correspond to the provided name,
+     * the function returns a DataSet instance d such that
+     * d.valid() is false.
+     *
+     * @param datasetName Name of the DataSet to retrieve.
+     *
+     * @return a DataSet corresponding to the provided name.
+     */
+    DataSet operator[](const std::string& datasetName) const;
+
+    /**
+     * @brief Searches this DataSet for an DataSet with 
+     * the provided name and returns an iterator to it if found,
+     * otherwise it returns an iterator to DataStore::end().
+     *
+     * @param datasetName Name of the DataSet to find.
+     *
+     * @return an iterator pointing to the DataSet if found,
+     * DataSet::end() otherwise.
+     */
+    iterator find(const std::string& datasetName);
+
+    /**
+     * @brief Searches this DataSet for an DataSet with 
+     * the provided name and returns a const_iterator to it 
+     * if found, otherwise it returns an iterator to DataSet::end().
+     *
+     * @param datasetName Name of the DataSet to find.
+     *
+     * @return a const_iterator pointing to the DataSet if found,
+     * DataSet::cend() otherwise.
+     */
+    const_iterator find(const std::string& datasetName) const;
+
+
+    /**
+     * @brief Returns an iterator referring to the first DataSet
+     * in this DataSet.
+     *
+     * @return an iterator referring to the first DataSet in this DataSet.
+     */
+    iterator begin();
+
+    /**
+     * @brief Returns an iterator referring to the end of the DataSet.
+     * The DataSet pointed to by this iterator is not valid (that is,
+     * `end()->valid()` return `false`).
+     *
+     * @return an iterator referring to the end of the DataSet.
+     */
+    iterator end();
+
+    /**
+     * @brief Returns a const_iterator referring to the first DataSet
+     * in this DataSet.
+     *
+     * @return a const_iterator referring to the first DataSet in this DataSet.
+     */
+    const_iterator cbegin() const;
+
+    /**
+     * @brief Returns a const_iterator referring to the end of the DataSet.
+     * The DataSet pointed to by this iterator is not valid (that is,
+     * `cend()->valid()` return `false`).
+     *
+     * @return a const_iterator referring to the end of the DataStore.
+     */
+    const_iterator cend() const;
+
+    /**
+     * @brief Returns an iterator pointing to the first DataSet in this
+     * DataSet, whose name is not considered to go before lb 
+     * (i.e., either it is equal or goes after, alphabetically).
+     *
+     * @param lb DataSet name to search for.
+     *
+     * @return An iterator to the the first DataSet in this DataSet 
+     * whose name is not considered to go before lb, or DataStore::end() 
+     * if all keys are considered to go before it.
+     */
+    iterator lower_bound(const std::string& lb);
+
+    /**
+     * @brief Returns a const_iterator pointing to the first DataSet in this
+     * DataSet whose name is not considered to go before lb 
+     * (i.e., either it is equal or goes after, alphabetically).
+     *
+     * @param lb DataSet name to search for.
+     *
+     * @return A const_iterator to the the first DataSet in the DataSet 
+     * whose name is not considered to go before lb, or DataSet::cend() 
+     * if all DataSet names are considered to go before it.
+     */
+    const_iterator lower_bound(const std::string& lb) const;
+
+    /**
+     * @brief Returns an iterator pointing to the first DataSet in the 
+     * DataStore whose key is considered to go after ub.
+     *
+     * @param ub DataSet name to search for.
+     *
+     * @return An iterator to the the first DataSet in this DataSet,
+     * whose name is considered to go after ub, or DataSet::end() if 
+     * no DataSet names are considered to go after it.
+     */
+    iterator upper_bound(const std::string& ub);
+
+    /**
+     * @brief Returns a const_iterator pointing to the first DataSet in this
+     * DataSet whose key is considered to go after ub.
+     *
+     * @param ub DataSet name to search for.
+     *
+     * @return A const_iterator to the the first DataSet in this DataSet 
+     * whose name is considered to go after ub, or DataSet::end() if 
+     * no DataSet names are considered to go after it.
+     */
+    const_iterator upper_bound(const std::string& ub) const;
+
+
 };
 
 }
