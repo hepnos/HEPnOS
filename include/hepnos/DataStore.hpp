@@ -214,61 +214,9 @@ class DataStore {
      */
     class Impl;
     std::unique_ptr<Impl> m_impl; /*!< Pointer to implementation */
-
-    /**
-     * @brief Function used by the DataSet, Run, SubRuns, and Event
-     * classes to load binary data associated with a particular object.
-     *
-     * @param level Level of nesting (0 for data products)
-     * @param containerName Name of the container
-     * @param objectName Name of the object
-     * @param data Resulting byte buffer containing the object's data
-     *
-     * @return true if the object was found an loaded correctly,
-     *      false otherwise.
-     */
-    bool load(uint8_t level, const std::string& containerName,
-            const std::string& objectName, std::vector<char>& data) const;
-
-    /**
-     * @brief Function used by the DataSet, Run, SubRuns, and Event
-     * classes to load binary data associated with a particular object.
-     *
-     * @param level Level of nesting (0 for data products)
-     * @param containerName Name of the container
-     * @param objectName Name of the object
-     * @param data Byte buffer to write
-     *
-     * @return true is the object did not exist and was correctly written,
-     *      false otherwise.
-     */
-    bool store(uint8_t level, const std::string& containerName,
-            const std::string& objectName, const std::vector<char>& data);
-
-    /**
-     * @brief Given a lowerBound for dataset names, retrieve at most
-     * maxDataSets dataset names coming striclty after lowerBound
-     * from the DataStore, for a given level and container name.
-     * Returns the number of dataset names actually retrieved
-     *
-     * @param level Level of nesting
-     * @param containerName Name of the container in which to search
-     * @param lowerBound Lower bound name to search for 
-     * @param keys Resulting vector of dataset names
-     * @param maxDataSets Maximum number of datasets to retrieve.
-     *
-     * @return The actual number of dataset names retrieved.
-     */
-    size_t nextKeys(uint8_t level, const std::string& containerName,
-            const std::string& lowerBound,
-            std::vector<std::string>& keys, size_t maxDataSets) const;
 };
 
 class DataStore::const_iterator {
-
-    friend class DataStore::Impl;
-    friend class DataStore;
-    friend class DataSet;
 
     protected:
 
@@ -278,6 +226,7 @@ class DataStore::const_iterator {
     class Impl;
     std::unique_ptr<Impl> m_impl; /*!< Pointer to implementation */
 
+    public:
     /**
      * @brief Constructor. Creates a const_iterator pointing
      * to an invalid DataSet.
@@ -299,8 +248,6 @@ class DataStore::const_iterator {
      * @param current DataSet to make the const_iterator point to.
      */
     const_iterator(DataSet&& current);
-
-    public:
 
     typedef const_iterator self_type;
     typedef DataSet value_type;
@@ -404,11 +351,7 @@ class DataStore::const_iterator {
 
 class DataStore::iterator : public DataStore::const_iterator {
 
-    friend class DataStore::Impl;
-    friend class DataStore;
-    friend class DataSet;
-
-    private:
+    public:
 
     /**
      * @brief Constructor. Builds an iterator pointing to an
@@ -433,8 +376,6 @@ class DataStore::iterator : public DataStore::const_iterator {
      * @param current DataSet to point to.
      */
     iterator(DataSet&& current);
-
-    public:
 
     typedef iterator self_type;
     typedef DataSet value_type;

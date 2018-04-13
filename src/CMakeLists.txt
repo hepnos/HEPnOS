@@ -21,13 +21,14 @@ target_link_libraries (hepnos mercury margo yaml-cpp sdskv-client bake-client ch
 target_include_directories (hepnos PUBLIC $<INSTALL_INTERFACE:include>)
 
 # local include's BEFORE, in case old incompatable .h files in prefix/include
-#target_include_directories (hepnos BEFORE PUBLIC
-#    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+include_directories (hepnos ${CMAKE_CURRENT_SOURCE_DIR}/private)
+target_include_directories (hepnos BEFORE PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
 
 # for shared libs, establish the lib version
-#set_target_properties (hepnos
-#    PROPERTIES VERSION ${HEPNOS_VERSION}
-#    SOVERSION ${HEPNOS_VERSION_MAJOR})
+set_target_properties (hepnos
+    PROPERTIES VERSION ${HEPNOS_VERSION}
+    SOVERSION ${HEPNOS_VERSION_MAJOR})
 
 #
 # installation stuff (packaging and install commands)

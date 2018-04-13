@@ -1,4 +1,5 @@
 #include "hepnos/DataSet.hpp"
+#include "private/DataStoreImpl.hpp"
 
 namespace hepnos {
 
@@ -54,7 +55,7 @@ DataSet DataSet::next() const {
     if(!valid()) return DataSet();
    
     std::vector<std::string> keys; 
-    size_t s = m_impl->m_datastore->nextKeys(
+    size_t s = m_impl->m_datastore->m_impl->nextKeys(
             m_impl->m_level, m_impl->m_container, m_impl->m_name, keys, 1);
     if(s == 0) return DataSet();
     return DataSet(m_impl->m_datastore, m_impl->m_level, m_impl->m_container, keys[0]);
@@ -70,7 +71,7 @@ bool DataSet::storeBuffer(const std::string& key, const std::vector<char>& buffe
         throw Exception("Calling store() on invalid DataSet");
     }
     // forward the call to the datastore's store function
-    return m_impl->m_datastore->store(0, fullname(), key, buffer);
+    return m_impl->m_datastore->m_impl->store(0, fullname(), key, buffer);
 }
 
 bool DataSet::loadBuffer(const std::string& key, std::vector<char>& buffer) const {
@@ -78,7 +79,7 @@ bool DataSet::loadBuffer(const std::string& key, std::vector<char>& buffer) cons
         throw Exception("Calling load() on invalid DataSet");
     }
     // forward the call to the datastore's load function
-    return m_impl->m_datastore->load(0, fullname(), key, buffer);
+    return m_impl->m_datastore->m_impl->load(0, fullname(), key, buffer);
 }
 
 bool DataSet::operator==(const DataSet& other) const {
@@ -113,7 +114,7 @@ DataSet DataSet::createDataSet(const std::string& name) {
         throw Exception("Invalid character '/' in dataset name");
     }
     std::string parent = fullname();
-    m_impl->m_datastore->store(m_impl->m_level+1, parent, name, std::vector<char>());
+    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, name, std::vector<char>());
     return DataSet(m_impl->m_datastore, m_impl->m_level+1, parent, name);
 }
 
@@ -129,7 +130,7 @@ DataSet::iterator DataSet::find(const std::string& datasetName) {
     }
     std::vector<char> data;
     std::string parent = fullname();
-    bool b = m_impl->m_datastore->load(m_impl->m_level+1, parent, datasetName, data);
+    bool b = m_impl->m_datastore->m_impl->load(m_impl->m_level+1, parent, datasetName, data);
     if(!b) {
         return m_impl->m_datastore->end();
     }
