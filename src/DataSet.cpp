@@ -78,10 +78,6 @@ bool DataSet::loadBuffer(const std::string& key, std::vector<char>& buffer) cons
         throw Exception("Calling load() on invalid DataSet");
     }
     // forward the call to the datastore's load function
-    std::stringstream ss;
-    if(m_impl->m_container.size() != 0)
-        ss << m_impl->m_container << "/";
-    ss << m_impl->m_name;
     return m_impl->m_datastore->load(0, fullname(), key, buffer);
 }
 
@@ -90,6 +86,10 @@ bool DataSet::operator==(const DataSet& other) const {
         && m_impl->m_level     == other.m_impl->m_level
         && m_impl->m_container == other.m_impl->m_container
         && m_impl->m_name      == other.m_impl->m_name;
+}
+
+bool DataSet::operator!=(const DataSet& other) const {
+    return !(*this == other);
 }
 
 const std::string& DataSet::name() const {
