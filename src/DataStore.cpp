@@ -338,7 +338,7 @@ DataSet DataStore::createDataSet(const std::string& name) {
         throw Exception("Invalid character '/' in dataset name");
     }
     store(1, "", name, std::vector<char>());
-    return DataSet(*this, 1, name);
+    return DataSet(*this, 1, "", name);
 }
 
 bool DataStore::load(uint8_t level, const std::string& containerName,

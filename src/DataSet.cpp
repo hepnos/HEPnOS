@@ -113,6 +113,7 @@ DataSet DataSet::createDataSet(const std::string& name) {
         throw Exception("Invalid character '/' in dataset name");
     }
     m_impl->m_datastore->store(m_impl->m_level+1, fullname(), name, std::vector<char>());
+    return DataSet(*(m_impl->m_datastore), 1, fullname(), name);
 }
 
 }
