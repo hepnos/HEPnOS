@@ -1,110 +1,90 @@
-#include "hepnos/DataSet.hpp"
 #include "hepnos/Run.hpp"
-#include "hepnos/RunSet.hpp"
 #include "private/RunImpl.hpp"
-#include "private/DataSetImpl.hpp"
 #include "private/DataStoreImpl.hpp"
 
 namespace hepnos {
 
-DataSet::DataSet()
-: m_impl(std::make_unique<DataSet::Impl>(this, nullptr, 0, "", "")) {}
+Run::Run()
+: m_impl(std::make_unique<Run::Impl>(nullptr, 0, "", 0)) {} 
 
-DataSet::DataSet(DataStore* ds, uint8_t level, const std::string& fullname)
-: m_impl(std::make_unique<DataSet::Impl>(this, ds, level, "", "")) {
-    size_t p = fullname.find_last_of('/');
-    if(p == std::string::npos) {
-        m_impl->m_name = fullname;
-    } else {
-        m_impl->m_name = fullname.substr(p+1);
-        m_impl->m_container = fullname.substr(0, p);
-    }
-}
+Run::Run(DataStore* ds, uint8_t level, const std::string& container, const RunNumber& rn)
+: m_impl(std::make_unique<Run::Impl>(ds, level, container, rn)) { }
 
-DataSet::DataSet(DataStore* ds, uint8_t level, const std::string& container, const std::string& name) 
-: m_impl(std::make_unique<DataSet::Impl>(this, ds, level, container, name)) {}
+Run::Run(const Run& other)
+: m_impl(std::make_unique<Run::Impl>(*other.m_impl)) {}
 
-DataSet::DataSet(const DataSet& other)
-: m_impl(std::make_unique<DataSet::Impl>(
-            this, other.m_impl->m_datastore,
-            other.m_impl->m_level,
-            other.m_impl->m_container,
-            other.m_impl->m_name)) {}
+Run::Run(Run&&) = default;
 
-DataSet::DataSet(DataSet&&) = default;
-
-DataSet& DataSet::operator=(const DataSet& other) {
+Run& Run::operator=(const Run& other) {
     if(this == &other) return *this;
-    m_impl = std::make_unique<DataSet::Impl>(this, 
-            other.m_impl->m_datastore,
-            other.m_impl->m_level,
-            other.m_impl->m_container,
-            other.m_impl->m_name);
+    m_impl = std::make_unique<Run::Impl>(*other.m_impl);
     return *this;
 }
 
-DataSet& DataSet::operator=(DataSet&&) = default;
+Run& Run::operator=(Run&&) = default;
 
-DataSet::~DataSet() {}
+Run::~Run() = default; 
 
-DataSet DataSet::next() const {
-    if(!valid()) return DataSet();
+Run Run::next() const {
+    if(!valid()) return Run();
    
-    std::vector<std::string> keys; 
+    std::vector<std::string> keys;
     size_t s = m_impl->m_datastore->m_impl->nextKeys(
-            m_impl->m_level, m_impl->m_container, m_impl->m_name, keys, 1);
-    if(s == 0) return DataSet();
-    return DataSet(m_impl->m_datastore, m_impl->m_level, m_impl->m_container, keys[0]);
+            m_impl->m_level, m_impl->m_container, 
+            m_impl->makeKeyStringFromRunNumber(), keys, 1);
+    if(s == 0) return Run();
+    size_t i = m_impl->m_container.size()+1;
+    if(keys[0].size() <= i) return Run();
+    if(keys[0][i] != '%') return Run();
+    std::stringstream strRunNumber;
+    strRunNumber << std::hex << keys[0].substr(i+1);
+    RunNumber rn;
+    strRunNumber >> rn;
+
+    return Run(m_impl->m_datastore, m_impl->m_level, m_impl->m_container, rn);
 }
 
-bool DataSet::valid() const {
+bool Run::valid() const {
     return m_impl && m_impl->m_datastore; 
 
 }
 
-bool DataSet::storeRawData(const std::string& key, const std::vector<char>& buffer) {
+bool Run::storeRawData(const std::string& key, const std::vector<char>& buffer) {
     if(!valid()) {
-        throw Exception("Calling store() on invalid DataSet");
+        throw Exception("Calling store() on invalid Run");
     }
     // forward the call to the datastore's store function
-    return m_impl->m_datastore->m_impl->store(0, fullname(), key, buffer);
+    return m_impl->m_datastore->m_impl->store(0, m_impl->fullpath(), key, buffer);
 }
 
-bool DataSet::loadRawData(const std::string& key, std::vector<char>& buffer) const {
+bool Run::loadRawData(const std::string& key, std::vector<char>& buffer) const {
     if(!valid()) {
-        throw Exception("Calling load() on invalid DataSet");
+        throw Exception("Calling load() on invalid Run");
     }
     // forward the call to the datastore's load function
-    return m_impl->m_datastore->m_impl->load(0, fullname(), key, buffer);
+    return m_impl->m_datastore->m_impl->load(0, m_impl->fullpath(), key, buffer);
 }
 
-bool DataSet::operator==(const DataSet& other) const {
+bool Run::operator==(const Run& other) const {
     return m_impl->m_datastore == other.m_impl->m_datastore
         && m_impl->m_level     == other.m_impl->m_level
         && m_impl->m_container == other.m_impl->m_container
-        && m_impl->m_name      == other.m_impl->m_name;
+        && m_impl->m_run_nr    == other.m_impl->m_run_nr;
 }
 
-bool DataSet::operator!=(const DataSet& other) const {
+bool Run::operator!=(const Run& other) const {
     return !(*this == other);
 }
 
-const std::string& DataSet::name() const {
-    return m_impl->m_name;
+const RunNumber& Run::number() const {
+    return m_impl->m_run_nr;
 }
 
-const std::string& DataSet::container() const {
+const std::string& Run::container() const {
     return m_impl->m_container;
 }
 
-std::string DataSet::fullname() const {
-    std::stringstream ss;
-    if(container().size() != 0)
-        ss << container() << "/";
-    ss << name();
-    return ss.str();
-}
-
+/*
 DataSet DataSet::createDataSet(const std::string& name) {
     if(name.find('/') != std::string::npos) {
         throw Exception("Invalid character '/' in dataset name");
@@ -114,20 +94,8 @@ DataSet DataSet::createDataSet(const std::string& name) {
     return DataSet(m_impl->m_datastore, m_impl->m_level+1, parent, name);
 }
 
-Run DataSet::createRun(const RunNumber& runNumber) {
-    std::string parent = fullname();
-    std::string runStr = Run::Impl::makeKeyStringFromRunNumber(runNumber);
-    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, runStr, std::vector<char>());
-    return Run(m_impl->m_datastore, m_impl->m_level+1, parent, runNumber);
-}
-
 DataSet DataSet::operator[](const std::string& datasetName) const {
     auto it = find(datasetName);
-    return std::move(*it);
-}
-
-Run DataSet::operator()(const RunNumber& runNumber) const {
-    auto it = runs().find(runNumber);
     return std::move(*it);
 }
 
@@ -159,14 +127,6 @@ DataSet::iterator DataSet::begin() {
 
 DataSet::iterator DataSet::end() {
     return m_impl->m_datastore->end();
-}
-
-DataSet::const_iterator DataSet::begin() const {
-    return const_iterator(const_cast<DataSet*>(this)->begin());
-}
-
-DataSet::const_iterator DataSet::end() const {
-    return m_impl->m_datastore->cend();
 }
 
 DataSet::const_iterator DataSet::cbegin() const {
@@ -209,13 +169,5 @@ DataSet::const_iterator DataSet::upper_bound(const std::string& ub) const {
     iterator it = const_cast<DataSet*>(this)->upper_bound(ub);
     return it;
 }
-
-RunSet& DataSet::runs() {
-    return m_impl->m_runset;
-}
-
-const RunSet& DataSet::runs() const {
-    return const_cast<DataSet*>(this)->runs();
-}
-
+*/
 }

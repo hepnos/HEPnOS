@@ -69,7 +69,16 @@ DataStore::iterator DataStore::begin() {
     else return end();
 }
 
+DataStore::const_iterator DataStore::begin() const {
+    iterator it = const_cast<DataStore*>(this)->begin();
+    return const_iterator(std::move(it));
+}
+
 DataStore::iterator DataStore::end() {
+    return m_impl->m_end;
+}
+
+DataStore::const_iterator DataStore::end() const {
     return m_impl->m_end;
 }
 

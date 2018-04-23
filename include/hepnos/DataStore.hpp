@@ -8,6 +8,9 @@
 namespace hepnos {
 
 class DataSet;
+class RunSet;
+class Run;
+class SubRun;
 
 /**
  * The DataStore class is the main handle referencing an HEPnOS service.
@@ -16,6 +19,9 @@ class DataSet;
 class DataStore {
 
     friend class DataSet;
+    friend class RunSet;
+    friend class Run;
+    friend class SubRun;
 
     public:
 
@@ -120,11 +126,28 @@ class DataStore {
     /**
      * @brief Returns an iterator referring to the end of the DataStore.
      * The DataSet pointed to by this iterator is not valid (that is,
-     * `end()->valid()` return `false`).
+     * `end()->valid()` returns `false`).
      *
      * @return an iterator referring to the end of the DataStore.
      */
     iterator end();
+
+    /**
+     * @brief Returns a const_iterator referring to the first DataSet
+     * in the DataStore.
+     *
+     * @return a const_iterator referring to the first DataSet in the DataStore.
+     */
+    const_iterator begin() const;
+
+    /**
+     * @brief Returns a const_iterator referring to the end of the DataStore.
+     * The DataSet pointed to by this iterator is not valid (that is,
+     * `end()->valid()` returns `false`).
+     *
+     * @return a const_iterator referring to the end of the DataStore.
+     */
+    const_iterator end() const;
 
     /**
      * @brief Returns a const_iterator referring to the first DataSet

@@ -11,6 +11,8 @@ cmake_minimum_required (VERSION 3.0)
 project (hepnos CXX)
 enable_testing ()
 
+add_definitions (-g)
+
 # add our cmake module directory to the path
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
      "${CMAKE_CURRENT_SOURCE_DIR}/cmake")

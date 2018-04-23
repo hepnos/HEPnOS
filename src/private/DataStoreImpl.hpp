@@ -1,3 +1,6 @@
+#ifndef __HEPNOS_PRIVATE_DATASTORE_IMPL
+#define __HEPNOS_PRIVATE_DATASTORE_IMPL
+
 #include <vector>
 #include <functional>
 #include <iostream>
@@ -373,3 +376,5 @@ class DataStore::Impl {
 };
 
 }
+
+#endif

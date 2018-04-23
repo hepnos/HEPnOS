@@ -8,9 +8,13 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/string.hpp>
 #include <hepnos/Exception.hpp>
+#include <hepnos/RunNumber.hpp>
 #include <hepnos/DataStore.hpp>
 
 namespace hepnos {
+
+class RunSet;
+class Run;
 
 /**
  * @brief The DataSet class represents a handle to a named dataset
@@ -21,6 +25,7 @@ namespace hepnos {
 class DataSet {
 
     friend class DataStore;
+    friend class RunSet;
 
     private:
 
@@ -258,6 +263,19 @@ class DataSet {
      */
     DataSet createDataSet(const std::string& name);
 
+    /**
+     * @brief Creates a run with a given run number inside the DataSet.
+     * A Run object pointing to the created run is returned.
+     * If a run with the same number exists in this DataSet, the run
+     * is not created by a Run object pointing to the existing one is
+     * returned instead.
+     *
+     * @param runNumber Run number of the run to create.
+     *
+     * @return A Run instance pointing to the created run.
+     */
+    Run createRun(const RunNumber& runNumber);
+
     typedef DataStore::const_iterator const_iterator;
     typedef DataStore::iterator iterator;
 
@@ -309,11 +327,28 @@ class DataSet {
     /**
      * @brief Returns an iterator referring to the end of the DataSet.
      * The DataSet pointed to by this iterator is not valid (that is,
-     * `end()->valid()` return `false`).
+     * `end()->valid()` returns `false`).
      *
      * @return an iterator referring to the end of the DataSet.
      */
     iterator end();
+
+    /**
+     * @brief Returns a const_iterator referring to the first DataSet
+     * in this DataSet.
+     *
+     * @return a const_iterator referring to the first DataSet in this DataSet.
+     */
+    const_iterator begin() const;
+
+    /**
+     * @brief Returns a const_iterator referring to the end of the DataSet.
+     * The DataSet pointed to by this iterator is not valid (that is,
+     * `end()->valid()` returns `false`).
+     *
+     * @return a const_iterator referring to the end of the DataSet.
+     */
+    const_iterator end() const;
 
     /**
      * @brief Returns a const_iterator referring to the first DataSet
@@ -382,7 +417,31 @@ class DataSet {
      */
     const_iterator upper_bound(const std::string& ub) const;
 
+    /**
+     * @brief Returns a reference to the RunSet associated with this DataSet.
+     *
+     * @return a reference to the RunSet associated with this DataSet.
+     */
+    RunSet& runs();
 
+    /**
+     * @brief Returns a reference to the RunSet associated with this DataSet.
+     *
+     * @return a reference to the RunSet associated with this DataSet.
+     */
+    const RunSet& runs() const;
+
+    /**
+     * @brief Accesses an existing run using the ()
+     * operator. If no run corresponds to the provided run number,
+     * the function returns a Run instance d such that
+     * r.valid() is false.
+     *
+     * @param runNumber Number of the run to retrieve.
+     *
+     * @return a Run corresponding to the provided run number.
+     */
+    Run operator()(const RunNumber& runNumber) const;
 };
 
 }
