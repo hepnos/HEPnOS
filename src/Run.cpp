@@ -1,3 +1,8 @@
+/*
+ * (C) 2018 The University of Chicago
+ * 
+ * See COPYRIGHT in top-level directory.
+ */
 #include "hepnos/Run.hpp"
 #include "private/RunImpl.hpp"
 #include "private/SubRunImpl.hpp"

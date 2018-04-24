@@ -1,3 +1,9 @@
+/*
+ * (C) 2018 The University of Chicago
+ * 
+ * See COPYRIGHT in top-level directory.
+ */
+
 #include "hepnos/SubRun.hpp"
 #include "private/SubRunImpl.hpp"
 #include "private/EventImpl.hpp"

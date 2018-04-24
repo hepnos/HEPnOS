@@ -1,3 +1,8 @@
+/*
+ * (C) 2018 The University of Chicago
+ * 
+ * See COPYRIGHT in top-level directory.
+ */
 #ifndef __HEPNOS_PRIVATE_EVENT_IMPL_H
 #define __HEPNOS_PRIVATE_EVENT_IMPL_H
 
