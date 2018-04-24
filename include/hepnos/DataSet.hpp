@@ -150,7 +150,7 @@ class DataSet {
      * @param key Key.
      * @param buffer Binary data to insert.
      *
-     * @return trye if the key did not already exist and the write succeeded,
+     * @return true if the key did not already exist and the write succeeded,
      *      false otherwise.
      */
     bool storeRawData(const std::string& key, const std::vector<char>& buffer);
@@ -173,7 +173,7 @@ class DataSet {
      * The type of the key should have operator<< available
      * to stream it into a std::stringstream for the purpose
      * of converting it into an std::string. The resulting
-     * string must not have the "/" or "#" characters. The
+     * string must not have the "/" or "%" characters. The
      * type of the value must be serializable using Boost.
      *
      * @tparam K type of the key.
@@ -202,7 +202,7 @@ class DataSet {
      * The type of the key should have operator<< available
      * to stream it into a std::stringstream for the purpose
      * of converting it into an std::string. The resulting
-     * string must not have the "/" or "#" characters. The
+     * string must not have the "/" or "%" characters. The
      * type of the value must be serializable using Boost.
      *
      * @tparam K type of the key.
@@ -210,7 +210,7 @@ class DataSet {
      * @param key Key to load.
      * @param value Value to load.
      *
-     * @return bool if the 
+     * @return true if the key exists and was loaded. False otherwise. 
      */
     template<typename K, typename V>
     bool load(const K& key, V& value) const {
