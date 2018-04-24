@@ -138,14 +138,6 @@ class Event : public KeyValueContainer {
      */
     const EventNumber& number() const;
 
-    /**
-     * @brief Returns the full name of the SubRun containing
-     * this Event.
-     *
-     * @return the full name of the SubRun containing this Event.
-     */
-    const std::string& container() const;
-
 };
 
 }

@@ -80,8 +80,4 @@ const EventNumber& Event::number() const {
     return m_impl->m_event_nr;
 }
 
-const std::string& Event::container() const {
-    return m_impl->m_container;
-}
-
 }

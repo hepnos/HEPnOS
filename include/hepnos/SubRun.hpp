@@ -139,14 +139,6 @@ class SubRun : public KeyValueContainer {
      */
     const SubRunNumber& number() const;
 
-    /**
-     * @brief Returns the full name of the Run containing
-     * this SubRun.
-     *
-     * @return the full name of the Run containing this SubRun.
-     */
-    const std::string& container() const;
-
     class const_iterator;
     class iterator;
 

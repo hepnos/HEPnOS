@@ -81,10 +81,6 @@ const SubRunNumber& SubRun::number() const {
     return m_impl->m_subrun_nr;
 }
 
-const std::string& SubRun::container() const {
-    return m_impl->m_container;
-}
-
 Event SubRun::createEvent(const EventNumber& eventNumber) {
     std::string parent = m_impl->fullpath();
     std::string eventStr = Event::Impl::makeKeyStringFromEventNumber(eventNumber);
