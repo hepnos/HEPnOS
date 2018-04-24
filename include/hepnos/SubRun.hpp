@@ -3,11 +3,7 @@
 
 #include <memory>
 #include <string>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/serialization/string.hpp>
+#include <hepnos/KeyValueContainer.hpp>
 #include <hepnos/DataStore.hpp>
 #include <hepnos/Event.hpp>
 #include <hepnos/SubRunNumber.hpp>
@@ -15,7 +11,7 @@
 
 namespace hepnos {
 
-class SubRun {
+class SubRun : public KeyValueContainer {
 
     private:
 
@@ -150,67 +146,6 @@ class SubRun {
      * @return the full name of the Run containing this SubRun.
      */
     const std::string& container() const;
-
-    /**
-     * @brief Stores a key/value pair into the SubRun.
-     * The type of the key should have operator<< available
-     * to stream it into a std::stringstream for the purpose
-     * of converting it into an std::string. The resulting
-     * string must not have the "/" or "%" characters. The
-     * type of the value must be serializable using Boost.
-     *
-     * @tparam K type of the key.
-     * @tparam V type of the value.
-     * @param key Key to store.
-     * @param value Value to store.
-     *
-     * @return true if the key was found. false otherwise.
-     */
-    template<typename K, typename V>
-    bool store(const K& key, const V& value) {
-        std::stringstream ss_value;
-        boost::archive::binary_oarchive oa(ss_value);
-        try {
-            oa << value;
-        } catch(...) {
-            throw Exception("Exception occured during serialization");
-        }
-        std::string serialized = ss_value.str();
-        std::vector<char> buffer(serialized.begin(), serialized.end());
-        return storeRawData(key, buffer);
-    }
-
-    /**
-     * @brief Loads a value associated with a key from the SubRun.
-     * The type of the key should have operator<< available
-     * to stream it into a std::stringstream for the purpose
-     * of converting it into an std::string. The resulting
-     * string must not have the "/" or "%" characters. The
-     * type of the value must be serializable using Boost.
-     *
-     * @tparam K type of the key.
-     * @tparam V type of the value.
-     * @param key Key to load.
-     * @param value Value to load.
-     *
-     * @return true if the key exists and was loaded. False otherwise.
-     */
-    template<typename K, typename V>
-    bool load(const K& key, V& value) const {
-        std::vector<char> buffer;
-        if(!loadRawData(key, buffer)) {
-            return false;
-        }
-        try {
-            std::string serialized(buffer.begin(), buffer.end());
-            std::stringstream ss(serialized);
-            boost::archive::binary_iarchive ia(ss);
-            ia >> value;
-        } catch(...) {
-            throw Exception("Exception occured during serialization");
-        }
-        return true;
-    }
 
     class const_iterator;
     class iterator;
@@ -361,6 +296,231 @@ class SubRun {
      * @return a handle to the created or existing Event.
      */
     Event createEvent(const EventNumber& eventNumber);
+};
+
+class SubRun::const_iterator {
+
+    protected:
+
+    /**
+     * @brief Implementation of the class (using Pimpl idiom)
+     */
+    class Impl;
+    std::unique_ptr<Impl> m_impl; /*!< Pointer to implementation */
+
+    public:
+
+    /**
+     * @brief Constructor. Creates a const_iterator pointing
+     * to an invalid Event.
+     */
+    const_iterator();
+
+    /**
+     * @brief Constructor. Creates a const_iterator pointing
+     * to a given Event. The Event may or may not be valid. 
+     *
+     * @param current Event to make the const_iterator point to.
+     */
+    const_iterator(const Event& current);
+
+    /**
+     * @brief Constructor. Creates a const_iterator pointing
+     * to a given Event. The Event may or may not be valid. 
+     *
+     * @param current Event to make the const_iterator point to.
+     */
+    const_iterator(Event&& current);
+
+    typedef const_iterator self_type;
+    typedef Event value_type;
+    typedef Event& reference;
+    typedef Event* pointer;
+    typedef int difference_type;
+    typedef std::forward_iterator_tag iterator_category;
+
+    /**
+     * @brief Destructor. This destructor is virtual because
+     * the iterator class inherits from const_iterator.
+     */
+    virtual ~const_iterator();
+
+    /**
+     * @brief Copy-constructor.
+     *
+     * @param other const_iterator to copy.
+     */
+    const_iterator(const const_iterator& other);
+
+    /**
+     * @brief Move-constructor.
+     *
+     * @param other const_iterator to move.
+     */
+    const_iterator(const_iterator&& other);
+
+    /**
+     * @brief Copy-assignment operator.
+     *
+     * @param other const_iterator to copy.
+     *
+     * @return this.
+     */
+    const_iterator& operator=(const const_iterator&);
+
+    /**
+     * @brief Move-assignment operator.
+     *
+     * @param other const_iterator to move.
+     *
+     * @return this.
+     */
+    const_iterator& operator=(const_iterator&&);
+
+    /**
+     * @brief Increments the const_iterator, returning
+     * a copy of the iterator after incrementation.
+     *
+     * @return a copy of the iterator after incrementation.
+     */
+    self_type operator++();
+
+    /**
+     * @brief Increments the const_iterator, returning
+     * a copy of the iterator before incrementation.
+     *
+     * @return a copy of the iterator after incrementation.
+     */
+    self_type operator++(int);
+
+    /**
+     * @brief Dereference operator. Returns a const reference
+     * to the Event this const_iterator points to.
+     *
+     * @return a const reference to the DataSet this 
+     *      const_iterator points to.
+     */
+    const reference operator*();
+
+    /**
+     * @brief Returns a const pointer to the Event this
+     * const_iterator points to.
+     *
+     * @return a const pointer to the Event this 
+     *      const_iterator points to.
+     */
+    const pointer operator->();
+
+    /**
+     * @brief Compares two const_iterators. The two const_iterators
+     * are equal if they point to the same Event or if both
+     * correspond to SubRun::cend().
+     *
+     * @param rhs const_iterator to compare with.
+     *
+     * @return true if the two const_iterators are equal, false otherwise.
+     */
+    bool operator==(const self_type& rhs) const;
+
+
+    /**
+     * @brief Compares two const_iterators.
+     *
+     * @param rhs const_iterator to compare with.
+     *
+     * @return true if the two const_iterators are different, false otherwise.
+     */
+    bool operator!=(const self_type& rhs) const;
+};
+
+class SubRun::iterator : public SubRun::const_iterator {
+
+    public:
+
+    /**
+     * @brief Constructor. Builds an iterator pointing to an
+     * invalid Event.
+     */
+    iterator();
+
+    /**
+     * @brief Constructor. Builds an iterator pointing to
+     * an existing Event. The Event may or may not be
+     * valid.
+     *
+     * @param current Event to point to.
+     */
+     iterator(const Event& current);
+
+    /**
+     * @brief Constructor. Builds an iterator pointing to
+     * an existing Event. The Event may or may not be
+     * valid.
+     *
+     * @param current Event to point to.
+     */
+     iterator(Event&& current);
+
+     typedef iterator self_type;
+     typedef Event value_type;
+     typedef Event& reference;
+     typedef Event* pointer;
+     typedef int difference_type;
+     typedef std::forward_iterator_tag iterator_category;
+
+     /**
+      * @brief Destructor.
+      */
+     ~iterator();
+
+     /**
+      * @brief Copy constructor.
+      *
+      * @param other iterator to copy.
+      */
+     iterator(const iterator& other);
+
+     /**
+      * @brief Move constructor.
+      *
+      * @param other iterator to move.
+      */
+     iterator(iterator&& other);
+
+     /**
+      * @brief Copy-assignment operator.
+      *
+      * @param other iterator to copy.
+      *
+      * @return this.
+      */
+     iterator& operator=(const iterator& other);
+
+     /**
+      * @brief Move-assignment operator.
+      *
+      * @param other iterator to move.
+      *
+      * @return this.
+      */
+     iterator& operator=(iterator&& other);
+
+     /**
+      * @brief Dereference operator. Returns a reference
+      * to the Event this iterator points to.
+      *
+      * @return A reference to the Event this iterator
+      *      points to.
+      */
+     reference operator*();
+
+     /**
+      * @brief Returns a pointer to the Event this iterator
+      * points to.
+      *
+      * @return A pointer to the Event this iterator points to.
+      */
+     pointer operator->();
 };
 
 }

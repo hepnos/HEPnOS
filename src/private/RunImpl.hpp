@@ -15,6 +15,7 @@ class Run::Impl {
         uint8_t      m_level;
         std::string  m_container;
         RunNumber    m_run_nr;
+        iterator     m_end;
 
         Impl(DataStore* ds, uint8_t level, const std::string& container, const RunNumber& rn)
         : m_datastore(ds)

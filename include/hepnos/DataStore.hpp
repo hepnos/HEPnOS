@@ -11,6 +11,7 @@ class DataSet;
 class RunSet;
 class Run;
 class SubRun;
+class Event;
 
 /**
  * The DataStore class is the main handle referencing an HEPnOS service.
@@ -22,6 +23,7 @@ class DataStore {
     friend class RunSet;
     friend class Run;
     friend class SubRun;
+    friend class Event;
 
     public:
 
@@ -367,7 +369,7 @@ class DataStore::const_iterator {
      *
      * @param rhs const_iterator to compare with.
      *
-     * @return true if the two const_iterators are different, false atherwise.
+     * @return true if the two const_iterators are different, false otherwise.
      */
     bool operator!=(const self_type& rhs) const;
 };

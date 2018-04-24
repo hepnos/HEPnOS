@@ -1,5 +1,6 @@
 #include "hepnos/Run.hpp"
 #include "private/RunImpl.hpp"
+#include "private/SubRunImpl.hpp"
 #include "private/DataStoreImpl.hpp"
 
 namespace hepnos {
@@ -84,90 +85,254 @@ const std::string& Run::container() const {
     return m_impl->m_container;
 }
 
-/*
-DataSet DataSet::createDataSet(const std::string& name) {
-    if(name.find('/') != std::string::npos) {
-        throw Exception("Invalid character '/' in dataset name");
-    }
-    std::string parent = fullname();
-    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, name, std::vector<char>());
-    return DataSet(m_impl->m_datastore, m_impl->m_level+1, parent, name);
+SubRun Run::createSubRun(const SubRunNumber& subRunNumber) {
+    std::string parent = m_impl->fullpath();
+    std::string subRunStr = SubRun::Impl::makeKeyStringFromSubRunNumber(subRunNumber);
+    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, subRunStr, std::vector<char>());
+    return SubRun(m_impl->m_datastore, m_impl->m_level+1, parent, subRunNumber);
 }
 
-DataSet DataSet::operator[](const std::string& datasetName) const {
-    auto it = find(datasetName);
+SubRun Run::operator()(const SubRunNumber& subRunNumber) const {
+    auto it = find(subRunNumber);
     return std::move(*it);
 }
 
-DataSet::iterator DataSet::find(const std::string& datasetName) {
+Run::iterator Run::find(const SubRunNumber& subRunNumber) {
     int ret;
-    if(datasetName.find('/') != std::string::npos) {
-        throw Exception("Invalid character '/' in dataset name");
-    }
     std::vector<char> data;
-    std::string parent = fullname();
-    bool b = m_impl->m_datastore->m_impl->load(m_impl->m_level+1, parent, datasetName, data);
+    std::string parent = m_impl->fullpath();
+    std::string subRunStr = SubRun::Impl::makeKeyStringFromSubRunNumber(subRunNumber);
+    bool b = m_impl->m_datastore->m_impl->load(m_impl->m_level+1, parent, subRunStr, data);
     if(!b) {
-        return m_impl->m_datastore->end();
+        return m_impl->m_end;
     }
-    return iterator(DataSet(m_impl->m_datastore, m_impl->m_level+1, parent, datasetName));
+    return iterator(SubRun(m_impl->m_datastore, m_impl->m_level+1, parent, subRunNumber));
 }
 
-DataSet::const_iterator DataSet::find(const std::string& datasetName) const {
-    iterator it = const_cast<DataSet*>(this)->find(datasetName);
+Run::const_iterator Run::find(const SubRunNumber& subRunNumber) const {
+    iterator it = const_cast<Run*>(this)->find(subRunNumber);
     return it;
 }
 
-DataSet::iterator DataSet::begin() {
-    DataSet ds(m_impl->m_datastore, m_impl->m_level+1, fullname(),"");
-    ds = ds.next();
-    if(ds.valid()) return iterator(ds);
+Run::iterator Run::begin() {
+    auto it = find(0);
+    if(it != end()) return *it;
+
+    auto level = m_impl->m_level;
+    auto datastore = m_impl->m_datastore;
+    std::string container = m_impl->fullpath();
+    SubRun subrun(datastore, level+1, container, 0);
+    subrun = subrun.next();
+
+    if(subrun.valid()) return iterator(subrun);
     else return end();
 }
 
-DataSet::iterator DataSet::end() {
-    return m_impl->m_datastore->end();
+Run::iterator Run::end() {
+    return m_impl->m_end;
 }
 
-DataSet::const_iterator DataSet::cbegin() const {
-    return const_iterator(const_cast<DataSet*>(this)->begin());
+Run::const_iterator Run::begin() const {
+    return const_iterator(const_cast<Run*>(this)->begin());
 }
 
-DataSet::const_iterator DataSet::cend() const {
-    return m_impl->m_datastore->cend();
+Run::const_iterator Run::end() const {
+    return m_impl->m_end;
 }
 
-DataSet::iterator DataSet::lower_bound(const std::string& lb) {
-    std::string lb2 = lb;
-    size_t s = lb2.size();
-    lb2[s-1] -= 1; // sdskv_list_keys's start_key is exclusive
-    iterator it = find(lb2);
-    if(it != end()) {
-        // we found something before the specified lower bound
-        ++it;
-        return it;
+Run::const_iterator Run::cbegin() const {
+    return const_iterator(const_cast<Run*>(this)->begin());
+}
+
+Run::const_iterator Run::cend() const {
+    return m_impl->m_end;
+}
+
+Run::iterator Run::lower_bound(const SubRunNumber& lb) {
+    if(lb == 0) {
+        auto it = find(0);
+        if(it != end()) {
+            return it;
+        } else {
+            SubRun subrun(m_impl->m_datastore, 
+                    m_impl->m_level+1,
+                    m_impl->fullpath(), 0);
+            subrun = subrun.next();
+            if(!subrun.valid()) return end();
+            else return iterator(subrun);
+        }
+    } else {
+        auto it = find(lb-1);
+        if(it != end()) {
+            ++it;
+            return it;
+        }
+        SubRun subrun(m_impl->m_datastore,
+                m_impl->m_level+1,
+                m_impl->fullpath(), lb-1);
+        subrun = subrun.next();
+        if(!subrun.valid()) return end();
+        else return iterator(subrun);
     }
-    DataSet ds(m_impl->m_datastore, m_impl->m_level+1, fullname(), lb2);
-    ds = ds.next();
-    if(!ds.valid()) return end();
-    else return iterator(ds);
 }
 
-DataSet::const_iterator DataSet::lower_bound(const std::string& lb) const {
-    iterator it = const_cast<DataSet*>(this)->lower_bound(lb);
+Run::const_iterator Run::lower_bound(const SubRunNumber& lb) const {
+    iterator it = const_cast<Run*>(this)->lower_bound(lb);
     return it;
 }
 
-DataSet::iterator DataSet::upper_bound(const std::string& ub) {
-    DataSet ds(m_impl->m_datastore, m_impl->m_level+1, fullname(), ub);
-    ds = ds.next();
-    if(!ds.valid()) return end();
-    else return iterator(ds);
+Run::iterator Run::upper_bound(const SubRunNumber& ub) {
+    SubRun subrun(m_impl->m_datastore, 
+            m_impl->m_level+1, 
+            m_impl->fullpath(), ub);
+    subrun = subrun.next();
+    if(!subrun.valid()) return end();
+    else return iterator(subrun);
 }
 
-DataSet::const_iterator DataSet::upper_bound(const std::string& ub) const {
-    iterator it = const_cast<DataSet*>(this)->upper_bound(ub);
+Run::const_iterator Run::upper_bound(const SubRunNumber& ub) const {
+    iterator it = const_cast<Run*>(this)->upper_bound(ub);
     return it;
 }
-*/
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// Run::const_iterator::Impl implementation
+////////////////////////////////////////////////////////////////////////////////////////////
+
+class Run::const_iterator::Impl {
+    public:
+        SubRun m_current_subrun;
+
+        Impl()
+        : m_current_subrun()
+        {}
+
+        Impl(const SubRun& subrun)
+        : m_current_subrun(subrun)
+        {}
+
+        Impl(SubRun&& subrun)
+            : m_current_subrun(std::move(subrun))
+        {}
+
+        Impl(const Impl& other)
+            : m_current_subrun(other.m_current_subrun)
+        {}
+
+        bool operator==(const Impl& other) const {
+            return m_current_subrun == other.m_current_subrun;
+        }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// Run::const_iterator implementation
+////////////////////////////////////////////////////////////////////////////////////////////
+
+Run::const_iterator::const_iterator()
+: m_impl(std::make_unique<Impl>()) {}
+
+Run::const_iterator::const_iterator(const SubRun& subrun)
+: m_impl(std::make_unique<Impl>(subrun)) {}
+
+Run::const_iterator::const_iterator(SubRun&& subrun)
+: m_impl(std::make_unique<Impl>(std::move(subrun))) {}
+
+Run::const_iterator::~const_iterator() {}
+
+Run::const_iterator::const_iterator(const Run::const_iterator& other)
+: m_impl(std::make_unique<Impl>(*other.m_impl)) {}
+
+Run::const_iterator::const_iterator(Run::const_iterator&& other)
+: m_impl(std::move(other.m_impl)) {}
+
+Run::const_iterator& Run::const_iterator::operator=(const Run::const_iterator& other) {
+    if(&other == this) return *this;
+    m_impl = std::make_unique<Impl>(*other.m_impl);
+    return *this;
+}
+
+Run::const_iterator& Run::const_iterator::operator=(Run::const_iterator&& other) {
+    if(&other == this) return *this;
+    m_impl = std::move(other.m_impl);
+    return *this;
+}
+
+Run::const_iterator::self_type Run::const_iterator::operator++() {
+    if(!m_impl) {
+        throw Exception("Trying to increment an invalid iterator");
+    }
+    m_impl->m_current_subrun = m_impl->m_current_subrun.next();
+    return *this;
+}
+
+Run::const_iterator::self_type Run::const_iterator::operator++(int) {
+    const_iterator copy = *this;
+    ++(*this);
+    return copy;
+}
+
+const Run::const_iterator::reference Run::const_iterator::operator*() {
+    if(!m_impl) {
+        throw Exception("Trying to dereference an invalid iterator");
+    }
+    return m_impl->m_current_subrun;
+}
+
+const Run::const_iterator::pointer Run::const_iterator::operator->() {
+    if(!m_impl) return nullptr;
+    return &(m_impl->m_current_subrun);
+}
+
+bool Run::const_iterator::operator==(const self_type& rhs) const {
+    if(!m_impl && !rhs.m_impl)  return true;
+    if(m_impl  && !rhs.m_impl)  return false;
+    if(!m_impl && rhs.m_impl)   return false;
+    return *m_impl == *(rhs.m_impl);
+}
+
+bool Run::const_iterator::operator!=(const self_type& rhs) const {
+        return !(*this == rhs);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// Run::iterator implementation
+////////////////////////////////////////////////////////////////////////////////////////////
+
+Run::iterator::iterator(const SubRun& current)
+: const_iterator(current) {}
+
+Run::iterator::iterator(SubRun&& current)
+: const_iterator(std::move(current)) {}
+
+Run::iterator::iterator()
+: const_iterator() {}
+
+Run::iterator::~iterator() {}
+
+Run::iterator::iterator(const Run::iterator& other)
+: const_iterator(other) {}
+
+Run::iterator::iterator(Run::iterator&& other)
+: const_iterator(std::move(other)) {}
+
+Run::iterator& Run::iterator::operator=(const Run::iterator& other) {
+    if(this == &other) return *this;
+    m_impl = std::make_unique<Impl>(*other.m_impl);
+    return *this;
+}
+
+Run::iterator& Run::iterator::operator=(Run::iterator&& other) {
+    if(this == &other) return *this;
+    m_impl = std::move(other.m_impl);
+    return *this;
+}
+
+Run::iterator::reference Run::iterator::operator*() {
+    return const_cast<reference>(const_iterator::operator*());
+}
+
+Run::iterator::pointer Run::iterator::operator->() {
+    return const_cast<pointer>(const_iterator::operator->());
+}
+
 }

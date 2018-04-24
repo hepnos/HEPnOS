@@ -1,5 +1,10 @@
 # list of source files
-set(hepnos-src DataStore.cpp DataSet.cpp RunSet.cpp Run.cpp) 
+set(hepnos-src DataStore.cpp
+	       DataSet.cpp
+	       RunSet.cpp
+	       Run.cpp
+	       SubRun.cpp
+	       Event.cpp) 
 
 # load package helper for generating cmake CONFIG packages
 include (CMakePackageConfigHelpers)
