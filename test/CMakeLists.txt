@@ -22,8 +22,12 @@ target_link_libraries(RunTest cppunit hepnos hepnos-service)
 add_executable(SubRunTest SubRunTest.cpp HEPnOSTestMain.cpp)
 target_link_libraries(SubRunTest cppunit hepnos hepnos-service)
 
+add_executable(EventTest EventTest.cpp HEPnOSTestMain.cpp)
+target_link_libraries(EventTest cppunit hepnos hepnos-service)
+
 add_test(NAME DataStoreTest COMMAND run-test.sh ./DataStoreTest)
 add_test(NAME DataSetTest   COMMAND run-test.sh ./DataSetTest)
 add_test(NAME RunSetTest    COMMAND run-test.sh ./RunSetTest)
 add_test(NAME RunTest       COMMAND run-test.sh ./RunTest)
 add_test(NAME SubRunTest    COMMAND run-test.sh ./SubRunTest)
+add_test(NAME EventTest     COMMAND run-test.sh ./EventTest)
