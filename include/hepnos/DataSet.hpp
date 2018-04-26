@@ -372,7 +372,7 @@ class DataSet : public KeyValueContainer {
     const RunSet& runs() const;
 
     /**
-     * @brief Accesses an existing run using the ()
+     * @brief Accesses an existing run using the []
      * operator. If no run corresponds to the provided run number,
      * the function returns a Run instance d such that
      * r.valid() is false.
@@ -381,7 +381,7 @@ class DataSet : public KeyValueContainer {
      *
      * @return a Run corresponding to the provided run number.
      */
-    Run operator()(const RunNumber& runNumber) const;
+    Run operator[](const RunNumber& runNumber) const;
 };
 
 }

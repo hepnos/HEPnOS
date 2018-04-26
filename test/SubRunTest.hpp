@@ -11,7 +11,7 @@ class SubRunTest : public CppUnit::TestFixture
     CPPUNIT_TEST_SUITE( SubRunTest );
     CPPUNIT_TEST( testFillDataStore );
     CPPUNIT_TEST( testCreateEvents );
-    CPPUNIT_TEST( testParenthesisOperator );
+    CPPUNIT_TEST( testBraketOperator );
     CPPUNIT_TEST( testFind );
     CPPUNIT_TEST( testBeginEnd );
     CPPUNIT_TEST( testLowerUpperBounds );
@@ -24,7 +24,7 @@ class SubRunTest : public CppUnit::TestFixture
 
     void testFillDataStore();
     void testCreateEvents();
-    void testParenthesisOperator();
+    void testBraketOperator();
     void testFind();
     void testBeginEnd();
     void testLowerUpperBounds();

@@ -97,7 +97,7 @@ SubRun Run::createSubRun(const SubRunNumber& subRunNumber) {
     return SubRun(m_impl->m_datastore, m_impl->m_level+1, parent, subRunNumber);
 }
 
-SubRun Run::operator()(const SubRunNumber& subRunNumber) const {
+SubRun Run::operator[](const SubRunNumber& subRunNumber) const {
     auto it = find(subRunNumber);
     return std::move(*it);
 }

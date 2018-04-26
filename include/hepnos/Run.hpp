@@ -282,7 +282,7 @@ class Run : public KeyValueContainer {
     const_iterator upper_bound(const SubRunNumber&) const;
 
     /**
-     * @brief Accesses an existing ubun using the ()
+     * @brief Accesses an existing ubun using the []
      * operator. If no run corresponds to the provided subrun number,
      * the function returns a SubRun instance r such that
      * r.valid() is false.
@@ -291,7 +291,7 @@ class Run : public KeyValueContainer {
      *
      * @return a SubRun corresponding to the provided subrun number.
      */
-    SubRun operator()(const SubRunNumber& subRunNumber) const;
+    SubRun operator[](const SubRunNumber& subRunNumber) const;
 
     /**
      * @brief Creates a SubRun within this Run, with the provided

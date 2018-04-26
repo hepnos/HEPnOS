@@ -158,7 +158,7 @@ void DataSetTest::testCreateRuns() {
     CPPUNIT_ASSERT(mds.valid());
 
     {
-        Run r = mds(45);
+        Run r = mds[45];
         CPPUNIT_ASSERT(!r.valid());
         CPPUNIT_ASSERT(r.number() == InvalidRunNumber);
     }

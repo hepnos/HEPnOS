@@ -271,7 +271,7 @@ class SubRun : public KeyValueContainer {
     const_iterator upper_bound(const SubRunNumber&) const;
 
     /**
-     * @brief Accesses an existing event using the ()
+     * @brief Accesses an existing event using the []
      * operator. If no run corresponds to the provided run number,
      * the function returns a Run instance d such that
      * r.valid() is false.
@@ -280,7 +280,7 @@ class SubRun : public KeyValueContainer {
      *
      * @return an Event corresponding to the provided event number.
      */
-    Event operator()(const EventNumber& eventNumber) const;
+    Event operator[](const EventNumber& eventNumber) const;
 
     /**
      * @brief Creates an Event within this SubRun, with the provided

@@ -144,7 +144,7 @@ DataSet DataSet::operator[](const std::string& datasetName) const {
     return std::move(*it);
 }
 
-Run DataSet::operator()(const RunNumber& runNumber) const {
+Run DataSet::operator[](const RunNumber& runNumber) const {
     auto it = runs().find(runNumber);
     return std::move(*it);
 }

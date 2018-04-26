@@ -25,7 +25,7 @@ RunSet::RunSet(DataSet* ds)
 
 RunSet::~RunSet() {}
 
-Run RunSet::operator()(const RunNumber& runNumber) {
+Run RunSet::operator[](const RunNumber& runNumber) {
     auto it = find(runNumber);
     return std::move(*it);
 }

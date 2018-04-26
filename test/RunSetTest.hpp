@@ -10,7 +10,7 @@ class RunSetTest : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE( RunSetTest );
     CPPUNIT_TEST( testFillDataStore );
-    CPPUNIT_TEST( testParenthesisOperator );
+    CPPUNIT_TEST( testBraketOperator );
     CPPUNIT_TEST( testFind );
     CPPUNIT_TEST( testBeginEnd );
     CPPUNIT_TEST( testLowerUpperBounds );
@@ -23,7 +23,7 @@ class RunSetTest : public CppUnit::TestFixture
     void tearDown();
 
     void testFillDataStore();
-    void testParenthesisOperator();
+    void testBraketOperator();
     void testFind();
     void testBeginEnd();
     void testLowerUpperBounds();

@@ -94,7 +94,7 @@ Event SubRun::createEvent(const EventNumber& eventNumber) {
     return Event(m_impl->m_datastore, m_impl->m_level+1, parent, eventNumber);
 }
 
-Event SubRun::operator()(const EventNumber& eventNumber) const {
+Event SubRun::operator[](const EventNumber& eventNumber) const {
     auto it = find(eventNumber);
     return std::move(*it);
 }

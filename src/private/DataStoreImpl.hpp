@@ -307,10 +307,17 @@ class DataStore::Impl {
         DataStoreEntryPtr entry = make_datastore_entry(level, ss.str());
         auto ph = m_sdskv_ph[provider_idx];
         auto db_id = m_sdskv_db[provider_idx];
+        // check if the key exists
+        hg_size_t vsize;
+        int ret = sdskv_length(ph, db_id, entry->raw(), entry->length(), &vsize);
+        if(ret == HG_SUCCESS) return false; // key already exists
+        if(ret != SDSKV_ERR_UNKNOWN_KEY) { // there was a problem with sdskv
+            throw Exception("Could not check if key exists in SDSKV (sdskv_length error)");
+        }
         std::cerr << "[LOG] store (level=" << (int)level
             << ", container=\"" << containerName << "\", object=\""
             << objectName << "\")" << std::endl;
-        int ret = sdskv_put(ph, db_id, entry->raw(), entry->length(), data.data(), data.size());
+        ret = sdskv_put(ph, db_id, entry->raw(), entry->length(), data.data(), data.size());
         if(ret != SDSKV_SUCCESS) {
             throw Exception("Could not put key/value pair in SDSKV (sdskv_put error)");
         }

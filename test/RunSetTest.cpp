@@ -49,24 +49,24 @@ void RunSetTest::testFillDataStore() {
     CPPUNIT_ASSERT(r5.valid());
 }
 
-void RunSetTest::testParenthesisOperator() {
+void RunSetTest::testBraketOperator() {
     DataSet mds = (*datastore)["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
     // check that accessing a Run that does not exist
     // yields a non-valid Run instance
-    Run r6 = mds(43);
+    Run r6 = mds[43];
     CPPUNIT_ASSERT(!r6.valid());
 
     // check that accessing a run that exists yields
     // a valid Run instance with correct information
-    Run r2 = mds(45);
+    Run r2 = mds[45];
     CPPUNIT_ASSERT(r2.valid());
     CPPUNIT_ASSERT(45 == r2.number());
     CPPUNIT_ASSERT_EQUAL_STR("matthieu", r2.container());
 
     // check that we access the same Run using the runs() function
     // to go through the RunSet
-    Run r22 = mds.runs()(45);
+    Run r22 = mds.runs()[45];
     CPPUNIT_ASSERT(r2 == r22);
 }
 
@@ -153,10 +153,10 @@ void RunSetTest::testLowerUpperBounds() {
 void RunSetTest::testCreateSubRuns() {
     DataSet mds = (*datastore)["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
-    Run r2 = mds(45);
+    Run r2 = mds[45];
 
     {
-        SubRun sr = r2(73);
+        SubRun sr = r2[73];
         CPPUNIT_ASSERT(!sr.valid());
         CPPUNIT_ASSERT(sr.number() == InvalidSubRunNumber);
     }

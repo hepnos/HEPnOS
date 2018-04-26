@@ -21,9 +21,9 @@ void SubRunTest::testFillDataStore() {
 void SubRunTest::testCreateEvents() {
     DataSet mds = (*datastore)["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
-    Run r1 = mds(42);
+    Run r1 = mds[42];
     CPPUNIT_ASSERT(r1.valid());
-    SubRun sr1 = r1(3);
+    SubRun sr1 = r1[3];
     CPPUNIT_ASSERT(sr1.valid());
 
     Event e10 = sr1.createEvent(10);
@@ -43,21 +43,21 @@ void SubRunTest::testCreateEvents() {
     CPPUNIT_ASSERT(38 == e38.number());
 }
 
-void SubRunTest::testParenthesisOperator() {
+void SubRunTest::testBraketOperator() {
     DataSet mds = (*datastore)["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
-    Run r1 = mds(42);
+    Run r1 = mds[42];
     CPPUNIT_ASSERT(r1.valid());
-    SubRun sr1 = r1(3);
+    SubRun sr1 = r1[3];
     CPPUNIT_ASSERT(sr1.valid());
 
     // check access to non-existing SubRun
-    Event e0 = sr1(12);
+    Event e0 = sr1[12];
     CPPUNIT_ASSERT(!e0.valid());
     CPPUNIT_ASSERT(e0.number() == InvalidEventNumber);
 
     // check access to existing SubRun
-    Event e13 = sr1(13);
+    Event e13 = sr1[13];
     CPPUNIT_ASSERT(e13.valid());
     CPPUNIT_ASSERT(13 == e13.number());
 }
@@ -65,9 +65,9 @@ void SubRunTest::testParenthesisOperator() {
 void SubRunTest::testFind() {
     DataSet mds = (*datastore)["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
-    Run r1 = mds(42);
+    Run r1 = mds[42];
     CPPUNIT_ASSERT(r1.valid());
-    SubRun sr1 = r1(3);
+    SubRun sr1 = r1[3];
     CPPUNIT_ASSERT(sr1.valid());
     // test calling find for a SubRun that does not exist
     {
@@ -91,9 +91,9 @@ void SubRunTest::testFind() {
 void SubRunTest::testBeginEnd() {
     DataSet mds = (*datastore)["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
-    Run r1 = mds(42);
+    Run r1 = mds[42];
     CPPUNIT_ASSERT(r1.valid());
-    SubRun sr1 = r1(3);
+    SubRun sr1 = r1[3];
     CPPUNIT_ASSERT(sr1.valid());
 
     std::vector<EventNumber> numbers = {10, 13, 23, 38};
@@ -107,9 +107,9 @@ void SubRunTest::testBeginEnd() {
 void SubRunTest::testLowerUpperBounds() {
     DataSet mds = (*datastore)["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
-    Run r1 = mds(42);
+    Run r1 = mds[42];
     CPPUNIT_ASSERT(r1.valid());
-    SubRun sr1 = r1(3);
+    SubRun sr1 = r1[3];
     CPPUNIT_ASSERT(sr1.valid());
 
     {

@@ -83,7 +83,7 @@ class RunSet {
     class iterator;
 
     /**
-     * @brief Accesses an existing Run using the ()
+     * @brief Accesses an existing Run using the []
      * operator. If no Run correspond to the provided number,
      * the function returns a Run instance r such that
      * r.valid() is false.
@@ -92,7 +92,7 @@ class RunSet {
      *
      * @return a Run corresponding to the provided number.
      */
-    Run operator()(const RunNumber& runNumber);
+    Run operator[](const RunNumber& runNumber);
 
     /**
      * @brief Searches this RunSet for a Run with 

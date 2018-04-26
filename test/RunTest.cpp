@@ -20,7 +20,7 @@ void RunTest::testFillDataStore() {
 void RunTest::testCreateSubRuns() {
     DataSet mds = (*datastore)["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
-    Run r1 = mds(42);
+    Run r1 = mds[42];
 
     SubRun sr10 = r1.createSubRun(10);
     CPPUNIT_ASSERT(sr10.valid());
@@ -39,20 +39,20 @@ void RunTest::testCreateSubRuns() {
     CPPUNIT_ASSERT(38 == sr38.number());
 }
 
-void RunTest::testParenthesisOperator() {
+void RunTest::testBraketOperator() {
     DataSet mds = (*datastore)["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
 
-    Run r1 = mds(42);
+    Run r1 = mds[42];
     CPPUNIT_ASSERT(r1.valid());
 
     // check access to non-existing SubRun
-    SubRun sr0 = r1(12);
+    SubRun sr0 = r1[12];
     CPPUNIT_ASSERT(!sr0.valid());
     CPPUNIT_ASSERT(sr0.number() == InvalidSubRunNumber);
 
     // check access to existing SubRun
-    SubRun sr13 = r1(13);
+    SubRun sr13 = r1[13];
     CPPUNIT_ASSERT(sr13.valid());
     CPPUNIT_ASSERT(13 == sr13.number());
 }
@@ -60,7 +60,7 @@ void RunTest::testParenthesisOperator() {
 void RunTest::testFind() {
     DataSet mds = (*datastore)["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
-    Run r1 = mds(42);
+    Run r1 = mds[42];
     CPPUNIT_ASSERT(r1.valid());
     // test calling find for a SubRun that does not exist
     {
@@ -84,7 +84,7 @@ void RunTest::testFind() {
 void RunTest::testBeginEnd() {
     DataSet mds = (*datastore)["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
-    Run r1 = mds(42);
+    Run r1 = mds[42];
     CPPUNIT_ASSERT(r1.valid());
 
     std::vector<SubRunNumber> numbers = {10, 13, 23, 38};
@@ -98,7 +98,7 @@ void RunTest::testBeginEnd() {
 void RunTest::testLowerUpperBounds() {
     DataSet mds = (*datastore)["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
-    Run r1 = mds(42);
+    Run r1 = mds[42];
     CPPUNIT_ASSERT(r1.valid());
 
     {
