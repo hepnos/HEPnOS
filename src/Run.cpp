@@ -11,7 +11,7 @@
 namespace hepnos {
 
 Run::Run()
-: m_impl(std::make_unique<Run::Impl>(nullptr, 0, "", 0)) {} 
+: m_impl(std::make_unique<Run::Impl>(nullptr, 0, "", InvalidRunNumber)) {} 
 
 Run::Run(DataStore* ds, uint8_t level, const std::string& container, const RunNumber& rn)
 : m_impl(std::make_unique<Run::Impl>(ds, level, container, rn)) { }

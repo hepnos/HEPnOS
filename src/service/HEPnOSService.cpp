@@ -13,44 +13,27 @@
 #include <bake-server.h>
 #include <sdskv-server.h>
 #include <yaml-cpp/yaml.h>
-#include "hepnos-service-util.hpp"
+#include "hepnos-service.h"
 
 #define ASSERT(__cond, __msg, ...) { if(!(__cond)) { fprintf(stderr, "[%s:%d] " __msg, __FILE__, __LINE__, __VA_ARGS__); exit(-1); } }
 
-void usage(void)
-{
-    fprintf(stderr, "Usage: hepnos-service <addr> <config>\n");
-    fprintf(stderr, "  <addr>    the Mercury address to listen on (e.g. tcp://)\n");
-    fprintf(stderr, "  <config>  path to the YAML file to generate for clients\n");
-    exit(-1);
-}
-
 static void generate_config_file(MPI_Comm comm, const char* addr, const char* config_file);
 
-int main(int argc, char *argv[])
+void hepnos_run_service(MPI_Comm comm, const char* listen_addr, const char* config_file)
 {
-    char* listen_addr;
-    char* config_file;
     margo_instance_id mid;
     int ret;
-
-    /* check args */
-    if (argc != 3)
-        usage();
-    listen_addr = argv[1];
-    config_file = argv[2];
-
-    /* MPI required for SSG bootstrapping */
-    MPI_Init(&argc, &argv);
     int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    MPI_Comm_rank(comm, &rank);
 
     /* Margo initialization */
     mid = margo_init(listen_addr, MARGO_SERVER_MODE, 0, -1);
     if (mid == MARGO_INSTANCE_NULL)
     {
         fprintf(stderr, "Error: Unable to initialize margo\n");
-        return -1;
+        MPI_Abort(MPI_COMM_WORLD, -1);
+        return;
     }
     margo_enable_remote_shutdown(mid);
 
@@ -60,8 +43,6 @@ int main(int argc, char *argv[])
     char self_addr_str[128];
     hg_size_t self_addr_str_size = 128;
     margo_addr_to_string(mid, self_addr_str, &self_addr_str_size, self_addr);
-
-    generate_config_file(MPI_COMM_WORLD, self_addr_str, config_file);
 
     /* Bake provider initialization */
     uint16_t bake_mplex_id = 1;
@@ -94,11 +75,9 @@ int main(int argc, char *argv[])
 
     margo_addr_free(mid, self_addr);
 
+    generate_config_file(MPI_COMM_WORLD, self_addr_str, config_file);
+
     margo_wait_for_finalize(mid);
-
-    MPI_Finalize();
-
-    return 0;
 }
 
 static void generate_config_file(MPI_Comm comm, const char* addr, const char* config_file)

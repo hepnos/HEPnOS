@@ -20,9 +20,15 @@ namespace hepnos {
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 RunSet::RunSet(DataSet* ds)
-: m_impl(std::make_unique<RunSet::Impl>(ds)) {}
+: m_impl(std::make_unique<RunSet::Impl>(ds)) {
+}
 
 RunSet::~RunSet() {}
+
+Run RunSet::operator()(const RunNumber& runNumber) {
+    auto it = find(runNumber);
+    return std::move(*it);
+}
 
 RunSet::iterator RunSet::find(const RunNumber& runNumber) {
     int ret;

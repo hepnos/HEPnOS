@@ -22,6 +22,7 @@ namespace hepnos {
 class RunSet {
 
     friend class DataSet::Impl;
+    friend class DataSet;
 
     private:
 
@@ -80,6 +81,18 @@ class RunSet {
 
     class const_iterator;
     class iterator;
+
+    /**
+     * @brief Accesses an existing Run using the ()
+     * operator. If no Run correspond to the provided number,
+     * the function returns a Run instance r such that
+     * r.valid() is false.
+     *
+     * @param runNumber run number of the Run to retrieve.
+     *
+     * @return a Run corresponding to the provided number.
+     */
+    Run operator()(const RunNumber& runNumber);
 
     /**
      * @brief Searches this RunSet for a Run with 

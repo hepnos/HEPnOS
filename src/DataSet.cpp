@@ -6,6 +6,7 @@
 #include "hepnos/DataSet.hpp"
 #include "hepnos/Run.hpp"
 #include "hepnos/RunSet.hpp"
+#include "private/RunSetImpl.hpp"
 #include "private/RunImpl.hpp"
 #include "private/DataSetImpl.hpp"
 #include "private/DataStoreImpl.hpp"
@@ -36,7 +37,10 @@ DataSet::DataSet(const DataSet& other)
             other.m_impl->m_container,
             other.m_impl->m_name)) {}
 
-DataSet::DataSet(DataSet&&) = default;
+DataSet::DataSet(DataSet&& other) 
+: m_impl(std::move(other.m_impl)) {
+    m_impl->m_runset.m_impl->m_dataset = this;
+}
 
 DataSet& DataSet::operator=(const DataSet& other) {
     if(this == &other) return *this;
@@ -48,7 +52,12 @@ DataSet& DataSet::operator=(const DataSet& other) {
     return *this;
 }
 
-DataSet& DataSet::operator=(DataSet&&) = default;
+DataSet& DataSet::operator=(DataSet&& other) {
+    if(this == &other) return *this;
+    m_impl = std::move(other.m_impl);
+    m_impl->m_runset.m_impl->m_dataset = this;
+    return *this;
+}
 
 DataSet::~DataSet() {}
 
@@ -59,7 +68,7 @@ DataSet DataSet::next() const {
     size_t s = m_impl->m_datastore->m_impl->nextKeys(
             m_impl->m_level, m_impl->m_container, m_impl->m_name, keys, 1);
     if(s == 0) return DataSet();
-    return DataSet(m_impl->m_datastore, m_impl->m_level, m_impl->m_container, keys[0]);
+    return DataSet(m_impl->m_datastore, m_impl->m_level, keys[0]);
 }
 
 bool DataSet::valid() const {
@@ -111,8 +120,9 @@ std::string DataSet::fullname() const {
 }
 
 DataSet DataSet::createDataSet(const std::string& name) {
-    if(name.find('/') != std::string::npos) {
-        throw Exception("Invalid character '/' in dataset name");
+    if(name.find('/') != std::string::npos
+    || name.find('%') != std::string::npos) {
+        throw Exception("Invalid character '/' or '%' in dataset name");
     }
     std::string parent = fullname();
     m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, name, std::vector<char>());
@@ -120,6 +130,9 @@ DataSet DataSet::createDataSet(const std::string& name) {
 }
 
 Run DataSet::createRun(const RunNumber& runNumber) {
+    if(InvalidRunNumber == runNumber) {
+        throw Exception("Trying to create a Run with InvalidRunNumber");
+    }
     std::string parent = fullname();
     std::string runStr = Run::Impl::makeKeyStringFromRunNumber(runNumber);
     m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, runStr, std::vector<char>());
@@ -138,8 +151,9 @@ Run DataSet::operator()(const RunNumber& runNumber) const {
 
 DataSet::iterator DataSet::find(const std::string& datasetName) {
     int ret;
-    if(datasetName.find('/') != std::string::npos) {
-        throw Exception("Invalid character '/' in dataset name");
+    if(datasetName.find('/') != std::string::npos
+    || datasetName.find('%') != std::string::npos) {
+        throw Exception("Invalid character '/' or '%' in dataset name");
     }
     std::vector<char> data;
     std::string parent = fullname();

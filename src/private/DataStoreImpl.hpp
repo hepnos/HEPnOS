@@ -7,6 +7,7 @@
 #define __HEPNOS_PRIVATE_DATASTORE_IMPL
 
 #include <vector>
+#include <unordered_set>
 #include <functional>
 #include <iostream>
 #include <yaml-cpp/yaml.h>
@@ -28,6 +29,7 @@ class DataStore::Impl {
     public:
 
     margo_instance_id                    m_mid;          // Margo instance
+    std::unordered_set<hg_addr_t>        m_addrs;        // Addresses used by the service
     sdskv_client_t                       m_sdskv_client; // SDSKV client
     bake_client_t                        m_bake_client;  // BAKE client
     std::vector<sdskv_provider_handle_t> m_sdskv_ph;     // list of SDSKV provider handlers
@@ -81,6 +83,7 @@ class DataStore::Impl {
                 cleanup();
                 throw Exception("margo_addr_lookup failed");
             }
+            m_addrs.insert(addr);
             if(it->second.IsScalar()) {
                 uint16_t provider_id = it->second.as<uint16_t>();
                 sdskv_provider_handle_t ph;
@@ -128,6 +131,7 @@ class DataStore::Impl {
                 cleanup();
                 throw Exception("margo_addr_lookup failed");
             }
+            m_addrs.insert(addr);
             if(it->second.IsScalar()) {
                 uint16_t provider_id = it->second.as<uint16_t>();
                 bake_provider_handle_t ph;

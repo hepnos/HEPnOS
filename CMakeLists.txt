@@ -9,7 +9,6 @@
 
 cmake_minimum_required (VERSION 3.0)
 project (hepnos CXX)
-enable_testing ()
 
 add_definitions (-g)
 
@@ -46,6 +45,19 @@ xpkg_import_module (bake-server  REQUIRED bake-server)
 xpkg_import_module (ch-placement REQUIRED ch-placement)
 find_package (yaml-cpp REQUIRED)
 
+find_package (CppUnit)
+if (CPPUNIT_FOUND)
+    message(STATUS "CppUnit found, unit tests will be compiled")
+    include_directories(${CPPUNIT_INCLUDE_DIR})
+    enable_testing()
+else (CPPUNIT_FOUND)
+    message(STATUS "CppUnit not found, unit tests will not be compiled")
+endif (CPPUNIT_FOUND)
+
 add_subdirectory (src)
-add_subdirectory (test)
 add_subdirectory (bin)
+
+if(CPPUNIT_FOUND AND ENABLE_TESTS)
+    message(STATUS "Unit tests are enabled, will be built")
+    add_subdirectory (test)
+endif(CPPUNIT_FOUND AND ENABLE_TESTS)

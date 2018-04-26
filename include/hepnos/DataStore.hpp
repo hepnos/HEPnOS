@@ -237,6 +237,11 @@ class DataStore {
      */
     DataSet createDataSet(const std::string& name);
 
+    /**
+     * @brief Shuts down the HEPnOS service.
+     */
+    void shutdown();
+
     private:
 
     /**

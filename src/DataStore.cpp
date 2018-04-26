@@ -54,7 +54,7 @@ DataStore::iterator DataStore::find(const std::string& datasetName) {
     if(!b) {
         return m_impl->m_end;
     }
-    return iterator(DataSet(this, 1, datasetName));
+    return iterator(DataSet(this, 1, "", datasetName));
 }
 
 DataSet DataStore::operator[](const std::string& datasetName) const {
@@ -135,6 +135,12 @@ DataSet DataStore::createDataSet(const std::string& name) {
     }
     m_impl->store(1, "", name, std::vector<char>());
     return DataSet(this, 1, "", name);
+}
+
+void DataStore::shutdown() {
+    for(auto addr : m_impl->m_addrs) {
+        margo_shutdown_remote_instance(m_impl->m_mid, addr);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////

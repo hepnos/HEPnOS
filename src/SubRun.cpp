@@ -12,7 +12,7 @@
 namespace hepnos {
 
 SubRun::SubRun()
-: m_impl(std::make_unique<Impl>(nullptr, 0, "", 0)) {} 
+: m_impl(std::make_unique<Impl>(nullptr, 0, "", InvalidSubRunNumber)) {} 
 
 SubRun::SubRun(DataStore* ds, uint8_t level, const std::string& container, const SubRunNumber& rn)
 : m_impl(std::make_unique<Impl>(ds, level, container, rn)) { }

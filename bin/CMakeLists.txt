@@ -1,2 +1,2 @@
-add_executable(hepnos-service hepnos-service.cpp hepnos-service-util.cpp)
-target_link_libraries(hepnos-service sdskv-server bake-server yaml-cpp)
+add_executable(hepnos-daemon hepnos-daemon.cpp)
+target_link_libraries(hepnos-daemon hepnos-service yaml-cpp margo bake-server sdskv-server)

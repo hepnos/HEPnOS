@@ -6,6 +6,8 @@ set(hepnos-src DataStore.cpp
 	       SubRun.cpp
 	       Event.cpp) 
 
+set(hepnos-service-src service/HEPnOSService.cpp)
+
 # load package helper for generating cmake CONFIG packages
 include (CMakePackageConfigHelpers)
 
@@ -15,8 +17,8 @@ set (hepnos-pkg "share/cmake/hepnos")
 #
 # library version set here (e.g. for shared libs).
 #
-set (HEPNOS_VERSION_MAJOR 1)
-set (HEPNOS_VERSION_MINOR 0)
+set (HEPNOS_VERSION_MAJOR 0)
+set (HEPNOS_VERSION_MINOR 1)
 set (HEPNOS_VERSION_PATCH 0)
 set (hepnos-vers "${HEPNOS_VERSION_MAJOR}.${HEPNOS_VERSION_MINOR}")
 set (HEPNOS_VERSION "${hepnos-vers}.${HEPNOS_VERSION_PATCH}")
@@ -35,6 +37,18 @@ set_target_properties (hepnos
     PROPERTIES VERSION ${HEPNOS_VERSION}
     SOVERSION ${HEPNOS_VERSION_MAJOR})
 
+add_library(hepnos-service ${hepnos-service-src})
+target_link_libraries (hepnos mercury margo yaml-cpp sdskv-client sdskv-server bake-client bake-server ch-placement)
+target_include_directories (hepnos-service PUBLIC $<INSTALL_INTERFACE:include>)
+
+# local include's BEFORE, in case old incompatable .h files in prefix/include
+target_include_directories (hepnos-service BEFORE PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+
+# for shared libs, establish the lib version
+set_target_properties (hepnos-service
+    PROPERTIES VERSION ${HEPNOS_VERSION}
+    SOVERSION ${HEPNOS_VERSION_MAJOR})
 #
 # installation stuff (packaging and install commands)
 #
@@ -49,12 +63,13 @@ configure_file (hepnos-config.cmake.in hepnos-config.cmake @ONLY)
 #
 # "make install" rules
 #
-#install (TARGETS hepnos EXPORT hepnos-targets
-#         ARCHIVE DESTINATION lib
-#         LIBRARY DESTINATION lib)
-#install (EXPORT hepnos-targets
-#         DESTINATION ${hepnos-pkg}
-#         FILE "hepnos-targets.cmake")
+install (TARGETS hepnos EXPORT hepnos-targets
+         ARCHIVE DESTINATION lib
+         LIBRARY DESTINATION lib)
+install (TARGETS hepnos-service ARCHIVE DESTINATION lib LIBRARY DESTINATION lib)
+install (EXPORT hepnos-targets
+         DESTINATION ${hepnos-pkg}
+         FILE "hepnos-targets.cmake")
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/hepnos-config.cmake"
                "${CMAKE_CURRENT_BINARY_DIR}/hepnos-config-version.cmake"
                "../cmake/xpkg-import.cmake"
@@ -62,3 +77,6 @@ install (FILES "${CMAKE_CURRENT_BINARY_DIR}/hepnos-config.cmake"
 install (DIRECTORY ../include/hepnos
          DESTINATION include
          FILES_MATCHING PATTERN "*.hpp")
+install (DIRECTORY ../include/hepnos
+         DESTINATION include
+         FILES_MATCHING PATTERN "*.h")

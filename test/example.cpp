@@ -103,5 +103,7 @@ int main(int argc, char** argv) {
         std::cout << "upper_bound(44) = " << it6->number() << " (should be 56)" << std::endl;
     }
 
+    datastore.shutdown();
+
     return 0;
 }
