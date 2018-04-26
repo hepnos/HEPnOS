@@ -21,6 +21,15 @@ namespace hepnos {
 // DataStore implementation
 ////////////////////////////////////////////////////////////////////////////////////////////
 
+DataStore::DataStore() 
+: m_impl(std::make_unique<DataStore::Impl>(this)) {
+    char* file = getenv("HEPNOS_CONFIG_FILE");
+    if(file == nullptr) 
+        throw Exception("HEPNOS_CONFIG_FILE environment variable not set");
+    std::string configFile(file);
+    m_impl->init(configFile);
+}
+
 DataStore::DataStore(const std::string& configFile) 
 : m_impl(std::make_unique<DataStore::Impl>(this)) {
     m_impl->init(configFile);

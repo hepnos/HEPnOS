@@ -80,3 +80,7 @@ install (DIRECTORY ../include/hepnos
 install (DIRECTORY ../include/hepnos
          DESTINATION include
          FILES_MATCHING PATTERN "*.h")
+install (FILES ../include/hepnos.h
+		DESTINATION include)
+install (FILES ../include/hepnos-service.h
+		DESTINATION include)
