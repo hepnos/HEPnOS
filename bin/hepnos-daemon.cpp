@@ -19,7 +19,7 @@
 
 void usage(void)
 {
-    fprintf(stderr, "Usage: hepnos-service <addr> <config>\n");
+    fprintf(stderr, "Usage: hepnos-daemon <addr> <config>\n");
     fprintf(stderr, "  <addr>    the Mercury address to listen on (e.g. tcp://)\n");
     fprintf(stderr, "  <config>  path to the YAML file to generate for clients\n");
     exit(-1);
