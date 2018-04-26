@@ -267,9 +267,6 @@ class DataStore::Impl {
         auto db_id = m_sdskv_db[provider_idx];
         // find the size of the value, as a way to check if the key exists
         hg_size_t vsize;
-        std::cerr << "[LOG] load (level=" << (int)level
-            << ", container=\"" << containerName << "\", object=\""
-            << objectName << "\")" << std::endl;
         ret = sdskv_length(ph, db_id, entry->raw(), entry->length(), &vsize);
         if(ret == SDSKV_ERR_UNKNOWN_KEY) {
             return false;
@@ -314,9 +311,6 @@ class DataStore::Impl {
         if(ret != SDSKV_ERR_UNKNOWN_KEY) { // there was a problem with sdskv
             throw Exception("Could not check if key exists in SDSKV (sdskv_length error)");
         }
-        std::cerr << "[LOG] store (level=" << (int)level
-            << ", container=\"" << containerName << "\", object=\""
-            << objectName << "\")" << std::endl;
         ret = sdskv_put(ph, db_id, entry->raw(), entry->length(), data.data(), data.size());
         if(ret != SDSKV_SUCCESS) {
             throw Exception("Could not put key/value pair in SDSKV (sdskv_put error)");
@@ -354,9 +348,6 @@ class DataStore::Impl {
         auto db_id = m_sdskv_db[provider_idx];
         // issue an sdskv_list_keys
         hg_size_t max_keys = maxKeys;
-        std::cerr << "[LOG] list keys (level=" << (int)level
-            << ", container=\"" << containerName << "\", greaterthan=\""
-            << lower << "\")" << std::endl;
         ret = sdskv_list_keys(ph, db_id, lb_entry->raw(), lb_entry->length(),
                 keys_ptr.data(), keys_len.data(), &max_keys);
         if(ret != HG_SUCCESS) {
