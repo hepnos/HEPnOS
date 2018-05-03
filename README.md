@@ -7,4 +7,4 @@ HEPnOS relies on libraries developed at Argonne National Laboratory within the
 context of the Mochi project (ANL, CMU, LANL, HDF Group).
 
 For information on copyright and licensing, see the COPYRIGHT file.
-For information on how to use, see the [wiki](https://xgitlab.cels.anl.gov/sds/HEPnOS).
+For information on how to use, see the [wiki](https://xgitlab.cels.anl.gov/sds/HEPnOS/wikis/home).
