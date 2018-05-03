@@ -70,7 +70,7 @@ void hepnos_run_service(MPI_Comm comm, const char* listen_addr, const char* conf
 
     // XXX creating the database - this should come from a config file
     sdskv_database_id_t db_id;
-    ret = sdskv_provider_add_database(sdskv_prov, "hepnosdb",  KVDB_MAP, SDSKV_COMPARE_DEFAULT,  &db_id);
+    ret = sdskv_provider_add_database(sdskv_prov, "hepnosdb", "", KVDB_MAP, SDSKV_COMPARE_DEFAULT,  &db_id);
     ASSERT(ret == 0, "sdskv_provider_add_database() failed (ret = %d)\n", ret);
 
     margo_addr_free(mid, self_addr);
