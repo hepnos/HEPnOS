@@ -1,3 +1,88 @@
+#include <sstream>
+#include <iostream>
+#include <boost/serialization/vector.hpp>
+#include <hepnos.hpp>
+
+class InputTag {
+    private:
+        template<typename S>
+        friend S& operator<<(S&, const InputTag&);
+        std::string _a;
+        std::string _b;
+    public:
+        InputTag(const std::string& a, const std::string& b)
+            : _a(a), _b(b) {}
+};
+
+template<typename S>
+S& operator<<(S& ss, const InputTag& t) {
+    ss << t._a << "_" << t._b;
+    return ss;
+}
+
+class Particle {
+    private:
+        friend class boost::serialization::access;
+        std::vector<double> position;
+        uint8_t             charge;
+
+        /* any serializable class needs to have this function.
+           Note that if your class has members that are STL containers
+           (e.g. std::vector<X>) then you will need to #include
+           the corresponding Boost header (e.g. boot/serialization/vector.hpp).
+           For more information about the serialization mechanism,
+           see here: http://www.boost.org/doc/libs/1_66_0/libs/serialization/doc/index.html
+         */
+        template<typename A>
+            void serialize(A& ar, const unsigned int version) {
+                ar & position;
+                ar & charge;
+            }
+
+    public:
+        Particle() = default;
+
+        Particle(double x, double y, double z, uint8_t c)
+            : position{x,y,z}, charge(c) {}
+
+        bool operator==(const Particle& other) {
+            if(charge != other.charge) return false;
+            if(position.size() != other.position.size()) return false;
+            for(unsigned i=0; i<position.size(); i++) {
+                if(position[i] != other.position[i]) return false;
+            }
+            return true;
+        }
+};
+
+using namespace hepnos;
+
+int main(int argc, char** argv) {
+    if(argc != 2) {
+        std::cerr << "Usage: " << argv[1] << " <configfile>" << std::endl;
+        exit(-1);
+    }
+
+    DataStore datastore(argv[1]);
+
+    DataSet ds = datastore.createDataSet("fermilab");
+
+    InputTag tag("AAA","BBB");
+    Particle p_in(3.4, 5.6, 7.8, 42);
+    Particle p_out;
+
+    std::cout << "p_in == p_out ? " << (p_in == p_out) << std::endl;
+
+    ds.store(tag, p_in);
+    ds.load(tag, p_out);
+
+    std::cout << "p_in == p_out ? " << (p_in == p_out) << std::endl;
+
+    datastore.shutdown();
+    return 0;
+}
+
+#if 0
 #include <iostream>
 #include <hepnos/DataStore.hpp>
 #include <hepnos/DataSet.hpp>
@@ -80,7 +165,7 @@ int main(int argc, char** argv) {
     std::cout << "created run with run number " << run43.number() << std::endl;
     std::cout << "created run with run number " << run23.number() << std::endl;
     std::cout << "created run with run number " << run56.number() << std::endl;
-    
+
     std::cout << "====== Testing runs().begin() and runs().end() =====" << std::endl;
     for(auto& r : dataset4.runs()) {
         std::cout << "accessing a run with number " << r.number() << std::endl;
@@ -107,3 +192,4 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+#endif

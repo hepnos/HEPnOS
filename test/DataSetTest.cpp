@@ -32,6 +32,17 @@ void DataSetTest::testFillDataStore() {
     CPPUNIT_ASSERT_EQUAL_STR("ds1", ds1.name());
     CPPUNIT_ASSERT_EQUAL_STR("matthieu", ds1.container());
     CPPUNIT_ASSERT_EQUAL_STR("matthieu/ds1", ds1.fullname());
+    // assert access from DataStore using full path
+    DataSet matthieu_ds1 = (*datastore)["matthieu/ds1"];
+    CPPUNIT_ASSERT(matthieu_ds1.valid());
+    CPPUNIT_ASSERT(matthieu_ds1 == ds1);
+    // create a dataset inside ds1
+    DataSet ds11 = ds1.createDataSet("ds11");
+    CPPUNIT_ASSERT(ds11.valid());
+    // access ds11 using path from "matthieu"
+    DataSet ds1_ds11 = mds["ds1/ds11"];
+    CPPUNIT_ASSERT(ds1_ds11.valid());
+    CPPUNIT_ASSERT(ds1_ds11 == ds11);
     // assert comparison with a default-constructed dataset
     DataSet ds0;
     CPPUNIT_ASSERT(ds0 != ds1);

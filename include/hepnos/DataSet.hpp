@@ -193,7 +193,7 @@ class DataSet : public KeyValueContainer {
 
     /**
      * @brief Creates a dataset with a given name inside the
-     * DataSet. This name must not have the '/' and '#' characters.
+     * DataSet. This name must not have the '/' and '%' characters.
      * A DataSet object pointing to the created dataset is returned.
      * If a dataset with this name already exists in the DataStore, 
      * it is not created, but a DataSet object pointing to the 
@@ -234,28 +234,28 @@ class DataSet : public KeyValueContainer {
     DataSet operator[](const std::string& datasetName) const;
 
     /**
-     * @brief Searches this DataSet for an DataSet with 
-     * the provided name and returns an iterator to it if found,
+     * @brief Searches this DataSet for a DataSet with 
+     * the provided path and returns an iterator to it if found,
      * otherwise it returns an iterator to DataStore::end().
      *
-     * @param datasetName Name of the DataSet to find.
+     * @param datasetPath Path of the DataSet to find.
      *
      * @return an iterator pointing to the DataSet if found,
      * DataSet::end() otherwise.
      */
-    iterator find(const std::string& datasetName);
+    iterator find(const std::string& datasetPath);
 
     /**
      * @brief Searches this DataSet for an DataSet with 
-     * the provided name and returns a const_iterator to it 
+     * the provided path and returns a const_iterator to it 
      * if found, otherwise it returns an iterator to DataSet::end().
      *
-     * @param datasetName Name of the DataSet to find.
+     * @param datasetPath Path of the DataSet to find.
      *
      * @return a const_iterator pointing to the DataSet if found,
      * DataSet::cend() otherwise.
      */
-    const_iterator find(const std::string& datasetName) const;
+    const_iterator find(const std::string& datasetPath) const;
 
 
     /**

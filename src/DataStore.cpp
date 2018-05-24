@@ -52,18 +52,33 @@ DataStore::~DataStore() {
     }
 }
 
-DataStore::iterator DataStore::find(const std::string& datasetName) {
+DataStore::iterator DataStore::find(const std::string& datasetPath) {
     int ret;
-    if(datasetName.find('/') != std::string::npos
-    || datasetName.find('%') != std::string::npos) {
-        throw Exception("Invalid character ('/' or '%') in dataset name");
+
+    if(datasetPath.find('%') != std::string::npos) {
+        throw Exception("Invalid character ('%') in dataset name");
     }
+
+    size_t slash_count = std::count(datasetPath.begin(), datasetPath.end(), '/');
+    size_t level = 1 + slash_count;
+    std::string containerName;
+    std::string datasetName;
+
+    if(slash_count == 0) {
+        datasetName = datasetPath;
+        containerName = "";
+    } else {
+        size_t c = datasetPath.find_last_of('/');
+        containerName = datasetPath.substr(0,c);
+        datasetName   = datasetPath.substr(c+1);
+    }
+
     std::vector<char> data;
-    bool b = m_impl->load(1, "", datasetName, data);
+    bool b = m_impl->load(level, containerName, datasetName, data);
     if(!b) {
         return m_impl->m_end;
     }
-    return iterator(DataSet(this, 1, "", datasetName));
+    return iterator(DataSet(this, level, containerName, datasetName));
 }
 
 DataSet DataStore::operator[](const std::string& datasetName) const {

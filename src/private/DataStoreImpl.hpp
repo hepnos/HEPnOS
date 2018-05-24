@@ -257,7 +257,7 @@ class DataStore::Impl {
             uint64_t h = std::hash<std::string>()(containerName);
             ch_placement_find_closest(m_chi_sdskv, h, 1, &provider_idx);
         } else {
-            // use the complete name for final objects (level 255)
+            // use the complete name for final objects (level 0)
             uint64_t h = std::hash<std::string>()(ss.str());
             ch_placement_find_closest(m_chi_sdskv, h, 1, &provider_idx);
         }

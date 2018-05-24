@@ -109,27 +109,27 @@ class DataStore {
 
     /**
      * @brief Searches the DataStore for an DataSet with 
-     * the provided name and returns an iterator to it if found,
+     * the provided path and returns an iterator to it if found,
      * otherwise it returns an iterator to DataStore::end().
      *
-     * @param datasetName Name of the DataSet to find.
+     * @param datasetPath Path of the DataSet to find.
      *
      * @return an iterator pointing to the DataSet if found,
      * DataStore::end() otherwise.
      */
-    iterator find(const std::string& datasetName);
+    iterator find(const std::string& datasetPath);
 
     /**
      * @brief Searches the DataStore for an DataSet with 
-     * the provided name and returns a const_iterator to it 
+     * the provided path and returns a const_iterator to it 
      * if found, otherwise it returns an iterator to DataStore::end().
      *
-     * @param datasetName Name of the DataSet to find.
+     * @param datasetPath Path of the DataSet to find.
      *
      * @return a const_iterator pointing to the DataSet if found,
      * DataStore::cend() otherwise.
      */
-    const_iterator find(const std::string& datasetName) const;
+    const_iterator find(const std::string& datasetPath) const;
 
     /**
      * @brief Returns an iterator referring to the first DataSet
@@ -234,7 +234,7 @@ class DataStore {
 
     /**
      * @brief Creates a dataset with a given name inside the
-     * DataStore. This name must not have the '/' and '#' characters.
+     * DataStore. This name must not have the '/' and '%' characters.
      * A DataSet object pointing to the created dataset is returned.
      * If a dataset with this name already exists in the DataStore, 
      * it is not created, but a DataSet object pointing to the 
