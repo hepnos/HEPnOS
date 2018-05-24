@@ -42,6 +42,8 @@ class RunSet {
 
     public:
 
+    typedef Run value_type;
+
     /**
      * @brief Copy-constructor. Deleted.
      *

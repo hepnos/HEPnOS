@@ -32,6 +32,7 @@ class DataStore {
 
     public:
 
+    typedef DataSet value_type;
 
     /**
      * @brief Constructor. Initializes the DataStore by taking

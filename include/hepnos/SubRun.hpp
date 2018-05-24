@@ -37,6 +37,8 @@ class SubRun : public KeyValueContainer {
 
     public:
 
+    typedef Event value_type;
+
     /**
      * @brief Default constructor. Creates a SubRun instance such that subrun.valid() is false.
      */

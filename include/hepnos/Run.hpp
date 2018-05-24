@@ -40,6 +40,8 @@ class Run : public KeyValueContainer {
 
     public:
 
+    typedef SubRun value_type;
+
     /**
      * @brief Default constructor. Creates a Run instance such that run.valid() is false.
      */

@@ -59,6 +59,8 @@ class DataSet : public KeyValueContainer {
 
     public:
 
+    typedef DataSet value_type;
+
     /**
      * @brief Default constructor.
      */
