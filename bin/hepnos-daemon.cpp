@@ -20,14 +20,14 @@
 void usage(void)
 {
     fprintf(stderr, "Usage: hepnos-daemon <addr> <config>\n");
-    fprintf(stderr, "  <addr>    the Mercury address to listen on (e.g. tcp://)\n");
-    fprintf(stderr, "  <config>  path to the YAML file to generate for clients\n");
+    fprintf(stderr, "  <config> path to the YAML file containing the service configuration\n");
+    fprintf(stderr, "  <connection>  path to the YAML file to generate for clients\n");
     exit(-1);
 }
 
 int main(int argc, char *argv[])
 {
-    char* listen_addr;
+    char* connection_file;
     char* config_file;
     int rank;
 
@@ -42,10 +42,10 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
-    listen_addr = argv[1];
-    config_file = argv[2];
+    config_file = argv[1];
+    connection_file = argv[2];
 
-    hepnos_run_service(MPI_COMM_WORLD, listen_addr, config_file);
+    hepnos_run_service(MPI_COMM_WORLD, config_file, connection_file);
 
     MPI_Finalize();
 }

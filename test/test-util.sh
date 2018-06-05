@@ -19,11 +19,11 @@ function hepnos_test_start_servers()
     nservers=${1:-4}
     startwait=${2:-15}
     maxtime=${3:-120}
-    cfile=${4:-testconfig.yml}
-
+    config=${4:-config.yaml}
+    cfile=${5:-connection.yaml}
     rm -rf ${cfile}
 
-    run_to $maxtime mpirun -np $nservers ../bin/hepnos-daemon tcp:// $cfile &
+    run_to $maxtime mpirun -np $nservers ../bin/hepnos-daemon $config $cfile &
     if [ $? -ne 0 ]; then
         # TODO: this doesn't actually work; can't check return code of
         # something executing in background.  We have to rely on the

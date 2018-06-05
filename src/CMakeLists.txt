@@ -6,7 +6,8 @@ set(hepnos-src DataStore.cpp
 	       SubRun.cpp
 	       Event.cpp) 
 
-set(hepnos-service-src service/HEPnOSService.cpp)
+set(hepnos-service-src service/HEPnOSService.cpp
+		       service/ServiceConfig.cpp)
 
 # load package helper for generating cmake CONFIG packages
 include (CMakePackageConfigHelpers)
@@ -19,7 +20,7 @@ set (hepnos-pkg "share/cmake/hepnos")
 #
 set (HEPNOS_VERSION_MAJOR 0)
 set (HEPNOS_VERSION_MINOR 1)
-set (HEPNOS_VERSION_PATCH 0)
+set (HEPNOS_VERSION_PATCH 2)
 set (hepnos-vers "${HEPNOS_VERSION_MAJOR}.${HEPNOS_VERSION_MINOR}")
 set (HEPNOS_VERSION "${hepnos-vers}.${HEPNOS_VERSION_PATCH}")
 
@@ -44,6 +45,8 @@ target_include_directories (hepnos-service PUBLIC $<INSTALL_INTERFACE:include>)
 # local include's BEFORE, in case old incompatable .h files in prefix/include
 target_include_directories (hepnos-service BEFORE PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+target_include_directories (hepnos-service BEFORE PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/service>)
 
 # for shared libs, establish the lib version
 set_target_properties (hepnos-service

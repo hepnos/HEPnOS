@@ -1,0 +1,6 @@
+---
+address: tcp://
+database:
+  name: hepnosdb
+  path: XXX/$RANK
+  type: bdb
