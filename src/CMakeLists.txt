@@ -7,7 +7,8 @@ set(hepnos-src DataStore.cpp
 	       Event.cpp) 
 
 set(hepnos-service-src service/HEPnOSService.cpp
-		       service/ServiceConfig.cpp)
+		       service/ServiceConfig.cpp
+		       service/ConnectionInfoGenerator.cpp)
 
 # load package helper for generating cmake CONFIG packages
 include (CMakePackageConfigHelpers)

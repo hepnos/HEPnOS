@@ -163,7 +163,7 @@ DataSet DataStore::createDataSet(const std::string& name) {
 
 void DataStore::shutdown() {
     for(auto addr : m_impl->m_addrs) {
-        margo_shutdown_remote_instance(m_impl->m_mid, addr);
+        margo_shutdown_remote_instance(m_impl->m_mid, addr.second);
     }
 }
 

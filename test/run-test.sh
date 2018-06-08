@@ -7,7 +7,7 @@ fi
 
 source test-util.sh
 
-TEST_DIR=`$MKTEMP -d tmp/hepnos-XXXXXX`
+TEST_DIR=`$MKTEMP -d /tmp/hepnos-XXXXXX`
 CON_FILE=$TEST_DIR/connection.yaml
 cp config.yaml $TEST_DIR/config.yaml
 CFG_FILE=$TEST_DIR/config.yaml

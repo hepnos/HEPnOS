@@ -12,13 +12,13 @@
 #include <margo.h>
 #include <bake-server.h>
 #include <sdskv-server.h>
-#include <yaml-cpp/yaml.h>
 #include "ServiceConfig.hpp"
+#include "ConnectionInfoGenerator.hpp"
 #include "hepnos-service.h"
 
 #define ASSERT(__cond, __msg, ...) { if(!(__cond)) { fprintf(stderr, "[%s:%d] " __msg, __FILE__, __LINE__, __VA_ARGS__); exit(-1); } }
 
-static void generate_connection_file(MPI_Comm comm, const char* addr, const char* filename);
+//static void generate_connection_file(MPI_Comm comm, const char* addr, const char* filename);
 
 void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* connection_file)
 {
@@ -58,9 +58,10 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
     hg_size_t self_addr_str_size = 128;
     margo_addr_to_string(mid, self_addr_str, &self_addr_str_size, self_addr);
 
+    uint16_t bake_provider_id = 0;
     if(config->hasStorage()) {
         /* Bake provider initialization */
-        uint16_t bake_mplex_id = 1;
+        bake_provider_id = 1; // XXX we can make that come from the config file
         const char* bake_target_name = config->getStoragePath().c_str();
         size_t bake_target_size = config->getStorageSize()*(1024*1024);
         /* create the bake target if it does not exist */
@@ -70,18 +71,19 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
         }
         bake_provider_t bake_prov;
         bake_target_id_t bake_tid;
-        ret = bake_provider_register(mid, bake_mplex_id, BAKE_ABT_POOL_DEFAULT, &bake_prov);
+        ret = bake_provider_register(mid, bake_provider_id, BAKE_ABT_POOL_DEFAULT, &bake_prov);
         ASSERT(ret == 0, "bake_provider_register() failed (ret = %d)\n", ret);
         ret = bake_provider_add_storage_target(bake_prov, bake_target_name, &bake_tid);
         ASSERT(ret == 0, "bake_provider_add_storage_target() failed to add target %s (ret = %d)\n",
                 bake_target_name, ret);
     }
 
+    uint8_t sdskv_provider_id = 0;
     if(config->hasDatabase()) {
         /* SDSKV provider initialization */
-        uint8_t sdskv_mplex_id = 1;
+        sdskv_provider_id = 1; // XXX we can make that come from the config file
         sdskv_provider_t sdskv_prov;
-        ret = sdskv_provider_register(mid, sdskv_mplex_id, SDSKV_ABT_POOL_DEFAULT, &sdskv_prov);
+        ret = sdskv_provider_register(mid, sdskv_provider_id, SDSKV_ABT_POOL_DEFAULT, &sdskv_prov);
         ASSERT(ret == 0, "sdskv_provider_register() failed (ret = %d)\n", ret);
 
         /* creating the database */
@@ -98,12 +100,12 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
 
     margo_addr_free(mid, self_addr);
 
-    // XXX This should be replaced by submitting the connection info to a registry
-    generate_connection_file(MPI_COMM_WORLD, self_addr_str, connection_file);
+    hepnos::ConnectionInfoGenerator fileGen(self_addr_str, sdskv_provider_id, bake_provider_id);
+    fileGen.generateFile(MPI_COMM_WORLD, connection_file);
 
     margo_wait_for_finalize(mid);
 }
-
+/*
 static void generate_connection_file(MPI_Comm comm, const char* addr, const char* filename)
 {
     int rank, size;
@@ -133,3 +135,4 @@ static void generate_connection_file(MPI_Comm comm, const char* addr, const char
     std::ofstream fout(filename);
     fout << config;
 }
+*/
