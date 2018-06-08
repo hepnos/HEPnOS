@@ -12,14 +12,15 @@
 #include <margo.h>
 #include <bake-server.h>
 #include <sdskv-server.h>
-#include <yaml-cpp/yaml.h>
+#include "ServiceConfig.hpp"
+#include "ConnectionInfoGenerator.hpp"
 #include "hepnos-service.h"
 
 #define ASSERT(__cond, __msg, ...) { if(!(__cond)) { fprintf(stderr, "[%s:%d] " __msg, __FILE__, __LINE__, __VA_ARGS__); exit(-1); } }
 
-static void generate_config_file(MPI_Comm comm, const char* addr, const char* config_file);
+//static void generate_connection_file(MPI_Comm comm, const char* addr, const char* filename);
 
-void hepnos_run_service(MPI_Comm comm, const char* listen_addr, const char* config_file)
+void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* connection_file)
 {
     margo_instance_id mid;
     int ret;
@@ -27,11 +28,24 @@ void hepnos_run_service(MPI_Comm comm, const char* listen_addr, const char* conf
 
     MPI_Comm_rank(comm, &rank);
 
+    /* load configuration */
+    std::unique_ptr<hepnos::ServiceConfig> config;
+    try {
+        config = std::make_unique<hepnos::ServiceConfig>(config_file, rank);
+    } catch(const std::exception& e) {
+        std::cerr << "Error: when reading configuration:" << std::endl;
+        std::cerr << "  " << e.what() << std::endl;
+        std::cerr << "Aborting." << std::endl;
+        MPI_Abort(MPI_COMM_WORLD, -1);
+        return;
+    }
+
     /* Margo initialization */
-    mid = margo_init(listen_addr, MARGO_SERVER_MODE, 0, -1);
+    mid = margo_init(config->getAddress().c_str(), MARGO_SERVER_MODE, 0, -1);
     if (mid == MARGO_INSTANCE_NULL)
     {
-        fprintf(stderr, "Error: Unable to initialize margo\n");
+        std::cerr << "Error: unable to initialize margo" << std::endl;
+        std::cerr << "Aborting." << std::endl;
         MPI_Abort(MPI_COMM_WORLD, -1);
         return;
     }
@@ -44,43 +58,55 @@ void hepnos_run_service(MPI_Comm comm, const char* listen_addr, const char* conf
     hg_size_t self_addr_str_size = 128;
     margo_addr_to_string(mid, self_addr_str, &self_addr_str_size, self_addr);
 
-    /* Bake provider initialization */
-    uint16_t bake_mplex_id = 1;
-    char bake_target_name[128];
-    sprintf(bake_target_name, "/dev/shm/hepnos.%d.dat", rank);
-    /* create the bake target if it does not exist */
-    if(-1 == access(bake_target_name, F_OK)) {
-        // XXX creating a pool of 10MB - this should come from a config file
-        ret = bake_makepool(bake_target_name, 10*1024*1024, 0664);
-        ASSERT(ret == 0, "bake_makepool() failed (ret = %d)\n", ret);
+    uint16_t bake_provider_id = 0;
+    if(config->hasStorage()) {
+        /* Bake provider initialization */
+        bake_provider_id = 1; // XXX we can make that come from the config file
+        const char* bake_target_name = config->getStoragePath().c_str();
+        size_t bake_target_size = config->getStorageSize()*(1024*1024);
+        /* create the bake target if it does not exist */
+        if(-1 == access(bake_target_name, F_OK)) {
+            ret = bake_makepool(bake_target_name, bake_target_size, 0664);
+            ASSERT(ret == 0, "bake_makepool() failed (ret = %d)\n", ret);
+        }
+        bake_provider_t bake_prov;
+        bake_target_id_t bake_tid;
+        ret = bake_provider_register(mid, bake_provider_id, BAKE_ABT_POOL_DEFAULT, &bake_prov);
+        ASSERT(ret == 0, "bake_provider_register() failed (ret = %d)\n", ret);
+        ret = bake_provider_add_storage_target(bake_prov, bake_target_name, &bake_tid);
+        ASSERT(ret == 0, "bake_provider_add_storage_target() failed to add target %s (ret = %d)\n",
+                bake_target_name, ret);
     }
-    bake_provider_t bake_prov;
-    bake_target_id_t bake_tid;
-    ret = bake_provider_register(mid, bake_mplex_id, BAKE_ABT_POOL_DEFAULT, &bake_prov);
-    ASSERT(ret == 0, "bake_provider_register() failed (ret = %d)\n", ret);
-    ret = bake_provider_add_storage_target(bake_prov, bake_target_name, &bake_tid);
-    ASSERT(ret == 0, "bake_provider_add_storage_target() failed to add target %s (ret = %d)\n",
-            bake_target_name, ret);
 
-    /* SDSKV provider initialization */
-    uint8_t sdskv_mplex_id = 1;
-    sdskv_provider_t sdskv_prov;
-    ret = sdskv_provider_register(mid, sdskv_mplex_id, SDSKV_ABT_POOL_DEFAULT, &sdskv_prov);
-    ASSERT(ret == 0, "sdskv_provider_register() failed (ret = %d)\n", ret);
+    uint8_t sdskv_provider_id = 0;
+    if(config->hasDatabase()) {
+        /* SDSKV provider initialization */
+        sdskv_provider_id = 1; // XXX we can make that come from the config file
+        sdskv_provider_t sdskv_prov;
+        ret = sdskv_provider_register(mid, sdskv_provider_id, SDSKV_ABT_POOL_DEFAULT, &sdskv_prov);
+        ASSERT(ret == 0, "sdskv_provider_register() failed (ret = %d)\n", ret);
 
-    // XXX creating the database - this should come from a config file
-    sdskv_database_id_t db_id;
-    ret = sdskv_provider_add_database(sdskv_prov, "hepnosdb", "", KVDB_MAP, SDSKV_COMPARE_DEFAULT,  &db_id);
-    ASSERT(ret == 0, "sdskv_provider_add_database() failed (ret = %d)\n", ret);
+        /* creating the database */
+        const char* db_path = config->getDatabasePath().c_str();
+        const char* db_name = config->getDatabaseName().c_str();
+        sdskv_db_type_t db_type;
+        if(config->getDatabaseType() == "map") db_type = KVDB_MAP;
+        if(config->getDatabaseType() == "ldb") db_type = KVDB_LEVELDB;
+        if(config->getDatabaseType() == "bdb") db_type = KVDB_BERKELEYDB;
+        sdskv_database_id_t db_id;
+        ret = sdskv_provider_add_database(sdskv_prov, db_name, db_path, db_type, SDSKV_COMPARE_DEFAULT,  &db_id);
+        ASSERT(ret == 0, "sdskv_provider_add_database() failed (ret = %d)\n", ret);
+    }
 
     margo_addr_free(mid, self_addr);
 
-    generate_config_file(MPI_COMM_WORLD, self_addr_str, config_file);
+    hepnos::ConnectionInfoGenerator fileGen(self_addr_str, sdskv_provider_id, bake_provider_id);
+    fileGen.generateFile(MPI_COMM_WORLD, connection_file);
 
     margo_wait_for_finalize(mid);
 }
-
-static void generate_config_file(MPI_Comm comm, const char* addr, const char* config_file)
+/*
+static void generate_connection_file(MPI_Comm comm, const char* addr, const char* filename)
 {
     int rank, size;
     MPI_Comm_rank(comm, &rank);
@@ -106,6 +132,7 @@ static void generate_config_file(MPI_Comm comm, const char* addr, const char* co
     for(auto& s :  addresses)
         config["hepnos"]["providers"]["sdskv"][s] = 1;
 
-    std::ofstream fout(config_file);
+    std::ofstream fout(filename);
     fout << config;
 }
+*/

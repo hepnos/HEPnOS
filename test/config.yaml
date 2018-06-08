@@ -1,0 +1,9 @@
+---
+address: tcp://
+database:
+  name: hepnosdb
+  path: XXX/$RANK
+  type: bdb
+storage:
+  path: /dev/shm/hepnos.$RANK.dat
+  size: 50
