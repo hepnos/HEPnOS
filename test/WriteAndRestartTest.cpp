@@ -1,16 +1,16 @@
-#include "LoadStoreTest.hpp"
+#include "WriteAndRestartTest.hpp"
 #include "CppUnitAdditionalMacros.hpp"
 #include "TestObjects.hpp"
 
-CPPUNIT_TEST_SUITE_REGISTRATION( LoadStoreTest );
+CPPUNIT_TEST_SUITE_REGISTRATION( WriteAndRestartTest );
 
 using namespace hepnos;
 
-void LoadStoreTest::setUp() {}
+void WriteAndRestartTest::setUp() {}
 
-void LoadStoreTest::tearDown() {}
+void WriteAndRestartTest::tearDown() {}
 
-void LoadStoreTest::testFillDataStore() {
+void WriteAndRestartTest::testFillDataStore() {
 
     auto mds = datastore->createDataSet("matthieu");
     CPPUNIT_ASSERT(mds.valid());
@@ -22,7 +22,7 @@ void LoadStoreTest::testFillDataStore() {
     CPPUNIT_ASSERT(ev1.valid());
 }
 
-void LoadStoreTest::testLoadStoreDataSet() {
+void WriteAndRestartTest::testStoreDataSet() {
 
     auto mds = (*datastore)["matthieu"];
     auto run = mds[42];
@@ -43,29 +43,11 @@ void LoadStoreTest::testLoadStoreDataSet() {
 
     // we can store obj_a
     CPPUNIT_ASSERT(mds.store(key1, out_obj_a));
-    // we cannot store at that key again something of the same type
-    TestObjectA tmpa;
-    CPPUNIT_ASSERT(!mds.store(key1, tmpa));
     // we can store obj_b at the same key because it's not the same type
     CPPUNIT_ASSERT(mds.store(key1, out_obj_b));
-
-    TestObjectA in_obj_a;
-    TestObjectB in_obj_b;
-
-    std::string key2 = "otherkey";
-    // we can't load something at a key that does not exist
-    CPPUNIT_ASSERT(!mds.load(key2, in_obj_a));
-    // we can reload obj_a from key1
-    CPPUNIT_ASSERT(mds.load(key1, in_obj_a));
-    // and they are the same
-    CPPUNIT_ASSERT(in_obj_a == out_obj_a);
-    // we can reload obj_b from key1
-    CPPUNIT_ASSERT(mds.load(key1, in_obj_b));
-    // and they are the same
-    CPPUNIT_ASSERT(in_obj_b == out_obj_b);
 }
 
-void LoadStoreTest::testLoadStoreRun() {
+void WriteAndRestartTest::testStoreRun() {
 
     auto mds = (*datastore)["matthieu"];
     auto run = mds[42];
@@ -86,29 +68,11 @@ void LoadStoreTest::testLoadStoreRun() {
 
     // we can store obj_a
     CPPUNIT_ASSERT(run.store(key1, out_obj_a));
-    // we cannot store at that key again something of the same type
-    TestObjectA tmpa;
-    CPPUNIT_ASSERT(!run.store(key1, tmpa));
     // we can store obj_b at the same key because it's not the same type
     CPPUNIT_ASSERT(run.store(key1, out_obj_b));
-
-    TestObjectA in_obj_a;
-    TestObjectB in_obj_b;
-
-    std::string key2 = "otherkey";
-    // we can't load something at a key that does not exist
-    CPPUNIT_ASSERT(!run.load(key2, in_obj_a));
-    // we can reload obj_a from key1
-    CPPUNIT_ASSERT(run.load(key1, in_obj_a));
-    // and they are the same
-    CPPUNIT_ASSERT(in_obj_a == out_obj_a);
-    // we can reload obj_b from key1
-    CPPUNIT_ASSERT(run.load(key1, in_obj_b));
-    // and they are the same
-    CPPUNIT_ASSERT(in_obj_b == out_obj_b);
 }
 
-void LoadStoreTest::testLoadStoreSubRun() {
+void WriteAndRestartTest::testStoreSubRun() {
 
     auto mds = (*datastore)["matthieu"];
     auto run = mds[42];
@@ -129,29 +93,11 @@ void LoadStoreTest::testLoadStoreSubRun() {
 
     // we can store obj_a
     CPPUNIT_ASSERT(subrun.store(key1, out_obj_a));
-    // we cannot store at that key again something of the same type
-    TestObjectA tmpa;
-    CPPUNIT_ASSERT(!subrun.store(key1, tmpa));
     // we can store obj_b at the same key because it's not the same type
     CPPUNIT_ASSERT(subrun.store(key1, out_obj_b));
-
-    TestObjectA in_obj_a;
-    TestObjectB in_obj_b;
-
-    std::string key2 = "otherkey";
-    // we can't load something at a key that does not exist
-    CPPUNIT_ASSERT(!subrun.load(key2, in_obj_a));
-    // we can reload obj_a from key1
-    CPPUNIT_ASSERT(subrun.load(key1, in_obj_a));
-    // and they are the same
-    CPPUNIT_ASSERT(in_obj_a == out_obj_a);
-    // we can reload obj_b from key1
-    CPPUNIT_ASSERT(subrun.load(key1, in_obj_b));
-    // and they are the same
-    CPPUNIT_ASSERT(in_obj_b == out_obj_b);
 }
 
-void LoadStoreTest::testLoadStoreEvent() {
+void WriteAndRestartTest::testStoreEvent() {
 
     auto mds = (*datastore)["matthieu"];
     auto run = mds[42];
@@ -172,25 +118,7 @@ void LoadStoreTest::testLoadStoreEvent() {
 
     // we can store obj_a
     CPPUNIT_ASSERT(event.store(key1, out_obj_a));
-    // we cannot store at that key again something of the same type
-    TestObjectA tmpa;
-    CPPUNIT_ASSERT(!event.store(key1, tmpa));
     // we can store obj_b at the same key because it's not the same type
     CPPUNIT_ASSERT(event.store(key1, out_obj_b));
-
-    TestObjectA in_obj_a;
-    TestObjectB in_obj_b;
-
-    std::string key2 = "otherkey";
-    // we can't load something at a key that does not exist
-    CPPUNIT_ASSERT(!event.load(key2, in_obj_a));
-    // we can reload obj_a from key1
-    CPPUNIT_ASSERT(event.load(key1, in_obj_a));
-    // and they are the same
-    CPPUNIT_ASSERT(in_obj_a == out_obj_a);
-    // we can reload obj_b from key1
-    CPPUNIT_ASSERT(event.load(key1, in_obj_b));
-    // and they are the same
-    CPPUNIT_ASSERT(in_obj_b == out_obj_b);
 }
 
