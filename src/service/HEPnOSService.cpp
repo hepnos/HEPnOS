@@ -18,8 +18,6 @@
 
 #define ASSERT(__cond, __msg, ...) { if(!(__cond)) { fprintf(stderr, "[%s:%d] " __msg, __FILE__, __LINE__, __VA_ARGS__); exit(-1); } }
 
-//static void generate_connection_file(MPI_Comm comm, const char* addr, const char* filename);
-
 void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* connection_file)
 {
     margo_instance_id mid;
@@ -105,34 +103,3 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
 
     margo_wait_for_finalize(mid);
 }
-/*
-static void generate_connection_file(MPI_Comm comm, const char* addr, const char* filename)
-{
-    int rank, size;
-    MPI_Comm_rank(comm, &rank);
-    MPI_Comm_size(comm, &size);
-
-    unsigned j=0;
-    while(addr[j] != '\0' && addr[j] != ':') j++;
-    std::string proto(addr, j);
-
-    std::vector<char> buf(128*size);
-
-    MPI_Gather(addr, 128, MPI_BYTE, buf.data(), 128, MPI_BYTE, 0, comm);
-    
-    if(rank != 0) return;
-
-    std::vector<std::string> addresses;
-    for(unsigned i=0; i < size; i++) {
-        addresses.emplace_back(&buf[128*i]);
-    }
-
-    YAML::Node config;
-    config["hepnos"]["client"]["protocol"] = proto;
-    for(auto& s :  addresses)
-        config["hepnos"]["providers"]["sdskv"][s] = 1;
-
-    std::ofstream fout(filename);
-    fout << config;
-}
-*/

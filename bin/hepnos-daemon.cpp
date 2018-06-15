@@ -19,9 +19,9 @@
 
 void usage(void)
 {
-    fprintf(stderr, "Usage: hepnos-daemon <addr> <config>\n");
-    fprintf(stderr, "  <config> path to the YAML file containing the service configuration\n");
-    fprintf(stderr, "  <connection>  path to the YAML file to generate for clients\n");
+    fprintf(stderr, "Usage: hepnos-daemon <config-file> <connection-file>\n");
+    fprintf(stderr, "  <config-file> path to the YAML file containing the service configuration\n");
+    fprintf(stderr, "  <connection-file>  path to the YAML file to generate for clients\n");
     exit(-1);
 }
 
