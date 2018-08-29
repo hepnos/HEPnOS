@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <cstring>
 #include <unistd.h>
 #include <mpi.h>
 #include <margo.h>
@@ -92,8 +93,13 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
         if(config->getDatabaseType() == "ldb") db_type = KVDB_LEVELDB;
         if(config->getDatabaseType() == "bdb") db_type = KVDB_BERKELEYDB;
         sdskv_database_id_t db_id;
-        ret = sdskv_provider_add_database(sdskv_prov, db_name, db_path, db_type, SDSKV_COMPARE_DEFAULT,  &db_id);
-        ASSERT(ret == 0, "sdskv_provider_add_database() failed (ret = %d)\n", ret);
+        sdskv_config_t config;
+        std::memset(&config, 0, sizeof(config));
+        config.db_name = db_name;
+        config.db_path = db_path;
+        config.db_type = db_type;
+        ret = sdskv_provider_attach_database(sdskv_prov, &config,  &db_id);
+        ASSERT(ret == 0, "sdskv_provider_attach_database() failed (ret = %d)\n", ret);
     }
 
     margo_addr_free(mid, self_addr);
