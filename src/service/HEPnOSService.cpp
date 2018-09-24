@@ -80,7 +80,7 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
     uint8_t sdskv_provider_id = 0;
     if(config->hasDatabase()) {
         /* SDSKV provider initialization */
-        sdskv_provider_id = 1; // XXX we can make that come from the config file
+        sdskv_provider_id = 2; // XXX we can make that come from the config file
         sdskv_provider_t sdskv_prov;
         ret = sdskv_provider_register(mid, sdskv_provider_id, SDSKV_ABT_POOL_DEFAULT, &sdskv_prov);
         ASSERT(ret == 0, "sdskv_provider_register() failed (ret = %d)\n", ret);
