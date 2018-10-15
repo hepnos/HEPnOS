@@ -249,12 +249,48 @@ class DataStore {
      */
     DataSet createDataSet(const std::string& name);
 
+    /**
+     * @brief Create a pointer to a product. The type T used must
+     * match the type of the product corresponding to the provided
+     * product ID. Using a different type will result in undefined
+     * behaviors.
+     *
+     * @tparam T Type of the product.
+     * @param productID Product ID.
+     *
+     * @return a Ptr instance pointing to the given product.
+     */
     template<typename T>
     Ptr<T> makePtr(const ProductID& productID);
 
+    /**
+     * @brief Create a pointer to a product located in a collection
+     * at a given index. The type T used must match the type of objects
+     * stored in the collection. Using a different type will result in
+     * undefined behavior. The collection type may be ommited if it
+     * is std::vector<T>. The collection type must have a braket operator
+     * taking an unsigned integral type (e.g. size_t) as input and returning
+     * a const reference (or a reference) to an object of type T.
+     *
+     * @tparam T Type of object pointed to.
+     * @tparam C Type of collection.
+     * @param productID Product id.
+     * @param index Index of the object in the collection.
+     *
+     * @return a Ptr instance pointing to the given product.
+     */
     template<typename T, typename C = std::vector<T>>
     Ptr<T,C> makePtr(const ProductID& productID, std::size_t index);
 
+    /**
+     * @brief Loads a particular object by its product id.
+     *
+     * @tparam T Type of object.
+     * @param productID Product id.
+     * @param t Object being loaded.
+     *
+     * @return True if the object was correctly loaded, false otherwise.
+     */
     template<typename T>
     bool loadProduct(const ProductID& productID, T& t);
 
@@ -271,6 +307,14 @@ class DataStore {
     class Impl;
     std::unique_ptr<Impl> m_impl; /*!< Pointer to implementation */
 
+    /**
+     * @brief Loads the raw data corresponding to a product.
+     *
+     * @param productID Product id.
+     * @param buffer Buffer in which to place the raw data.
+     *
+     * @return true if the data was loaded successfuly, false otherwise.
+     */
     bool loadRawProduct(const ProductID& productID, std::vector<char>& buffer);
 };
 
