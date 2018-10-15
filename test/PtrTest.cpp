@@ -1,3 +1,5 @@
+#include <map>
+#include <boost/serialization/map.hpp>
 #include "PtrTest.hpp"
 #include "CppUnitAdditionalMacros.hpp"
 #include "TestObjects.hpp"
@@ -92,3 +94,42 @@ void PtrTest::testPtrLoad() {
     CPPUNIT_ASSERT(objB == *ptrB);
 }
 
+void PtrTest::testPtrLoadFromArray() {
+
+    auto mds = (*datastore)["matthieu"];
+    auto run = mds[42];
+    auto subrun = run[3];
+    auto event = subrun[22];
+    CPPUNIT_ASSERT(mds.valid());
+    CPPUNIT_ASSERT(run.valid());
+    CPPUNIT_ASSERT(subrun.valid());
+    CPPUNIT_ASSERT(event.valid());
+
+    std::vector<TestObjectA> vecA(3);
+    vecA[0].x() = 43;
+    vecA[0].y() = 4.3;
+    vecA[1].x() = 44;
+    vecA[1].y() = 4.4;
+    vecA[2].x() = 45;
+    vecA[2].y() = 4.5;
+
+    auto prodIDvec = event.store("somekey", vecA);
+
+    auto ptrToVecA = datastore->makePtr<TestObjectA>(prodIDvec,1);
+    
+    CPPUNIT_ASSERT(vecA[1] == *ptrToVecA);
+   
+    std::map<unsigned,TestObjectA> mapA;
+    mapA[0].x() = 43;
+    mapA[0].y() = 4.3;
+    mapA[1].x() = 44;
+    mapA[1].y() = 4.4;
+    mapA[2].x() = 45;
+    mapA[2].y() = 4.5;
+
+    auto prodIDmap = event.store("somekey", mapA);
+
+    auto ptrToMapA = datastore->makePtr<TestObjectA,std::map<unsigned,TestObjectA>>(prodIDmap,1);
+
+    CPPUNIT_ASSERT(mapA[1] == *ptrToMapA);
+}

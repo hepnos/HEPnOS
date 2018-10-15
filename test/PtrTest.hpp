@@ -12,6 +12,7 @@ class PtrTest : public CppUnit::TestFixture
     CPPUNIT_TEST( testFillDataStore );
     CPPUNIT_TEST( testMakePtr );
     CPPUNIT_TEST( testPtrLoad );
+    CPPUNIT_TEST( testPtrLoadFromArray );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -22,6 +23,7 @@ class PtrTest : public CppUnit::TestFixture
     void testFillDataStore();
     void testMakePtr();
     void testPtrLoad();
+    void testPtrLoadFromArray();
 };
 
 #endif
