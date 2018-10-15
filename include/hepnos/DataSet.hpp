@@ -104,6 +104,11 @@ class DataSet : public KeyValueContainer {
     ~DataSet();
 
     /**
+     * @brief Overrides getDataStore from KeyValueContainer class.
+     */
+    DataStore* getDataStore() const override;
+
+    /**
      * @brief Name of the DataSet.
      *
      * @return the name of the DataSet.
@@ -153,10 +158,10 @@ class DataSet : public KeyValueContainer {
      * @param key Key.
      * @param buffer Binary data to insert.
      *
-     * @return true if the key did not already exist and the write succeeded,
-     *      false otherwise.
+     * @return a valid ProductID if the key did not already exist and the write succeeded,
+     *      an invalid one otherwise.
      */
-    bool storeRawData(const std::string& key, const std::vector<char>& buffer);
+    ProductID storeRawData(const std::string& key, const std::vector<char>& buffer) override;
 
     /**
      * @brief Loads binary data associated with a particular key from the DataSet.
@@ -169,7 +174,7 @@ class DataSet : public KeyValueContainer {
      * @return true if the key exists and the read succeeded,
      *      false otherwise.
      */
-    bool loadRawData(const std::string& key, std::vector<char>& buffer) const;
+    bool loadRawData(const std::string& key, std::vector<char>& buffer) const override;
 
     /**
      * @brief Comparison operator.

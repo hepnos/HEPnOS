@@ -32,6 +32,11 @@ SubRun& SubRun::operator=(SubRun&&) = default;
 
 SubRun::~SubRun() = default; 
 
+DataStore* SubRun::getDataStore() const {
+    if(!m_impl) return nullptr;
+    return m_impl->m_datastore;
+}
+
 SubRun SubRun::next() const {
     if(!valid()) return SubRun();
    
@@ -56,7 +61,7 @@ bool SubRun::valid() const {
 
 }
 
-bool SubRun::storeRawData(const std::string& key, const std::vector<char>& buffer) {
+ProductID SubRun::storeRawData(const std::string& key, const std::vector<char>& buffer) {
     if(!valid()) {
         throw Exception("Calling store() on invalid SubRun");
     }

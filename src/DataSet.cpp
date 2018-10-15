@@ -61,6 +61,11 @@ DataSet& DataSet::operator=(DataSet&& other) {
 
 DataSet::~DataSet() {}
 
+DataStore* DataSet::getDataStore() const {
+    if(!m_impl) return nullptr;
+    return m_impl->m_datastore;
+}
+
 DataSet DataSet::next() const {
     if(!valid()) return DataSet();
    
@@ -76,7 +81,7 @@ bool DataSet::valid() const {
 
 }
 
-bool DataSet::storeRawData(const std::string& key, const std::vector<char>& buffer) {
+ProductID DataSet::storeRawData(const std::string& key, const std::vector<char>& buffer) {
     if(!valid()) {
         throw Exception("Calling store() on invalid DataSet");
     }

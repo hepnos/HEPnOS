@@ -8,11 +8,11 @@
 
 #include <memory>
 #include <string>
-#include <hepnos/KeyValueContainer.hpp>
 #include <hepnos/DataStore.hpp>
 #include <hepnos/Event.hpp>
 #include <hepnos/SubRunNumber.hpp>
 #include <hepnos/Exception.hpp>
+#include <hepnos/KeyValueContainer.hpp>
 
 namespace hepnos {
 
@@ -82,6 +82,11 @@ class SubRun : public KeyValueContainer {
     ~SubRun();
 
     /**
+     * @brief Overrides getDataStore from KeyValueContainer class.
+     */
+    DataStore* getDataStore() const override;
+
+    /**
      * @brief Returns the next SubRun in the same container,
      * sorted by subrun number. If no such subrun exists, a SubRun instance
      * such that SubRun::valid() returns false is returned.
@@ -105,9 +110,9 @@ class SubRun : public KeyValueContainer {
      * @param key Key
      * @param buffer Value
      *
-     * @return true if the key did not already exist, false otherwise.
+     * @return a valid ProductID if the key did not already exist, an invalid one otherwise.
      */
-    bool storeRawData(const std::string& key, const std::vector<char>& buffer);
+    ProductID storeRawData(const std::string& key, const std::vector<char>& buffer) override;
 
     /**
      * @brief Loads raw key/value data from this SubRun.
@@ -117,7 +122,7 @@ class SubRun : public KeyValueContainer {
      *
      * @return true if the key exists, false otherwise.
      */
-    bool loadRawData(const std::string& key, std::vector<char>& buffer) const;
+    bool loadRawData(const std::string& key, std::vector<char>& buffer) const override;
 
     /**
      * @brief Compares this SubRun with another SubRun. The SubRuns must point to

@@ -12,11 +12,13 @@
 
 namespace hepnos {
 
+class ProductID;
 class DataSet;
 class RunSet;
 class Run;
 class SubRun;
 class Event;
+template<typename T, typename C = std::vector<T>> class Ptr;
 
 /**
  * The DataStore class is the main handle referencing an HEPnOS service.
@@ -24,6 +26,7 @@ class Event;
  */
 class DataStore {
 
+    friend class ProductID;
     friend class DataSet;
     friend class RunSet;
     friend class Run;
@@ -246,6 +249,15 @@ class DataStore {
      */
     DataSet createDataSet(const std::string& name);
 
+    template<typename T>
+    Ptr<T> makePtr(const ProductID& productID);
+
+    template<typename T, typename C = std::vector<T>>
+    Ptr<T,C> makePtr(const ProductID& productID, std::size_t index);
+
+    template<typename T>
+    bool loadProduct(const ProductID& productID, T& t);
+
     /**
      * @brief Shuts down the HEPnOS service.
      */
@@ -258,6 +270,8 @@ class DataStore {
      */
     class Impl;
     std::unique_ptr<Impl> m_impl; /*!< Pointer to implementation */
+
+    bool loadRawProduct(const ProductID& productID, std::vector<char>& buffer);
 };
 
 class DataStore::const_iterator {
@@ -482,6 +496,40 @@ class DataStore::iterator : public DataStore::const_iterator {
      */
     pointer operator->();
 };
+
+}
+
+#include <hepnos/ProductID.hpp>
+#include <hepnos/Ptr.hpp>
+
+namespace hepnos {
+
+template<typename T>
+Ptr<T> DataStore::makePtr(const ProductID& productID) {
+    return Ptr<T>(this, productID);
+}
+
+template<typename T, typename C = std::vector<T>>
+Ptr<T,C> DataStore::makePtr(const ProductID& productID, std::size_t index) {
+    return Ptr<T,C>(this, productID, index);
+}
+
+template<typename T>
+bool DataStore::loadProduct(const ProductID& productID, T& t) {
+    std::vector<char> buffer;
+    if(!loadRawProduct(productID, buffer)) {
+        return false;
+    }
+    std::string serialized(buffer.begin(), buffer.end());
+    std::stringstream ss(serialized);
+    InputArchive ia(this, ss);
+    try {
+        ia >> t;
+    } catch(...) {
+        throw Exception("Exception occured during serialization");
+    }
+    return true;
+}
 
 }
 

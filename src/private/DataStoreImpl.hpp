@@ -368,13 +368,15 @@ class DataStore::Impl {
         return true;
     }
 
-    bool store(uint8_t level, const std::string& containerName,
+    ProductID store(uint8_t level, const std::string& containerName,
             const std::string& objectName, const std::vector<char>& data) {
         // build full name
         std::stringstream ss;
         if(!containerName.empty())
             ss << containerName << "/";
         ss << objectName;
+        // Create the product id
+        ProductID product_id(level, containerName, objectName);
         // hash the name to get the provider id
         long unsigned sdskv_provider_idx = 0;
         uint64_t name_hash;
@@ -392,7 +394,7 @@ class DataStore::Impl {
         // check if the key exists
         hg_size_t vsize;
         int ret = sdskv_length(sdskv_ph, db_id, entry->raw(), entry->length(), &vsize);
-        if(ret == HG_SUCCESS) return false; // key already exists
+        if(ret == HG_SUCCESS) return ProductID(); // key already exists
         if(ret != SDSKV_ERR_UNKNOWN_KEY) { // there was a problem with sdskv
             throw Exception("Could not check if key exists in SDSKV (sdskv_length error)");
         }
@@ -423,7 +425,7 @@ class DataStore::Impl {
                 throw Exception("Could not put key/value pair in SDSKV (sdskv_put error)");
             }
         }
-        return true;
+        return product_id;
     }
 
     size_t nextKeys(uint8_t level, const std::string& containerName,

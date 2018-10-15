@@ -30,6 +30,11 @@ Event& Event::operator=(Event&&) = default;
 
 Event::~Event() = default; 
 
+DataStore* Event::getDataStore() const {
+    if(!m_impl) return nullptr;
+    return m_impl->m_datastore;
+}
+
 Event Event::next() const {
     if(!valid()) return Event();
    
@@ -54,7 +59,7 @@ bool Event::valid() const {
 
 }
 
-bool Event::storeRawData(const std::string& key, const std::vector<char>& buffer) {
+ProductID Event::storeRawData(const std::string& key, const std::vector<char>& buffer) {
     if(!valid()) {
         throw Exception("Calling store() on invalid Event");
     }

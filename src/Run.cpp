@@ -31,6 +31,11 @@ Run& Run::operator=(Run&&) = default;
 
 Run::~Run() = default; 
 
+DataStore* Run::getDataStore() const {
+    if(!m_impl) return nullptr;
+    return m_impl->m_datastore;
+}
+
 Run Run::next() const {
     if(!valid()) return Run();
    
@@ -55,7 +60,7 @@ bool Run::valid() const {
 
 }
 
-bool Run::storeRawData(const std::string& key, const std::vector<char>& buffer) {
+ProductID Run::storeRawData(const std::string& key, const std::vector<char>& buffer) {
     if(!valid()) {
         throw Exception("Calling store() on invalid Run");
     }

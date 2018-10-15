@@ -167,6 +167,10 @@ void DataStore::shutdown() {
     }
 }
 
+bool DataStore::loadRawProduct(const ProductID& productID, std::vector<char>& buffer) {
+    return m_impl->load(productID.m_level, productID.m_containerName, productID.m_objectName, buffer);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 // DataStore::const_iterator::Impl implementation
 ////////////////////////////////////////////////////////////////////////////////////////////

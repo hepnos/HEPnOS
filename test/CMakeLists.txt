@@ -31,6 +31,9 @@ target_link_libraries(EventTest cppunit hepnos)
 add_executable(LoadStoreTest LoadStoreTest.cpp HEPnOSTestMain.cpp)
 target_link_libraries(LoadStoreTest cppunit hepnos boost_serialization)
 
+add_executable(PtrTest PtrTest.cpp HEPnOSTestMain.cpp)
+target_link_libraries(PtrTest cppunit hepnos boost_serialization)
+
 add_executable(WriteAndRestartTest WriteAndRestartTest.cpp HEPnOSTestMain.cpp)
 target_link_libraries(WriteAndRestartTest cppunit hepnos boost_serialization)
 
@@ -44,4 +47,5 @@ add_test(NAME RunTest       COMMAND run-test.sh ./RunTest)
 add_test(NAME SubRunTest    COMMAND run-test.sh ./SubRunTest)
 add_test(NAME EventTest     COMMAND run-test.sh ./EventTest)
 add_test(NAME LoadStoreTest COMMAND run-test.sh ./LoadStoreTest)
+add_test(NAME PtrTest       COMMAND run-test.sh ./PtrTest)
 add_test(NAME RestartTest   COMMAND run-two-tests.sh ./WriteAndRestartTest ./RestartAndReadTest)

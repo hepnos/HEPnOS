@@ -8,11 +8,11 @@
 
 #include <memory>
 #include <string>
-#include <hepnos/KeyValueContainer.hpp>
 #include <hepnos/DataStore.hpp>
 #include <hepnos/RunNumber.hpp>
 #include <hepnos/SubRun.hpp>
 #include <hepnos/Exception.hpp>
+#include <hepnos/KeyValueContainer.hpp>
 
 namespace hepnos {
 
@@ -85,6 +85,11 @@ class Run : public KeyValueContainer {
     ~Run();
 
     /**
+     * @brief Overrides getDataStore from KeyValueContainer class.
+     */
+    DataStore* getDataStore() const override;
+
+    /**
      * @brief Returns the next Run in the same container,
      * sorted by run number. If no such run exists, a Run instance
      * such that Run::valid() returns false is returned.
@@ -108,9 +113,9 @@ class Run : public KeyValueContainer {
      * @param key Key
      * @param buffer Value
      *
-     * @return true if the key did not already exist, false otherwise.
+     * @return a valid ProductID if the key did not already exist, an invalid one otherwise.
      */
-    bool storeRawData(const std::string& key, const std::vector<char>& buffer);
+    ProductID storeRawData(const std::string& key, const std::vector<char>& buffer) override;
 
     /**
      * @brief Loads raw key/value data from this Run.
@@ -120,7 +125,7 @@ class Run : public KeyValueContainer {
      *
      * @return true if the key exists, false otherwise.
      */
-    bool loadRawData(const std::string& key, std::vector<char>& buffer) const;
+    bool loadRawData(const std::string& key, std::vector<char>& buffer) const override;
 
     /**
      * @brief Compares this Run with another Run. The Runs must point to

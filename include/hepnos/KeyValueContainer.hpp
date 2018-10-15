@@ -8,11 +8,12 @@
 
 #include <memory>
 #include <string>
+#include <sstream>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/string.hpp>
+#include <hepnos/InputArchive.hpp>
+#include <hepnos/ProductID.hpp>
 #include <hepnos/Demangle.hpp>
 #include <hepnos/Exception.hpp>
 
@@ -53,15 +54,22 @@ class KeyValueContainer {
     virtual ~KeyValueContainer() = default;
 
     /**
+     * @brief Gets the DataStore to which this instance of KeyValueContainer belongs.
+     *
+     * @return DataStore.
+     */
+    virtual DataStore* getDataStore() const = 0;
+
+    /**
      * @brief Stores raw key/value data in this KeyValueContainer.
      * This function is virtual and must be overloaded in the child class.
      *
      * @param key Key
      * @param buffer Value
      *
-     * @return true if the key did not already exist, false otherwise.
+     * @return A valid ProductID if the key did not already exist, an invalid one otherwise.
      */
-    virtual bool storeRawData(const std::string& key, const std::vector<char>& buffer) = 0;
+    virtual ProductID storeRawData(const std::string& key, const std::vector<char>& buffer) = 0;
 
     /**
      * @brief Loads raw key/value data from this KeyValueContainer.
@@ -90,7 +98,7 @@ class KeyValueContainer {
      * @return true if the key was found. false otherwise.
      */
     template<typename K, typename V>
-    bool store(const K& key, const V& value) {
+    ProductID store(const K& key, const V& value) {
         std::stringstream ss_value;
         std::stringstream ss_key;
         ss_key << key << "#" << demangle<V>();
@@ -131,7 +139,8 @@ class KeyValueContainer {
         try {
             std::string serialized(buffer.begin(), buffer.end());
             std::stringstream ss(serialized);
-            boost::archive::binary_iarchive ia(ss);
+            //boost::archive::binary_iarchive ia(ss);
+            InputArchive ia(getDataStore(), ss);
             ia >> value;
         } catch(...) {
             throw Exception("Exception occured during serialization");

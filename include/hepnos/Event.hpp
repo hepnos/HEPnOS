@@ -8,10 +8,10 @@
 
 #include <memory>
 #include <string>
-#include <hepnos/KeyValueContainer.hpp>
 #include <hepnos/DataStore.hpp>
 #include <hepnos/EventNumber.hpp>
 #include <hepnos/Exception.hpp>
+#include <hepnos/KeyValueContainer.hpp>
 
 namespace hepnos {
 
@@ -79,6 +79,11 @@ class Event : public KeyValueContainer {
     ~Event();
 
     /**
+     * @brief Overrides getDataStore from KeyValueContainer class.
+     */
+    DataStore* getDataStore() const override;
+
+    /**
      * @brief Returns the next Event in the same container,
      * sorted by event number. If no such event exists, an Event instance
      * such that Event::valid() returns false is returned.
@@ -102,9 +107,9 @@ class Event : public KeyValueContainer {
      * @param key Key
      * @param buffer Value
      *
-     * @return true if the key did not already exist, false otherwise.
+     * @return a valid ProductID if the key did not already exist, an invalid one otherwise.
      */
-    bool storeRawData(const std::string& key, const std::vector<char>& buffer);
+    ProductID storeRawData(const std::string& key, const std::vector<char>& buffer) override;
 
     /**
      * @brief Loads raw key/value data from this Event.
@@ -114,7 +119,7 @@ class Event : public KeyValueContainer {
      *
      * @return true if the key exists, false otherwise.
      */
-    bool loadRawData(const std::string& key, std::vector<char>& buffer) const;
+    bool loadRawData(const std::string& key, std::vector<char>& buffer) const override;
 
     /**
      * @brief Compares this Event with another Event. The Events must point to
