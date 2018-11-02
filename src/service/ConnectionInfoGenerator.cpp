@@ -24,7 +24,10 @@ ConnectionInfoGenerator::~ConnectionInfoGenerator() {}
 
 void ConnectionInfoGenerator::generateFile(MPI_Comm comm, const std::string& filename) const {
     int rank, size;
-    const char* addr = m_impl->m_addr.c_str();
+    auto addr_cpy = m_impl->m_addr;
+    addr_cpy.resize(1024,'\0');
+
+    const char* addr = addr_cpy.c_str();
 
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
@@ -34,8 +37,8 @@ void ConnectionInfoGenerator::generateFile(MPI_Comm comm, const std::string& fil
     std::string proto(addr, j);
 
     // Exchange addresses
-    std::vector<char> addresses_buf(128*size);
-    MPI_Gather(addr, 128, MPI_BYTE, addresses_buf.data(), 128, MPI_BYTE, 0, comm);
+    std::vector<char> addresses_buf(1024*size);
+    MPI_Gather(addr, 1024, MPI_BYTE, addresses_buf.data(), 1024, MPI_BYTE, 0, comm);
 
     // Exchange bake providers info
     std::vector<uint16_t> bake_pr_ids_buf(size);
@@ -58,7 +61,7 @@ void ConnectionInfoGenerator::generateFile(MPI_Comm comm, const std::string& fil
 
     std::vector<std::string> addresses;
     for(unsigned i=0; i < size; i++) {
-        addresses.emplace_back(&addresses_buf[128*i]);
+        addresses.emplace_back(&addresses_buf[1024*i]);
     }
 
     YAML::Node config;
