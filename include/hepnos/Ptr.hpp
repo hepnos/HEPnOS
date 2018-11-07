@@ -30,7 +30,7 @@ class Ptr {
 
     private:
 
-    DataStore* m_datastore         = nullptr;
+    DataStore*  m_datastore         = nullptr;
     ProductID   m_product_id       = ProductID();
     std::size_t m_index            = 0;
     bool        m_is_in_container  = false;
@@ -42,13 +42,15 @@ class Ptr {
     : m_datastore(datastore)
     , m_product_id(product_id)
     , m_index(0)
-    , m_is_in_container(false) {}
+    , m_is_in_container(false)
+    , m_refcount(new size_t(1)) {}
 
     Ptr(DataStore* datastore, const ProductID& product_id, std::size_t index)
     : m_datastore(datastore)
     , m_product_id(product_id)
     , m_index(index)
-    , m_is_in_container(true) {};
+    , m_is_in_container(true)
+    , m_refcount(new size_t(1)) {};
 
     public:
 
@@ -101,7 +103,7 @@ class Ptr {
         if(&other == this) return *this;
         if(other.m_data == m_data) return *this;
         if(m_data) {
-            this->~Ptr();
+            reset();
         }
         m_datastore       = other.m_datastore;
         m_product_id      = other.m_product_id;
@@ -126,7 +128,7 @@ class Ptr {
         if(&other == this) return *this;
         if(other.m_data == m_data) return *this;
         if(m_data) {
-            this->~Ptr();
+            reset();
         }
         m_datastore       = other.m_datastore;
         m_product_id      = std::move(other.m_product_id);
@@ -145,6 +147,13 @@ class Ptr {
      * @brief Destructor.
      */
     ~Ptr() {
+        reset();
+    }
+
+    /**
+     * @brief Reset the pointer to NULL.
+     */
+    void reset() {
         if(m_refcount) {
             *m_refcount -= 1;
             if(*m_refcount == 0) {
@@ -156,6 +165,13 @@ class Ptr {
                 }
             }
         }
+        m_datastore        = nullptr;
+        m_product_id       = ProductID();
+        m_index            = 0;
+        m_is_in_container  = false;
+        m_container        = nullptr;
+        m_data             = nullptr;
+        m_refcount         = nullptr;
     }
 
     /**
@@ -237,6 +253,10 @@ class Ptr {
     template<typename Archive>
     void save(Archive& ar, const unsigned int version) const {
         ar & m_product_id;
+        ar & m_is_in_container;
+        if(m_is_in_container) {
+            ar & m_index;
+        }
     }
 
     /**
@@ -248,8 +268,12 @@ class Ptr {
      */
     template<typename Archive>
     void load(Archive& ar, const unsigned int version) {
-        ar & m_product_id;
         m_datastore = ar.getDataStore();
+        ar & m_product_id;
+        ar & m_is_in_container;
+        if(m_is_in_container) {
+            ar & m_index;
+        }
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER()

@@ -132,4 +132,16 @@ void PtrTest::testPtrLoadFromArray() {
     auto ptrToMapA = datastore->makePtr<TestObjectA,std::map<unsigned,TestObjectA>>(prodIDmap,1);
 
     CPPUNIT_ASSERT(mapA[1] == *ptrToMapA);
+
+    event.store("somekey", ptrToVecA);
+    event.store("somekey", ptrToMapA);
+
+    decltype(ptrToVecA) ptrToVecAReloaded;
+    decltype(ptrToMapA) ptrToMapAReloaded;
+
+    event.load("somekey", ptrToVecAReloaded);
+    event.load("somekey", ptrToMapAReloaded);
+
+    CPPUNIT_ASSERT(vecA[1] == *ptrToVecAReloaded);
+    CPPUNIT_ASSERT(mapA[1] == *ptrToMapAReloaded);
 }
