@@ -26,6 +26,11 @@ void DataStoreTest::testFillDataStore() {
     CPPUNIT_ASSERT_EQUAL_STR("ds1", ds1.name());
     CPPUNIT_ASSERT_EQUAL_STR("", ds1.container());
     CPPUNIT_ASSERT_EQUAL_STR("ds1", ds1.fullname());
+    // assert invalid dataset when it does not exist
+    DataSet ds_invalid = (*datastore)["invalid"];
+    DataSet ds_invalid2 = (*datastore)["invalid2"];
+    CPPUNIT_ASSERT(!ds_invalid.valid());
+    CPPUNIT_ASSERT(!ds_invalid2.valid());
     // assert comparison with a default-constructed dataset
     DataSet ds0;
     CPPUNIT_ASSERT(ds0 != ds1);
