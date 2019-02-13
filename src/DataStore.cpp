@@ -53,6 +53,10 @@ DataStore::~DataStore() {
 }
 
 DataStore::iterator DataStore::find(const std::string& datasetPath) {
+    if(!m_impl) {
+        throw Exception("Calling DataStore member function on an invalid DataStore object");
+    }
+
     int ret;
 
     if(datasetPath.find('%') != std::string::npos) {
@@ -92,6 +96,9 @@ DataStore::const_iterator DataStore::find(const std::string& datasetName) const 
 }
 
 DataStore::iterator DataStore::begin() {
+    if(!m_impl) {
+        throw Exception("Calling DataStore member function on an invalid DataStore object");
+    }
     DataSet ds(this, 1, "", "");
     ds = ds.next();
     if(ds.valid()) return iterator(std::move(ds));
@@ -104,10 +111,16 @@ DataStore::const_iterator DataStore::begin() const {
 }
 
 DataStore::iterator DataStore::end() {
+    if(!m_impl) {
+        throw Exception("Calling DataStore member function on an invalid DataStore object");
+    }
     return m_impl->m_end;
 }
 
 DataStore::const_iterator DataStore::end() const {
+    if(!m_impl) {
+        throw Exception("Calling DataStore member function on an invalid DataStore object");
+    }
     return m_impl->m_end;
 }
 
@@ -141,6 +154,9 @@ DataStore::const_iterator DataStore::lower_bound(const std::string& lb) const {
 }
 
 DataStore::iterator DataStore::upper_bound(const std::string& ub) {
+    if(!m_impl) {
+        throw Exception("Calling DataStore member function on an invalid DataStore object");
+    }
     DataSet ds(this, 1, "", ub);
     ds = ds.next();
     if(!ds.valid()) return end();
@@ -153,6 +169,9 @@ DataStore::const_iterator DataStore::upper_bound(const std::string& ub) const {
 }
 
 DataSet DataStore::createDataSet(const std::string& name) {
+    if(!m_impl) {
+        throw Exception("Calling DataStore member function on an invalid DataStore object");
+    }
     if(name.find('/') != std::string::npos
     || name.find('%') != std::string::npos) {
         throw Exception("Invalid character ('/' or '%') in dataset name");
@@ -162,12 +181,18 @@ DataSet DataStore::createDataSet(const std::string& name) {
 }
 
 void DataStore::shutdown() {
+    if(!m_impl) {
+        throw Exception("Calling DataStore member function on an invalid DataStore object");
+    }
     for(auto addr : m_impl->m_addrs) {
         margo_shutdown_remote_instance(m_impl->m_mid, addr.second);
     }
 }
 
 bool DataStore::loadRawProduct(const ProductID& productID, std::vector<char>& buffer) {
+    if(!m_impl) {
+        throw Exception("Calling DataStore member function on an invalid DataStore object");
+    }
     return m_impl->load(productID.m_level, productID.m_containerName, productID.m_objectName, buffer);
 }
 
@@ -255,7 +280,9 @@ const DataStore::const_iterator::reference DataStore::const_iterator::operator*(
 }
 
 const DataStore::const_iterator::pointer DataStore::const_iterator::operator->() {
-    if(!m_impl) return nullptr;
+    if(!m_impl) {
+        throw Exception("Trying to dereference an invalid iterator");
+    }
     return &(m_impl->m_current_dataset);
 }
 
