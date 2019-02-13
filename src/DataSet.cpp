@@ -39,7 +39,9 @@ DataSet::DataSet(const DataSet& other)
 
 DataSet::DataSet(DataSet&& other) 
 : m_impl(std::move(other.m_impl)) {
-    m_impl->m_runset.m_impl->m_dataset = this;
+    if(m_impl) {
+        m_impl->m_runset.m_impl->m_dataset = this;
+    }
 }
 
 DataSet& DataSet::operator=(const DataSet& other) {
@@ -55,14 +57,18 @@ DataSet& DataSet::operator=(const DataSet& other) {
 DataSet& DataSet::operator=(DataSet&& other) {
     if(this == &other) return *this;
     m_impl = std::move(other.m_impl);
-    m_impl->m_runset.m_impl->m_dataset = this;
+    if(m_impl) {
+        m_impl->m_runset.m_impl->m_dataset = this;
+    }
     return *this;
 }
 
 DataSet::~DataSet() {}
 
 DataStore* DataSet::getDataStore() const {
-    if(!m_impl) return nullptr;
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
     return m_impl->m_datastore;
 }
 
@@ -78,12 +84,11 @@ DataSet DataSet::next() const {
 
 bool DataSet::valid() const {
     return m_impl && m_impl->m_datastore; 
-
 }
 
 ProductID DataSet::storeRawData(const std::string& key, const std::vector<char>& buffer) {
     if(!valid()) {
-        throw Exception("Calling store() on invalid DataSet");
+        throw Exception("Calling DataSet member function on an invalid DataSet");
     }
     // forward the call to the datastore's store function
     return m_impl->m_datastore->m_impl->store(0, fullname(), key, buffer);
@@ -91,13 +96,15 @@ ProductID DataSet::storeRawData(const std::string& key, const std::vector<char>&
 
 bool DataSet::loadRawData(const std::string& key, std::vector<char>& buffer) const {
     if(!valid()) {
-        throw Exception("Calling load() on invalid DataSet");
+        throw Exception("Calling DataSet member function on an invalid DataSet");
     }
     // forward the call to the datastore's load function
     return m_impl->m_datastore->m_impl->load(0, fullname(), key, buffer);
 }
 
 bool DataSet::operator==(const DataSet& other) const {
+    if(!valid() && !other.valid()) 
+        return true;
     return m_impl->m_datastore == other.m_impl->m_datastore
         && m_impl->m_level     == other.m_impl->m_level
         && m_impl->m_container == other.m_impl->m_container
@@ -109,10 +116,16 @@ bool DataSet::operator!=(const DataSet& other) const {
 }
 
 const std::string& DataSet::name() const {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
     return m_impl->m_name;
 }
 
 const std::string& DataSet::container() const {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
     return m_impl->m_container;
 }
 
@@ -155,6 +168,9 @@ Run DataSet::operator[](const RunNumber& runNumber) const {
 }
 
 DataSet::iterator DataSet::find(const std::string& datasetPath) {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
     int ret;
     if(datasetPath.find('%') != std::string::npos) {
         throw Exception("Invalid character '%' in dataset name");
@@ -191,6 +207,9 @@ DataSet::const_iterator DataSet::find(const std::string& datasetName) const {
 }
 
 DataSet::iterator DataSet::begin() {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
     DataSet ds(m_impl->m_datastore, m_impl->m_level+1, fullname(),"");
     ds = ds.next();
     if(ds.valid()) return iterator(ds);
@@ -198,6 +217,9 @@ DataSet::iterator DataSet::begin() {
 }
 
 DataSet::iterator DataSet::end() {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
     return m_impl->m_datastore->end();
 }
 
@@ -206,6 +228,9 @@ DataSet::const_iterator DataSet::begin() const {
 }
 
 DataSet::const_iterator DataSet::end() const {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
     return m_impl->m_datastore->cend();
 }
 
@@ -214,10 +239,16 @@ DataSet::const_iterator DataSet::cbegin() const {
 }
 
 DataSet::const_iterator DataSet::cend() const {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
     return m_impl->m_datastore->cend();
 }
 
 DataSet::iterator DataSet::lower_bound(const std::string& lb) {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
     std::string lb2 = lb;
     size_t s = lb2.size();
     lb2[s-1] -= 1; // sdskv_list_keys's start_key is exclusive
@@ -239,6 +270,9 @@ DataSet::const_iterator DataSet::lower_bound(const std::string& lb) const {
 }
 
 DataSet::iterator DataSet::upper_bound(const std::string& ub) {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
     DataSet ds(m_impl->m_datastore, m_impl->m_level+1, fullname(), ub);
     ds = ds.next();
     if(!ds.valid()) return end();
@@ -251,6 +285,9 @@ DataSet::const_iterator DataSet::upper_bound(const std::string& ub) const {
 }
 
 RunSet& DataSet::runs() {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
     return m_impl->m_runset;
 }
 
