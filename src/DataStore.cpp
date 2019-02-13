@@ -240,15 +240,21 @@ DataStore::const_iterator::const_iterator(DataSet&& dataset)
 
 DataStore::const_iterator::~const_iterator() {}
 
-DataStore::const_iterator::const_iterator(const DataStore::const_iterator& other) 
-: m_impl(std::make_unique<Impl>(*other.m_impl)) {}
+DataStore::const_iterator::const_iterator(const DataStore::const_iterator& other) {
+    if(other.m_impl) {
+        m_impl = std::make_unique<Impl>(*other.m_impl);
+    }
+}
 
 DataStore::const_iterator::const_iterator(DataStore::const_iterator&& other) 
 : m_impl(std::move(other.m_impl)) {}
 
 DataStore::const_iterator& DataStore::const_iterator::operator=(const DataStore::const_iterator& other) {
     if(&other == this) return *this;
-    m_impl = std::make_unique<Impl>(*other.m_impl);
+    if(other.m_impl)
+        m_impl = std::make_unique<Impl>(*other.m_impl);
+    else
+        m_impl.reset();
     return *this;
 }
 
@@ -320,7 +326,10 @@ DataStore::iterator::iterator(DataStore::iterator&& other)
 
 DataStore::iterator& DataStore::iterator::operator=(const DataStore::iterator& other) {
     if(this == &other) return *this;
-    m_impl = std::make_unique<Impl>(*other.m_impl);
+    if(other.m_impl)
+        m_impl = std::make_unique<Impl>(*other.m_impl);
+    else
+        m_impl.reset();
     return *this;
 }
 

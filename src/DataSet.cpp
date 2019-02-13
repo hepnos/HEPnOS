@@ -30,12 +30,15 @@ DataSet::DataSet(DataStore* ds, uint8_t level, const std::string& fullname)
 DataSet::DataSet(DataStore* ds, uint8_t level, const std::string& container, const std::string& name) 
 : m_impl(std::make_unique<DataSet::Impl>(this, ds, level, container, name)) {}
 
-DataSet::DataSet(const DataSet& other)
-: m_impl(std::make_unique<DataSet::Impl>(
+DataSet::DataSet(const DataSet& other) {
+    if(other.m_impl) {
+        m_impl = std::make_unique<DataSet::Impl>(
             this, other.m_impl->m_datastore,
             other.m_impl->m_level,
             other.m_impl->m_container,
-            other.m_impl->m_name)) {}
+            other.m_impl->m_name);
+    }
+}
 
 DataSet::DataSet(DataSet&& other) 
 : m_impl(std::move(other.m_impl)) {
@@ -46,6 +49,10 @@ DataSet::DataSet(DataSet&& other)
 
 DataSet& DataSet::operator=(const DataSet& other) {
     if(this == &other) return *this;
+    if(!other.m_impl) {
+        m_impl.reset();
+        return *this;
+    }
     m_impl = std::make_unique<DataSet::Impl>(this, 
             other.m_impl->m_datastore,
             other.m_impl->m_level,
@@ -103,8 +110,11 @@ bool DataSet::loadRawData(const std::string& key, std::vector<char>& buffer) con
 }
 
 bool DataSet::operator==(const DataSet& other) const {
-    if(!valid() && !other.valid()) 
-        return true;
+    bool v1 = valid();
+    bool v2 = other.valid();
+    if(!v1 && !v2) return true;
+    if(v1  && !v2) return false;
+    if(!v2 &&  v2) return false;
     return m_impl->m_datastore == other.m_impl->m_datastore
         && m_impl->m_level     == other.m_impl->m_level
         && m_impl->m_container == other.m_impl->m_container

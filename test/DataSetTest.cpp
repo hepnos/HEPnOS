@@ -171,7 +171,7 @@ void DataSetTest::testCreateRuns() {
     {
         Run r = mds[45];
         CPPUNIT_ASSERT(!r.valid());
-        CPPUNIT_ASSERT(r.number() == InvalidRunNumber);
+        CPPUNIT_ASSERT_THROW(r.number(), hepnos::Exception);
     }
 
     {

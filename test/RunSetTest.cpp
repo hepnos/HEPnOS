@@ -20,7 +20,7 @@ void RunSetTest::testFillDataStore() {
     // default-constructed run has InvalidRunNumber number
     Run r0;
     CPPUNIT_ASSERT(!r0.valid());
-    CPPUNIT_ASSERT(InvalidRunNumber == r0.number());
+    CPPUNIT_ASSERT_THROW(r0.number(), hepnos::Exception);
     // correct run creation
     Run r1 = mds.createRun(42);
     // assert the characteristics of the created dataset

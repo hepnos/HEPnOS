@@ -16,14 +16,18 @@ Run::Run()
 Run::Run(DataStore* ds, uint8_t level, const std::string& container, const RunNumber& rn)
 : m_impl(std::make_unique<Run::Impl>(ds, level, container, rn)) { }
 
-Run::Run(const Run& other)
-: m_impl(std::make_unique<Run::Impl>(*other.m_impl)) {}
+Run::Run(const Run& other) {
+    if(other.m_impl)
+        m_impl = std::make_unique<Run::Impl>(*other.m_impl);
+}
 
 Run::Run(Run&&) = default;
 
 Run& Run::operator=(const Run& other) {
     if(this == &other) return *this;
-    m_impl = std::make_unique<Run::Impl>(*other.m_impl);
+    if(other.m_impl) {
+        m_impl = std::make_unique<Run::Impl>(*other.m_impl);
+    }
     return *this;
 }
 
@@ -32,7 +36,9 @@ Run& Run::operator=(Run&&) = default;
 Run::~Run() = default; 
 
 DataStore* Run::getDataStore() const {
-    if(!m_impl) return nullptr;
+    if(!valid()) { 
+        throw Exception("Calling Run member function on an invalid Run object");
+    }
     return m_impl->m_datastore;
 }
 
@@ -62,7 +68,7 @@ bool Run::valid() const {
 
 ProductID Run::storeRawData(const std::string& key, const std::vector<char>& buffer) {
     if(!valid()) {
-        throw Exception("Calling store() on invalid Run");
+        throw Exception("Calling Run member function on an invalid Run object");
     }
     // forward the call to the datastore's store function
     return m_impl->m_datastore->m_impl->store(0, m_impl->fullpath(), key, buffer);
@@ -70,13 +76,18 @@ ProductID Run::storeRawData(const std::string& key, const std::vector<char>& buf
 
 bool Run::loadRawData(const std::string& key, std::vector<char>& buffer) const {
     if(!valid()) {
-        throw Exception("Calling load() on invalid Run");
+        throw Exception("Calling Run member function on an invalid Run object");
     }
     // forward the call to the datastore's load function
     return m_impl->m_datastore->m_impl->load(0, m_impl->fullpath(), key, buffer);
 }
 
 bool Run::operator==(const Run& other) const {
+    bool v1 = valid();
+    bool v2 = other.valid();
+    if(!v1 && !v2) return true;
+    if(v1 && !v2)  return false;
+    if(!v1 && v2)  return false;
     return m_impl->m_datastore == other.m_impl->m_datastore
         && m_impl->m_level     == other.m_impl->m_level
         && m_impl->m_container == other.m_impl->m_container
@@ -88,14 +99,23 @@ bool Run::operator!=(const Run& other) const {
 }
 
 const RunNumber& Run::number() const {
+    if(!valid()) {
+        throw Exception("Calling Run member function on an invalid Run object");
+    }
     return m_impl->m_run_nr;
 }
 
 const std::string& Run::container() const {
+    if(!valid()) {
+        throw Exception("Calling Run member function on an invalid Run object");
+    }
     return m_impl->m_container;
 }
 
 SubRun Run::createSubRun(const SubRunNumber& subRunNumber) {
+    if(!valid()) {
+        throw Exception("Calling Run member function on an invalid Run object");
+    }
     std::string parent = m_impl->fullpath();
     std::string subRunStr = SubRun::Impl::makeKeyStringFromSubRunNumber(subRunNumber);
     m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, subRunStr, std::vector<char>());
@@ -108,6 +128,9 @@ SubRun Run::operator[](const SubRunNumber& subRunNumber) const {
 }
 
 Run::iterator Run::find(const SubRunNumber& subRunNumber) {
+    if(!valid()) {
+        throw Exception("Calling Run member function on an invalid Run object");
+    }
     int ret;
     std::vector<char> data;
     std::string parent = m_impl->fullpath();
@@ -139,6 +162,9 @@ Run::iterator Run::begin() {
 }
 
 Run::iterator Run::end() {
+    if(!valid()) {
+        throw Exception("Calling Run member function on an invalid Run object");
+    }
     return m_impl->m_end;
 }
 
@@ -147,6 +173,9 @@ Run::const_iterator Run::begin() const {
 }
 
 Run::const_iterator Run::end() const {
+    if(!valid()) {
+        throw Exception("Calling Run member function on an invalid Run object");
+    }
     return m_impl->m_end;
 }
 
@@ -155,6 +184,9 @@ Run::const_iterator Run::cbegin() const {
 }
 
 Run::const_iterator Run::cend() const {
+    if(!valid()) {
+        throw Exception("Calling Run member function on an invalid Run object");
+    }
     return m_impl->m_end;
 }
 
@@ -192,6 +224,9 @@ Run::const_iterator Run::lower_bound(const SubRunNumber& lb) const {
 }
 
 Run::iterator Run::upper_bound(const SubRunNumber& ub) {
+    if(!valid()) {
+        throw Exception("Calling Run member function on an invalid Run object");
+    }
     SubRun subrun(m_impl->m_datastore, 
             m_impl->m_level+1, 
             m_impl->fullpath(), ub);
@@ -249,15 +284,20 @@ Run::const_iterator::const_iterator(SubRun&& subrun)
 
 Run::const_iterator::~const_iterator() {}
 
-Run::const_iterator::const_iterator(const Run::const_iterator& other)
-: m_impl(std::make_unique<Impl>(*other.m_impl)) {}
+Run::const_iterator::const_iterator(const Run::const_iterator& other) {
+    if(other.m_impl) 
+        m_impl = std::make_unique<Impl>(*other.m_impl);
+}
 
 Run::const_iterator::const_iterator(Run::const_iterator&& other)
 : m_impl(std::move(other.m_impl)) {}
 
 Run::const_iterator& Run::const_iterator::operator=(const Run::const_iterator& other) {
     if(&other == this) return *this;
-    m_impl = std::make_unique<Impl>(*other.m_impl);
+    if(other.m_impl)
+        m_impl = std::make_unique<Impl>(*other.m_impl);
+    else
+        m_impl.reset();
     return *this;
 }
 
@@ -301,7 +341,7 @@ bool Run::const_iterator::operator==(const self_type& rhs) const {
 }
 
 bool Run::const_iterator::operator!=(const self_type& rhs) const {
-        return !(*this == rhs);
+    return !(*this == rhs);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -327,7 +367,10 @@ Run::iterator::iterator(Run::iterator&& other)
 
 Run::iterator& Run::iterator::operator=(const Run::iterator& other) {
     if(this == &other) return *this;
-    m_impl = std::make_unique<Impl>(*other.m_impl);
+    if(other.m_impl) 
+        m_impl = std::make_unique<Impl>(*other.m_impl);
+    else
+        m_impl.reset();
     return *this;
 }
 
