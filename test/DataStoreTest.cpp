@@ -27,10 +27,7 @@ void DataStoreTest::testFillDataStore() {
     CPPUNIT_ASSERT_EQUAL_STR("", ds1.container());
     CPPUNIT_ASSERT_EQUAL_STR("ds1", ds1.fullname());
     // assert invalid dataset when it does not exist
-    DataSet ds_invalid = (*datastore)["invalid"];
-    DataSet ds_invalid2 = (*datastore)["invalid2"];
-    CPPUNIT_ASSERT(!ds_invalid.valid());
-    CPPUNIT_ASSERT(!ds_invalid2.valid());
+    CPPUNIT_ASSERT_THROW((*datastore)["invalid"], hepnos::Exception);
     // assert comparison with a default-constructed dataset
     DataSet ds0;
     CPPUNIT_ASSERT(ds0 != ds1);
@@ -56,9 +53,8 @@ void DataStoreTest::testFillDataStore() {
 
 void DataStoreTest::testBraketOperator() {
     // check that accessing a dataset that does not exist
-    // yields a non-valid DataSet
-    DataSet ds6 = (*datastore)["ds6"];
-    CPPUNIT_ASSERT(!ds6.valid());
+    // throws an exception 
+    CPPUNIT_ASSERT_THROW((*datastore)["ds6"], hepnos::Exception);
 
     // check that accessing a dataset that exists yields
     // a valid DataSet instance with correct information

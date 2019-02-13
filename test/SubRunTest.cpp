@@ -52,9 +52,7 @@ void SubRunTest::testBraketOperator() {
     CPPUNIT_ASSERT(sr1.valid());
 
     // check access to non-existing SubRun
-    Event e0 = sr1[12];
-    CPPUNIT_ASSERT(!e0.valid());
-    CPPUNIT_ASSERT(e0.number() == InvalidEventNumber);
+    CPPUNIT_ASSERT_THROW(sr1[12], hepnos::Exception);
 
     // check access to existing SubRun
     Event e13 = sr1[13];

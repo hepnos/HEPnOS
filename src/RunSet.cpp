@@ -27,6 +27,8 @@ RunSet::~RunSet() {}
 
 Run RunSet::operator[](const RunNumber& runNumber) {
     auto it = find(runNumber);
+    if(!it->valid())
+        throw Exception("Requested Run does not exist");
     return std::move(*it);
 }
 

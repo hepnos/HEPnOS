@@ -15,14 +15,17 @@ Event::Event()
 Event::Event(DataStore* ds, uint8_t level, const std::string& container, const EventNumber& rn)
 : m_impl(std::make_unique<Impl>(ds, level, container, rn)) { }
 
-Event::Event(const Event& other)
-: m_impl(std::make_unique<Impl>(*other.m_impl)) {}
+Event::Event(const Event& other) {
+    if(other.m_impl)
+        m_impl = std::make_unique<Impl>(*other.m_impl);
+}
 
 Event::Event(Event&&) = default;
 
 Event& Event::operator=(const Event& other) {
     if(this == &other) return *this;
-    m_impl = std::make_unique<Impl>(*other.m_impl);
+    if(other.m_impl)
+        m_impl = std::make_unique<Impl>(*other.m_impl);
     return *this;
 }
 
@@ -31,7 +34,9 @@ Event& Event::operator=(Event&&) = default;
 Event::~Event() = default; 
 
 DataStore* Event::getDataStore() const {
-    if(!m_impl) return nullptr;
+    if(!valid()) {
+        throw Exception("Calling Event member function on an invalid Event object");
+    }
     return m_impl->m_datastore;
 }
 
@@ -61,7 +66,7 @@ bool Event::valid() const {
 
 ProductID Event::storeRawData(const std::string& key, const std::vector<char>& buffer) {
     if(!valid()) {
-        throw Exception("Calling store() on invalid Event");
+        throw Exception("Calling Event member function on an invalid Event object");
     }
     // forward the call to the datastore's store function
     return m_impl->m_datastore->m_impl->store(0, m_impl->fullpath(), key, buffer);
@@ -69,17 +74,22 @@ ProductID Event::storeRawData(const std::string& key, const std::vector<char>& b
 
 bool Event::loadRawData(const std::string& key, std::vector<char>& buffer) const {
     if(!valid()) {
-        throw Exception("Calling load() on invalid Event");
+        throw Exception("Calling Event member function on an invalid Event object");
     }
     // forward the call to the datastore's load function
     return m_impl->m_datastore->m_impl->load(0, m_impl->fullpath(), key, buffer);
 }
 
 bool Event::operator==(const Event& other) const {
+    bool v1 = valid();
+    bool v2 = other.valid();
+    if(!v1 && !v2) return true;
+    if(!v1 &&  v2) return false;
+    if(v1  && !v2) return false;
     return m_impl->m_datastore == other.m_impl->m_datastore
         && m_impl->m_level     == other.m_impl->m_level
         && m_impl->m_container == other.m_impl->m_container
-        && m_impl->m_event_nr    == other.m_impl->m_event_nr;
+        && m_impl->m_event_nr  == other.m_impl->m_event_nr;
 }
 
 bool Event::operator!=(const Event& other) const {
@@ -87,6 +97,9 @@ bool Event::operator!=(const Event& other) const {
 }
 
 const EventNumber& Event::number() const {
+    if(!valid()) {
+        throw Exception("Calling Event member function on an invalid Event object");
+    }
     return m_impl->m_event_nr;
 }
 

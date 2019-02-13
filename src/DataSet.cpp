@@ -169,11 +169,15 @@ Run DataSet::createRun(const RunNumber& runNumber) {
 
 DataSet DataSet::operator[](const std::string& datasetName) const {
     auto it = find(datasetName);
+    if(!it->valid())
+        throw Exception("Requested DataSet does not exist");
     return std::move(*it);
 }
 
 Run DataSet::operator[](const RunNumber& runNumber) const {
     auto it = runs().find(runNumber);
+    if(!it->valid())
+        throw Exception("Requested Run does not exist");
     return std::move(*it);
 }
 

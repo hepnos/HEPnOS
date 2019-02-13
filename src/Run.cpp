@@ -124,6 +124,8 @@ SubRun Run::createSubRun(const SubRunNumber& subRunNumber) {
 
 SubRun Run::operator[](const SubRunNumber& subRunNumber) const {
     auto it = find(subRunNumber);
+    if(!it->valid())
+        throw Exception("Requested SubRun does not exist");
     return std::move(*it);
 }
 

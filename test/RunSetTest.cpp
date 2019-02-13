@@ -54,8 +54,7 @@ void RunSetTest::testBraketOperator() {
     CPPUNIT_ASSERT(mds.valid());
     // check that accessing a Run that does not exist
     // yields a non-valid Run instance
-    Run r6 = mds[43];
-    CPPUNIT_ASSERT(!r6.valid());
+    CPPUNIT_ASSERT_THROW(mds[43], hepnos::Exception);
 
     // check that accessing a run that exists yields
     // a valid Run instance with correct information
@@ -156,9 +155,7 @@ void RunSetTest::testCreateSubRuns() {
     Run r2 = mds[45];
 
     {
-        SubRun sr = r2[73];
-        CPPUNIT_ASSERT(!sr.valid());
-        CPPUNIT_ASSERT(sr.number() == InvalidSubRunNumber);
+        CPPUNIT_ASSERT_THROW(r2[73], hepnos::Exception);
     }
 
     {

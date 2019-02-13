@@ -47,9 +47,7 @@ void RunTest::testBraketOperator() {
     CPPUNIT_ASSERT(r1.valid());
 
     // check access to non-existing SubRun
-    SubRun sr0 = r1[12];
-    CPPUNIT_ASSERT(!sr0.valid());
-    CPPUNIT_ASSERT(sr0.number() == InvalidSubRunNumber);
+    CPPUNIT_ASSERT_THROW(r1[12], hepnos::Exception);
 
     // check access to existing SubRun
     SubRun sr13 = r1[13];

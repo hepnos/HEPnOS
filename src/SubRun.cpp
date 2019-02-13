@@ -17,14 +17,19 @@ SubRun::SubRun()
 SubRun::SubRun(DataStore* ds, uint8_t level, const std::string& container, const SubRunNumber& rn)
 : m_impl(std::make_unique<Impl>(ds, level, container, rn)) { }
 
-SubRun::SubRun(const SubRun& other)
-: m_impl(std::make_unique<Impl>(*other.m_impl)) {}
+SubRun::SubRun(const SubRun& other) {   
+    if(other.m_impl)
+        m_impl = std::make_unique<Impl>(*other.m_impl);
+}
 
 SubRun::SubRun(SubRun&&) = default;
 
 SubRun& SubRun::operator=(const SubRun& other) {
     if(this == &other) return *this;
-    m_impl = std::make_unique<Impl>(*other.m_impl);
+    if(other.m_impl)
+        m_impl = std::make_unique<Impl>(*other.m_impl);
+    else
+        m_impl.reset();
     return *this;
 }
 
@@ -33,7 +38,9 @@ SubRun& SubRun::operator=(SubRun&&) = default;
 SubRun::~SubRun() = default; 
 
 DataStore* SubRun::getDataStore() const {
-    if(!m_impl) return nullptr;
+    if(!valid()) {
+        throw Exception("Calling SubRun member function on invalid SubRun object");
+    }
     return m_impl->m_datastore;
 }
 
@@ -58,12 +65,11 @@ SubRun SubRun::next() const {
 
 bool SubRun::valid() const {
     return m_impl && m_impl->m_datastore; 
-
 }
 
 ProductID SubRun::storeRawData(const std::string& key, const std::vector<char>& buffer) {
     if(!valid()) {
-        throw Exception("Calling store() on invalid SubRun");
+        throw Exception("Calling SubRun member function on invalid SubRun object");
     }
     // forward the call to the datastore's store function
     return m_impl->m_datastore->m_impl->store(0, m_impl->fullpath(), key, buffer);
@@ -71,13 +77,18 @@ ProductID SubRun::storeRawData(const std::string& key, const std::vector<char>& 
 
 bool SubRun::loadRawData(const std::string& key, std::vector<char>& buffer) const {
     if(!valid()) {
-        throw Exception("Calling load() on invalid SubRun");
+        throw Exception("Calling SubRun member function on invalid SubRun object");
     }
     // forward the call to the datastore's load function
     return m_impl->m_datastore->m_impl->load(0, m_impl->fullpath(), key, buffer);
 }
 
 bool SubRun::operator==(const SubRun& other) const {
+    bool v1 = valid();
+    bool v2 = other.valid();
+    if(!v1 && !v2) return true;
+    if(!v1 &&  v2) return false;
+    if(v1  && !v2) return false;
     return m_impl->m_datastore == other.m_impl->m_datastore
         && m_impl->m_level     == other.m_impl->m_level
         && m_impl->m_container == other.m_impl->m_container
@@ -93,6 +104,9 @@ const SubRunNumber& SubRun::number() const {
 }
 
 Event SubRun::createEvent(const EventNumber& eventNumber) {
+    if(!valid()) {
+        throw Exception("Calling SubRun member function on invalid SubRun object");
+    }
     std::string parent = m_impl->fullpath();
     std::string eventStr = Event::Impl::makeKeyStringFromEventNumber(eventNumber);
     m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, eventStr, std::vector<char>());
@@ -101,10 +115,15 @@ Event SubRun::createEvent(const EventNumber& eventNumber) {
 
 Event SubRun::operator[](const EventNumber& eventNumber) const {
     auto it = find(eventNumber);
+    if(!it->valid())
+        throw Exception("Requested Event does not exist");
     return std::move(*it);
 }
 
 SubRun::iterator SubRun::find(const EventNumber& eventNumber) {
+    if(!valid()) {
+        throw Exception("Calling SubRun member function on invalid SubRun object");
+    }
     int ret;
     std::vector<char> data;
     std::string parent = m_impl->fullpath();
@@ -136,6 +155,9 @@ SubRun::iterator SubRun::begin() {
 }
 
 SubRun::iterator SubRun::end() {
+    if(!valid()) {
+        throw Exception("Calling SubRun member function on invalid SubRun object");
+    }
     return m_impl->m_end;
 }
 
@@ -144,6 +166,9 @@ SubRun::const_iterator SubRun::begin() const {
 }
 
 SubRun::const_iterator SubRun::end() const {
+    if(!valid()) {
+        throw Exception("Calling SubRun member function on invalid SubRun object");
+    }
     return m_impl->m_end;
 }
 
@@ -152,6 +177,9 @@ SubRun::const_iterator SubRun::cbegin() const {
 }
 
 SubRun::const_iterator SubRun::cend() const {
+    if(!valid()) {
+        throw Exception("Calling SubRun member function on invalid SubRun object");
+    }
     return m_impl->m_end;
 }
 
@@ -189,6 +217,9 @@ SubRun::const_iterator SubRun::lower_bound(const EventNumber& lb) const {
 }
 
 SubRun::iterator SubRun::upper_bound(const EventNumber& ub) {
+    if(!valid()) {
+        throw Exception("Calling SubRun member function on invalid SubRun object");
+    }
     Event event(m_impl->m_datastore, 
             m_impl->m_level+1, 
             m_impl->fullpath(), ub);
@@ -246,15 +277,20 @@ SubRun::const_iterator::const_iterator(Event&& event)
 
 SubRun::const_iterator::~const_iterator() {}
 
-SubRun::const_iterator::const_iterator(const SubRun::const_iterator& other)
-: m_impl(std::make_unique<Impl>(*other.m_impl)) {}
+SubRun::const_iterator::const_iterator(const SubRun::const_iterator& other) {
+    if(other.m_impl)
+        m_impl = std::make_unique<Impl>(*other.m_impl);
+}
 
 SubRun::const_iterator::const_iterator(SubRun::const_iterator&& other)
 : m_impl(std::move(other.m_impl)) {}
 
 SubRun::const_iterator& SubRun::const_iterator::operator=(const SubRun::const_iterator& other) {
     if(&other == this) return *this;
-    m_impl = std::make_unique<Impl>(*other.m_impl);
+    if(other.m_impl)
+        m_impl = std::make_unique<Impl>(*other.m_impl);
+    else
+        m_impl.reset();
     return *this;
 }
 
@@ -286,7 +322,9 @@ const SubRun::const_iterator::reference SubRun::const_iterator::operator*() {
 }
 
 const SubRun::const_iterator::pointer SubRun::const_iterator::operator->() {
-    if(!m_impl) return nullptr;
+    if(!m_impl) {
+        throw Exception("Trying to dereference an invalid iterator");
+    }
     return &(m_impl->m_current_event);
 }
 
@@ -324,7 +362,10 @@ SubRun::iterator::iterator(SubRun::iterator&& other)
 
 SubRun::iterator& SubRun::iterator::operator=(const SubRun::iterator& other) {
     if(this == &other) return *this;
-    m_impl = std::make_unique<Impl>(*other.m_impl);
+    if(other.m_impl)
+        m_impl = std::make_unique<Impl>(*other.m_impl);
+    else
+        m_impl.reset();
     return *this;
 }
 

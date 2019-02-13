@@ -87,6 +87,8 @@ DataStore::iterator DataStore::find(const std::string& datasetPath) {
 
 DataSet DataStore::operator[](const std::string& datasetName) const {
     auto it = find(datasetName);
+    if(!it->valid())
+        throw Exception("Requested DataSet does not exist");
     return std::move(*it);
 }
 

@@ -71,8 +71,7 @@ void DataSetTest::testBraketOperator() {
     CPPUNIT_ASSERT(mds.valid());
     // check that accessing a dataset that does not exist
     // yields a non-valid DataSet
-    DataSet ds6 = mds["ds6"];
-    CPPUNIT_ASSERT(!ds6.valid());
+    CPPUNIT_ASSERT_THROW(mds["ds6"], hepnos::Exception);
 
     // check that accessing a dataset that exists yields
     // a valid DataSet instance with correct information
@@ -169,9 +168,7 @@ void DataSetTest::testCreateRuns() {
     CPPUNIT_ASSERT(mds.valid());
 
     {
-        Run r = mds[45];
-        CPPUNIT_ASSERT(!r.valid());
-        CPPUNIT_ASSERT_THROW(r.number(), hepnos::Exception);
+        CPPUNIT_ASSERT_THROW(mds[45], hepnos::Exception);
     }
 
     {
