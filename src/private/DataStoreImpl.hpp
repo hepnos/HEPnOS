@@ -30,15 +30,23 @@ namespace hepnos {
 class DataStore::Impl {
     public:
 
+    struct database {
+        sdskv_provider_handle_t m_sdskv_ph;
+        sdskv_database_id_t     m_sdskv_db;
+    };
+
+    struct storage {
+        bake_provider_handle_t m_bake_ph;
+        bake_target_id_t       m_bake_target;
+    };
+
     margo_instance_id                         m_mid;          // Margo instance
     std::unordered_map<std::string,hg_addr_t> m_addrs;        // Addresses used by the service
     sdskv_client_t                            m_sdskv_client; // SDSKV client
     bake_client_t                             m_bake_client;  // BAKE client
-    std::vector<sdskv_provider_handle_t>      m_sdskv_ph;     // list of SDSKV provider handlers
-    std::vector<sdskv_database_id_t>          m_sdskv_db;     // list of SDSKV database ids
+    std::vector<database>                     m_databases;    // list of SDSKV databases
     struct ch_placement_instance*             m_chi_sdskv;    // ch-placement instance for SDSKV
-    std::vector<bake_provider_handle_t>       m_bake_ph;      // list of BAKE provider handlers
-    std::vector<bake_target_id_t>             m_bake_targets; // list of BAKE target ids
+    std::vector<storage>                      m_storage;      // list of BAKE storage targets
     struct ch_placement_instance*             m_chi_bake;     // ch-placement instance for BAKE
     const DataStore::iterator                 m_end;          // iterator for the end() of the DataStore
 
@@ -91,41 +99,50 @@ class DataStore::Impl {
                 }
                 m_addrs[str_addr] = addr;
             }
-            // get the provider id(s)
-            if(it->second.IsScalar()) {
-                uint16_t provider_id = it->second.as<uint16_t>();
-                sdskv_provider_handle_t ph;
+            // get the number of providers
+            uint16_t num_providers = it->second.as<uint16_t>();
+            sdskv_provider_handle_t ph;
+            for(uint16_t provider_id = 0 ; provider_id < num_providers; provider_id++) {
                 ret = sdskv_provider_handle_create(m_sdskv_client, addr, provider_id, &ph);
                 if(ret != SDSKV_SUCCESS) {
                     cleanup();
                     throw Exception("sdskv_provider_handle_create failed");
                 }
-                m_sdskv_ph.push_back(ph);
-            } else if(it->second.IsSequence()) {
-                for(YAML::const_iterator pid = it->second.begin(); pid != it->second.end(); pid++) {
-                    uint16_t provider_id = pid->second.as<uint16_t>();
-                    sdskv_provider_handle_t ph;
-                    ret = sdskv_provider_handle_create(m_sdskv_client, addr, provider_id, &ph);
-                    if(ret != SDSKV_SUCCESS) {
-                        cleanup();
-                        throw Exception("sdskv_provider_handle_create failed");
-                    }
-                    m_sdskv_ph.push_back(ph);
+                size_t db_count = 256;
+                ret = sdskv_count_databases(ph, &db_count);
+                if(ret != SDSKV_SUCCESS) {
+                    sdskv_provider_handle_release(ph);
+                    cleanup();
+                    throw Exception("sdskv_count_databases failed");
                 }
+                std::cerr << "Found " << db_count << " databases" << std::endl;
+                if(db_count == 0) {
+                    continue;
+                }
+                std::vector<sdskv_database_id_t> db_ids(db_count);
+                std::vector<char*> db_names(db_count);
+                ret = sdskv_list_databases(ph, &db_count, db_names.data(), db_ids.data());
+                if(ret != SDSKV_SUCCESS) {
+                    sdskv_provider_handle_release(ph);
+                    cleanup();
+                    throw Exception("sdskv_list_databases failed");
+                }
+                std::cout << "db_count is now " << db_count << std::endl;
+                unsigned i = 0;
+                for(auto id : db_ids) {
+                    std::cout << "Database: " << id << " " << db_names[i] << std::endl;
+                    database db;
+                    sdskv_provider_handle_ref_incr(ph);
+                    db.m_sdskv_ph = ph;
+                    db.m_sdskv_db = id;
+                    m_databases.push_back(db);
+                    i += 1;
+                }
+                sdskv_provider_handle_release(ph);
             }
-        }
-        // loop over sdskv providers and get the database id
-        for(auto ph : m_sdskv_ph) {
-            sdskv_database_id_t db_id;
-            ret = sdskv_open(ph, "hepnosdb", &db_id);
-            if(ret != SDSKV_SUCCESS) {
-                cleanup();
-                throw Exception("sdskv_open failed to open database");
-            }
-            m_sdskv_db.push_back(db_id);
         }
         // initialize ch-placement for the SDSKV providers
-        m_chi_sdskv = ch_placement_initialize("hash_lookup3", m_sdskv_ph.size(), 4, 0);
+        m_chi_sdskv = ch_placement_initialize("hash_lookup3", m_databases.size(), 4, 0);
 
         // get list of bake provider handles
         YAML::Node bake = config["hepnos"]["providers"]["bake"];
@@ -146,54 +163,47 @@ class DataStore::Impl {
                     }
                     m_addrs[str_addr] = addr;
                 }
-                if(it->second.IsScalar()) {
-                    uint16_t provider_id = it->second.as<uint16_t>();
+                uint16_t num_providers = it->second.as<uint16_t>();
+                for(uint16_t provider_id = 0; provider_id < num_providers; provider_id++) {
                     bake_provider_handle_t ph;
                     ret = bake_provider_handle_create(m_bake_client, addr, provider_id, &ph);
                     if(ret != 0) {
                         cleanup();
                         throw Exception("bake_provider_handle_create failed");
                     }
-                    m_bake_ph.push_back(ph);
-                } else if(it->second.IsSequence()) {
-                    for(YAML::const_iterator pid = it->second.begin(); pid != it->second.end(); pid++) {
-                        uint16_t provider_id = pid->second.as<uint16_t>();
-                        bake_provider_handle_t ph;
-                        ret = bake_provider_handle_create(m_bake_client, addr, provider_id, &ph);
-                        if(ret != 0) {
-                            cleanup();
-                            throw Exception("bake_provider_handle_create failed");
-                        }
-                        m_bake_ph.push_back(ph);
+                    uint64_t num_targets;
+                    std::vector<bake_target_id_t> targets(256);
+                    ret = bake_probe(ph, 256, targets.data(), &num_targets);
+                    if(ret != 0) {
+                        bake_provider_handle_release(ph);
+                        cleanup();
+                        throw Exception("bake_probe failed");
                     }
-                } // if(it->second.IsSequence())
+                    targets.resize(num_targets);
+                    for(const auto& id : targets) {
+                        storage tgt;
+                        bake_provider_handle_ref_incr(ph);
+                        tgt.m_bake_ph = ph;
+                        tgt.m_bake_target = id;
+                        m_storage.push_back(tgt);
+                    }
+                    bake_provider_handle_release(ph);
+                }
             } // for loop
             // find out the bake targets at each bake provider
-            for(auto& bake_ph : m_bake_ph) {
-                bake_target_id_t bti;
-                uint64_t num_targets = 0;
-                ret = bake_probe(bake_ph, 1, &bti, &num_targets);
-                if(ret != BAKE_SUCCESS) {
-                    throw Exception("bake_probe failed to retrieve targets");
-                }
-                if(num_targets != 1) {
-                    throw Exception("bake_prove returned no target");
-                }
-                m_bake_targets.push_back(bti);
-            }
         }
         // initialize ch-placement for the bake providers
-        if(m_bake_ph.size()) {
-            m_chi_bake = ch_placement_initialize("hash_lookup3", m_bake_ph.size(), 4, 0);
+        if(m_storage.size()) {
+            m_chi_bake = ch_placement_initialize("hash_lookup3", m_storage.size(), 4, 0);
         }
     }
 
     void cleanup() {
-        for(auto ph : m_sdskv_ph) {
-            sdskv_provider_handle_release(ph);
+        for(const auto& db : m_databases) {
+            sdskv_provider_handle_release(db.m_sdskv_ph);
         }
-        for(auto ph : m_bake_ph) {
-            bake_provider_handle_release(ph);
+        for(const auto& tgt : m_storage) {
+            bake_provider_handle_release(tgt.m_bake_ph);
         }
         sdskv_client_finalize(m_sdskv_client);
         bake_client_finalize(m_bake_client);
@@ -242,24 +252,7 @@ class DataStore::Impl {
         // for each sdskv entry
         for(auto it = sdskvNode.begin(); it != sdskvNode.end(); it++) {
             if(it->second.IsScalar()) continue; // one provider id given
-            if(it->second.IsSequence()) { // array of provider ids given
-                // the sequence is not empty
-                if(it->second.size() == 0) {
-                    throw Exception("Empty array of provider ids encountered in \"sdskv\" section");
-                }
-                // all objects in the sequence are scalar and appear only once
-                std::unordered_set<uint16_t> ids;
-                for(auto pid = it->second.begin(); pid != it->second.end(); pid++) {
-                    if(!pid->second.IsScalar()) {
-                        throw Exception("Non-scalar provider id encountered in \"sdskv\" section");
-                    }
-                    uint16_t pid_int = pid->as<uint16_t>();
-                    if(ids.count(pid_int) != 0) {
-                        throw Exception("Provider id encountered twice in \"sdskv\" section");
-                    }
-                    ids.insert(pid_int);
-                }
-            } else {
+            else {
                 throw Exception("Invalid value type for provider in \"sdskv\" section");
             }
         }
@@ -270,22 +263,7 @@ class DataStore::Impl {
         if(bakeNode.size() == 0) return;
         for(auto it = bakeNode.begin(); it != bakeNode.end(); it++) {
             if(it->second.IsScalar()) continue; // one provider id given
-            if(it->second.IsSequence()) { // array of provider ids given
-                if(it->second.size() == 0) {
-                    throw Exception("No provider found in \"bake\" section");
-                }
-                std::unordered_set<uint16_t> ids;
-                for(auto pid = it->second.begin(); pid != it->second.end(); pid++) {
-                    if(!pid->second.IsScalar()) {
-                        throw Exception("Non-scalar provider id encountered in \"bake\" section");
-                    }
-                    uint16_t pid_int = pid->as<uint16_t>();
-                    if(ids.count(pid_int) != 0) {
-                        throw Exception("Provider id encountered twice in \"bake\" section");
-                    }
-                    ids.insert(pid_int);
-                }
-            } else {
+            else {
                 throw Exception("Invalid value type for provider in \"bake\" section");
             }
         }
@@ -313,10 +291,11 @@ class DataStore::Impl {
         ch_placement_find_closest(m_chi_sdskv, name_hash, 1, &sdskv_provider_idx);
         // make corresponding datastore entry
         DataStoreEntryPtr entry = make_datastore_entry(level, ss.str());
-        auto sdskv_ph = m_sdskv_ph[sdskv_provider_idx];
-        auto db_id = m_sdskv_db[sdskv_provider_idx];
+        auto& db = m_databases[sdskv_provider_idx];
+        auto sdskv_ph = db.m_sdskv_ph;
+        auto db_id = db.m_sdskv_db;
         // read the value
-        if(level != 0 || m_bake_ph.empty()) { // read directly from sdskv
+        if(level != 0 || m_storage.empty()) { // read directly from sdskv
             
             // find the size of the value, as a way to check if the key exists
             hg_size_t vsize;
@@ -354,8 +333,9 @@ class DataStore::Impl {
             if(data.size() == 0) return true;
             long unsigned bake_provider_idx = 0;
             ch_placement_find_closest(m_chi_bake, name_hash, 1, &bake_provider_idx);
-            auto bake_ph = m_bake_ph[bake_provider_idx];
-            auto target = m_bake_targets[bake_provider_idx];
+            auto& bake_info = m_storage[bake_provider_idx];
+            auto bake_ph = bake_info.m_bake_ph;
+            auto target = bake_info.m_bake_target;
             uint64_t bytes_read = 0;
             ret = bake_read(bake_ph, rid_info.getBakeRegionID(), 0, data.data(), data.size(), &bytes_read);
             if(ret != BAKE_SUCCESS) {
@@ -389,8 +369,9 @@ class DataStore::Impl {
         ch_placement_find_closest(m_chi_sdskv, name_hash, 1, &sdskv_provider_idx);
         // make corresponding datastore entry key
         DataStoreEntryPtr entry = make_datastore_entry(level, ss.str());
-        auto sdskv_ph = m_sdskv_ph[sdskv_provider_idx];
-        auto db_id = m_sdskv_db[sdskv_provider_idx];
+        const auto& sdskv_info = m_databases[sdskv_provider_idx];
+        auto sdskv_ph = sdskv_info.m_sdskv_ph;
+        auto db_id = sdskv_info.m_sdskv_db;
         // check if the key exists
         hg_size_t vsize;
         int ret = sdskv_length(sdskv_ph, db_id, entry->raw(), entry->length(), &vsize);
@@ -399,7 +380,7 @@ class DataStore::Impl {
             throw Exception("Could not check if key exists in SDSKV (sdskv_length error)");
         }
         // if it's not a last-level data entry (data product), store in sdskeyval
-        if(level != 0 || m_bake_ph.empty()) {
+        if(level != 0 || m_storage.empty()) {
             ret = sdskv_put(sdskv_ph, db_id, entry->raw(), entry->length(), data.data(), data.size());
             if(ret != SDSKV_SUCCESS) {
                 throw Exception("Could not put key/value pair in SDSKV (sdskv_put error)");
@@ -407,8 +388,9 @@ class DataStore::Impl {
         } else { // store data in bake
             long unsigned bake_provider_idx = 0;
             ch_placement_find_closest(m_chi_bake, name_hash, 1, &bake_provider_idx);
-            auto bake_ph = m_bake_ph[bake_provider_idx];
-            auto target = m_bake_targets[bake_provider_idx];
+            const auto& bake_info = m_storage[bake_provider_idx];
+            auto bake_ph = bake_info.m_bake_ph;
+            auto target = bake_info.m_bake_target;
             bake_region_id_t rid;
             ret = bake_create_write_persist(bake_ph, target, data.data(), data.size(), &rid);
             if(ret != BAKE_SUCCESS) {
@@ -454,8 +436,9 @@ class DataStore::Impl {
             keys_len[i] = sizeof(DataStoreEntry) + 1024;
         }
         // get provider and database
-        auto ph = m_sdskv_ph[provider_idx];
-        auto db_id = m_sdskv_db[provider_idx];
+        const auto& sdskv_info = m_databases[provider_idx];
+        auto ph = sdskv_info.m_sdskv_ph;
+        auto db_id = sdskv_info.m_sdskv_db;
         // issue an sdskv_list_keys
         hg_size_t max_keys = maxKeys;
         ret = sdskv_list_keys(ph, db_id, lb_entry->raw(), lb_entry->length(),

@@ -5,19 +5,19 @@
 namespace hepnos {
 
 struct ConnectionInfoGenerator::Impl {
-    std::string m_addr;      // address of this process
-    uint16_t    m_bake_id;   // provider ids for BAKE
-    uint16_t    m_sdskv_id;  // provider ids for SDSKV
+    std::string m_addr;                // address of this process
+    uint16_t    m_num_bake_providers;  // number of BAKE provider ids
+    uint16_t    m_num_sdskv_providers; // number of SDSKV provider ids
 };
 
 ConnectionInfoGenerator::ConnectionInfoGenerator(
         const std::string& address, 
-        uint16_t sdskv_provider_id,
-        uint16_t bake_provider_id) 
+        uint16_t sdskv_providers,
+        uint16_t bake_providers) 
 : m_impl(std::make_unique<Impl>()) {
-    m_impl->m_addr     = address;
-    m_impl->m_bake_id  = bake_provider_id;
-    m_impl->m_sdskv_id = sdskv_provider_id;
+    m_impl->m_addr                 = address;
+    m_impl->m_num_bake_providers   = bake_providers;
+    m_impl->m_num_sdskv_providers  = sdskv_providers;
 }
 
 ConnectionInfoGenerator::~ConnectionInfoGenerator() {}
@@ -42,7 +42,7 @@ void ConnectionInfoGenerator::generateFile(MPI_Comm comm, const std::string& fil
 
     // Exchange bake providers info
     std::vector<uint16_t> bake_pr_ids_buf(size);
-    MPI_Gather(&(m_impl->m_bake_id), 
+    MPI_Gather(&(m_impl->m_num_bake_providers), 
             1, MPI_UNSIGNED_SHORT, 
             bake_pr_ids_buf.data(),
             1, MPI_UNSIGNED_SHORT, 
@@ -50,7 +50,7 @@ void ConnectionInfoGenerator::generateFile(MPI_Comm comm, const std::string& fil
 
     // Exchange sdskv providers info
     std::vector<uint16_t> sdskv_pr_ids_buf(size);
-    MPI_Gather(&(m_impl->m_sdskv_id),
+    MPI_Gather(&(m_impl->m_num_sdskv_providers),
             1, MPI_UNSIGNED_SHORT, 
             sdskv_pr_ids_buf.data(),
             1, MPI_UNSIGNED_SHORT, 

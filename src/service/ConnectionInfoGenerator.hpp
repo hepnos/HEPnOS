@@ -17,8 +17,7 @@ private:
 public:
 
     ConnectionInfoGenerator(const std::string& address,
-            uint16_t sdskv_provider_id,
-            uint16_t bake_provider_id);
+            uint16_t num_sdskv_providers, uint16_t num_bake_providers);
     ConnectionInfoGenerator(const ConnectionInfoGenerator&) = delete;
     ConnectionInfoGenerator(ConnectionInfoGenerator&&) = delete;
     ConnectionInfoGenerator& operator=(const ConnectionInfoGenerator&) = delete;

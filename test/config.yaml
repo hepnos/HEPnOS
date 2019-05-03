@@ -1,9 +1,14 @@
 ---
 address: tcp://
+threads: 4
 database:
-  name: hepnosdb
-  path: XXX/$RANK
+  name: hepnosdb.$RANK.$PROVIDER.$TARGET
+  path: XXX/$RANK_$PROVIDER_$TARGET
   type: bdb
+  providers: 2
+  targets: 2
 storage:
-  path: /dev/shm/hepnos.$RANK.dat
+  path: /dev/shm/hepnos.$RANK.$PROVIDER.$TARGET.dat
   size: 50
+  providers: 2
+  targets: 2
