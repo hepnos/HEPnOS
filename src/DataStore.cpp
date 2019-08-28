@@ -44,6 +44,7 @@ DataStore& DataStore::operator=(DataStore&& other) {
         m_impl->cleanup();
     }
     m_impl = std::move(other.m_impl);
+    return *this;
 }
     
 DataStore::~DataStore() {

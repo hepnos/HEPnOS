@@ -7,10 +7,11 @@
 #      -DCMAKE_PREFIX_PATH='/dir1;/dir2;/dir3'
 #
 
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.14)
 project (hepnos CXX)
 
 add_definitions (-g)
+set (CMAKE_CXX_STANDARD 14)
 
 # add our cmake module directory to the path
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
@@ -35,7 +36,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 # packages we depend on
 include (xpkg-import)
 find_package (mercury CONFIG REQUIRED)
-find_package (Boost REQUIRED COMPONENTS serialization system filesystem)
+find_package (Boost REQUIRED COMPONENTS serialization)
 include_directories(${Boost_INCLUDE_DIRS})
 xpkg_import_module (margo REQUIRED margo)
 xpkg_import_module (sdskv-client REQUIRED sdskv-client)
