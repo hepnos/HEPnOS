@@ -8,7 +8,6 @@
 #include <iostream>
 #include <yaml-cpp/yaml.h>
 #include <sdskv-client.h>
-#include <bake-client.h>
 #include <ch-placement.h>
 #include "hepnos/Exception.hpp"
 #include "hepnos/DataStore.hpp"

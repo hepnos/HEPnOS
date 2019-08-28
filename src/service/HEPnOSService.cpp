@@ -11,7 +11,6 @@
 #include <unistd.h>
 #include <mpi.h>
 #include <margo.h>
-#include <bake-server.h>
 #include <sdskv-server.h>
 #include "ServiceConfig.hpp"
 #include "ConnectionInfoGenerator.hpp"
@@ -56,28 +55,6 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
     char self_addr_str[128];
     hg_size_t self_addr_str_size = 128;
     margo_addr_to_string(mid, self_addr_str, &self_addr_str_size, self_addr);
-
-    if(config->hasStorage()) {
-        for(auto bake_provider_id = 0; bake_provider_id < config->getNumStorageProviders(); bake_provider_id++) {
-            /* create provider */
-            bake_provider_t bake_prov;
-            ret = bake_provider_register(mid, bake_provider_id, BAKE_ABT_POOL_DEFAULT, &bake_prov);
-            ASSERT(ret == 0, "bake_provider_register() failed (ret = %d)\n", ret);
-            /* create databases */
-            for(unsigned i=0; i < config->getNumStorageTargets(); i++) {
-                auto bake_target_name = config->getStoragePath(rank, bake_provider_id, i);
-                size_t bake_target_size = config->getStorageSize()*(1024*1024);
-                if(-1 == access(bake_target_name.c_str(), F_OK)) {
-                    ret = bake_makepool(bake_target_name.c_str(), bake_target_size, 0664);
-                    ASSERT(ret == 0, "bake_makepool() failed (ret = %d)\n", ret);
-                }
-                bake_target_id_t bake_tid;
-                ret = bake_provider_add_storage_target(bake_prov, bake_target_name.c_str(), &bake_tid);
-                ASSERT(ret == 0, "bake_provider_add_storage_target() failed to add target %s (ret = %d)\n",
-                    bake_target_name.c_str(), ret);
-            }
-        }
-    }
 
     if(config->hasDatabase()) {
         /* SDSKV provider initialization */

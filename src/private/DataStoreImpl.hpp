@@ -13,10 +13,8 @@
 #include <iostream>
 #include <yaml-cpp/yaml.h>
 #include <sdskv-client.h>
-#include <bake-client.h>
 #include <ch-placement.h>
 #include "KeyTypes.hpp"
-#include "ValueTypes.hpp"
 #include "hepnos/Exception.hpp"
 #include "hepnos/DataStore.hpp"
 #include "hepnos/DataSet.hpp"
@@ -35,27 +33,17 @@ class DataStore::Impl {
         sdskv_database_id_t     m_sdskv_db;
     };
 
-    struct storage {
-        bake_provider_handle_t m_bake_ph;
-        bake_target_id_t       m_bake_target;
-    };
-
     margo_instance_id                         m_mid;          // Margo instance
     std::unordered_map<std::string,hg_addr_t> m_addrs;        // Addresses used by the service
     sdskv_client_t                            m_sdskv_client; // SDSKV client
-    bake_client_t                             m_bake_client;  // BAKE client
     std::vector<database>                     m_databases;    // list of SDSKV databases
     struct ch_placement_instance*             m_chi_sdskv;    // ch-placement instance for SDSKV
-    std::vector<storage>                      m_storage;      // list of BAKE storage targets
-    struct ch_placement_instance*             m_chi_bake;     // ch-placement instance for BAKE
     const DataStore::iterator                 m_end;          // iterator for the end() of the DataStore
 
     Impl(DataStore* parent)
     : m_mid(MARGO_INSTANCE_NULL)
     , m_sdskv_client(SDSKV_CLIENT_NULL)
     , m_chi_sdskv(nullptr)
-    , m_bake_client(BAKE_CLIENT_NULL)
-    , m_chi_bake(nullptr)
     , m_end() {}
 
     void init(const std::string& configFile) {
@@ -76,12 +64,6 @@ class DataStore::Impl {
         if(ret != SDSKV_SUCCESS) {
             cleanup();
             throw Exception("Could not create SDSKV client");
-        }
-        // initialize BAKE client
-        ret = bake_client_init(m_mid, &m_bake_client);
-        if(ret != 0) {
-            cleanup();
-            throw Exception("Could not create BAKE client");
         }
         // create list of sdskv provider handles
         YAML::Node sdskv = config["hepnos"]["providers"]["sdskv"];
@@ -143,74 +125,15 @@ class DataStore::Impl {
         }
         // initialize ch-placement for the SDSKV providers
         m_chi_sdskv = ch_placement_initialize("hash_lookup3", m_databases.size(), 4, 0);
-
-        // get list of bake provider handles
-        YAML::Node bake = config["hepnos"]["providers"]["bake"];
-        if(bake) {
-            for(YAML::const_iterator it = bake.begin(); it != bake.end(); it++) {
-                // get the address of a bake provider
-                std::string str_addr = it->first.as<std::string>();
-                hg_addr_t addr;
-                if(m_addrs.count(str_addr) != 0) {
-                    addr = m_addrs[str_addr];
-                } else {
-                    // lookup the address
-                    hret = margo_addr_lookup(m_mid, str_addr.c_str(), &addr);
-                    if(hret != HG_SUCCESS) {
-                        margo_addr_free(m_mid, addr);
-                        cleanup();
-                        throw Exception("margo_addr_lookup failed");
-                    }
-                    m_addrs[str_addr] = addr;
-                }
-                uint16_t num_providers = it->second.as<uint16_t>();
-                for(uint16_t provider_id = 0; provider_id < num_providers; provider_id++) {
-                    bake_provider_handle_t ph;
-                    ret = bake_provider_handle_create(m_bake_client, addr, provider_id, &ph);
-                    if(ret != 0) {
-                        cleanup();
-                        throw Exception("bake_provider_handle_create failed");
-                    }
-                    uint64_t num_targets;
-                    std::vector<bake_target_id_t> targets(256);
-                    ret = bake_probe(ph, 256, targets.data(), &num_targets);
-                    if(ret != 0) {
-                        bake_provider_handle_release(ph);
-                        cleanup();
-                        throw Exception("bake_probe failed");
-                    }
-                    targets.resize(num_targets);
-                    for(const auto& id : targets) {
-                        storage tgt;
-                        bake_provider_handle_ref_incr(ph);
-                        tgt.m_bake_ph = ph;
-                        tgt.m_bake_target = id;
-                        m_storage.push_back(tgt);
-                    }
-                    bake_provider_handle_release(ph);
-                }
-            } // for loop
-            // find out the bake targets at each bake provider
-        }
-        // initialize ch-placement for the bake providers
-        if(m_storage.size()) {
-            m_chi_bake = ch_placement_initialize("hash_lookup3", m_storage.size(), 4, 0);
-        }
     }
 
     void cleanup() {
         for(const auto& db : m_databases) {
             sdskv_provider_handle_release(db.m_sdskv_ph);
         }
-        for(const auto& tgt : m_storage) {
-            bake_provider_handle_release(tgt.m_bake_ph);
-        }
         sdskv_client_finalize(m_sdskv_client);
-        bake_client_finalize(m_bake_client);
         if(m_chi_sdskv)
             ch_placement_finalize(m_chi_sdskv);
-        if(m_chi_bake)
-            ch_placement_finalize(m_chi_bake);
         for(auto& addr : m_addrs) {
             margo_addr_free(m_mid, addr.second);
         }
@@ -256,17 +179,6 @@ class DataStore::Impl {
                 throw Exception("Invalid value type for provider in \"sdskv\" section");
             }
         }
-        // bake providers are not mandatory. If they are not present,
-        // objects will be stored in sdskv providers.
-        auto bakeNode = providersNode["bake"];
-        if(!bakeNode) return;
-        if(bakeNode.size() == 0) return;
-        for(auto it = bakeNode.begin(); it != bakeNode.end(); it++) {
-            if(it->second.IsScalar()) continue; // one provider id given
-            else {
-                throw Exception("Invalid value type for provider in \"bake\" section");
-            }
-        }
     }
 
     public:
@@ -295,55 +207,20 @@ class DataStore::Impl {
         auto sdskv_ph = db.m_sdskv_ph;
         auto db_id = db.m_sdskv_db;
         // read the value
-        if(level != 0 || m_storage.empty()) { // read directly from sdskv
-            
-            // find the size of the value, as a way to check if the key exists
-            hg_size_t vsize;
-            ret = sdskv_length(sdskv_ph, db_id, entry->raw(), entry->length(), &vsize);
-            if(ret == SDSKV_ERR_UNKNOWN_KEY) {
-                return false;
-            }
-            if(ret != SDSKV_SUCCESS) {
-                throw Exception("Error occured when calling sdskv_length");
-            }
+        // find the size of the value, as a way to check if the key exists
+        hg_size_t vsize;
+        ret = sdskv_length(sdskv_ph, db_id, entry->raw(), entry->length(), &vsize);
+        if(ret == SDSKV_ERR_UNKNOWN_KEY) {
+            return false;
+        }
+        if(ret != SDSKV_SUCCESS) {
+            throw Exception("Error occured when calling sdskv_length");
+        }
 
-            data.resize(vsize);
-            ret = sdskv_get(sdskv_ph, db_id, entry->raw(), entry->length(), data.data(), &vsize);
-            if(ret != SDSKV_SUCCESS) {
-                throw Exception("Error occured when calling sdskv_get");
-            }
-
-        } else { // read from BAKE
-
-            // first get the key/val from sdskv
-            DataStoreValue rid_info;
-            hg_size_t vsize = sizeof(rid_info);
-            ret = sdskv_get(sdskv_ph, db_id, entry->raw(), entry->length(), (void*)(&rid_info), &vsize);
-            if(ret == SDSKV_ERR_UNKNOWN_KEY) {
-                return false;
-            }
-            if(ret != SDSKV_SUCCESS) {
-                throw Exception("Error occured when calling sdskv_get");
-            }
-            if(vsize != sizeof(rid_info)) {
-                throw Exception("Call to sdskv_get returned a value of unexpected size");
-            }
-            // now read the data from bake
-            data.resize(rid_info.getDataSize());
-            if(data.size() == 0) return true;
-            long unsigned bake_provider_idx = 0;
-            ch_placement_find_closest(m_chi_bake, name_hash, 1, &bake_provider_idx);
-            auto& bake_info = m_storage[bake_provider_idx];
-            auto bake_ph = bake_info.m_bake_ph;
-            auto target = bake_info.m_bake_target;
-            uint64_t bytes_read = 0;
-            ret = bake_read(bake_ph, rid_info.getBakeRegionID(), 0, data.data(), data.size(), &bytes_read);
-            if(ret != BAKE_SUCCESS) {
-                throw Exception("Couldn't read region from BAKE");
-            }
-            if(bytes_read != rid_info.getDataSize()) {
-                throw Exception("Bytes read from BAKE did not match expected object size");
-            }
+        data.resize(vsize);
+        ret = sdskv_get(sdskv_ph, db_id, entry->raw(), entry->length(), data.data(), &vsize);
+        if(ret != SDSKV_SUCCESS) {
+            throw Exception("Error occured when calling sdskv_get");
         }
         return true;
     }
@@ -380,32 +257,9 @@ class DataStore::Impl {
             throw Exception("Could not check if key exists in SDSKV (sdskv_length error)");
         }
         // if it's not a last-level data entry (data product), store in sdskeyval
-        if(level != 0 || m_storage.empty()) {
-            ret = sdskv_put(sdskv_ph, db_id, entry->raw(), entry->length(), data.data(), data.size());
-            if(ret != SDSKV_SUCCESS) {
-                throw Exception("Could not put key/value pair in SDSKV (sdskv_put error)");
-            }
-        } else { // store data in bake
-            long unsigned bake_provider_idx = 0;
-            ch_placement_find_closest(m_chi_bake, name_hash, 1, &bake_provider_idx);
-            const auto& bake_info = m_storage[bake_provider_idx];
-            auto bake_ph = bake_info.m_bake_ph;
-            auto target = bake_info.m_bake_target;
-            bake_region_id_t rid;
-            ret = bake_create_write_persist(bake_ph, target, data.data(), data.size(), &rid);
-            if(ret != BAKE_SUCCESS) {
-                throw Exception("Could not create bake region (bake_create_write_persist error)");
-            }
-            // create Value to put in SDSKV
-            DataStoreValue value(data.size(), bake_provider_idx, rid);
-            ret = sdskv_put(sdskv_ph, db_id, entry->raw(), entry->length(), (void*)(&value), sizeof(value));
-            if(ret != SDSKV_SUCCESS) {
-                ret = bake_remove(bake_ph, rid);
-                if(ret != BAKE_SUCCESS) {
-                    throw Exception("Dude, not only did SDSKV fail to put the key, but I couldn't cleanup BAKE. Is it Friday 13?");
-                }
-                throw Exception("Could not put key/value pair in SDSKV (sdskv_put error)");
-            }
+        ret = sdskv_put(sdskv_ph, db_id, entry->raw(), entry->length(), data.data(), data.size());
+        if(ret != SDSKV_SUCCESS) {
+            throw Exception("Could not put key/value pair in SDSKV (sdskv_put error)");
         }
         return product_id;
     }
