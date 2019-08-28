@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <mpi.h>
 #include <margo.h>
-#include <sdskv-server.h>
+#include <sdskv-server.hpp>
 #include "ServiceConfig.hpp"
 #include "ConnectionInfoGenerator.hpp"
 #include "hepnos-service.h"
@@ -59,9 +59,8 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
     if(config->hasDatabase()) {
         /* SDSKV provider initialization */
         for(auto sdskv_provider_id = 0; sdskv_provider_id < config->getNumDatabaseProviders(); sdskv_provider_id++) {
-            sdskv_provider_t sdskv_prov;
-            ret = sdskv_provider_register(mid, sdskv_provider_id, SDSKV_ABT_POOL_DEFAULT, &sdskv_prov);
-            ASSERT(ret == 0, "sdskv_provider_register() failed (ret = %d)\n", ret);
+
+            sdskv::provider* provider = sdskv::provider::create(mid, sdskv_provider_id, SDSKV_ABT_POOL_DEFAULT);
 
             for(unsigned i=0 ; i < config->getNumDatabaseTargets(); i++)  {
                 auto db_path = config->getDatabasePath(rank, sdskv_provider_id, i);
@@ -76,8 +75,7 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
                 config.db_name = db_name.c_str();
                 config.db_path = db_path.c_str();
                 config.db_type = db_type;
-                ret = sdskv_provider_attach_database(sdskv_prov, &config,  &db_id);
-                ASSERT(ret == 0, "sdskv_provider_attach_database() failed (ret = %d)\n", ret);
+                db_id = provider->attach_database(config);
             }
         }
     }
