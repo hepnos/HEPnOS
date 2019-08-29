@@ -6,9 +6,6 @@
 #include <vector>
 #include <functional>
 #include <iostream>
-#include <yaml-cpp/yaml.h>
-#include <sdskv-client.h>
-#include <ch-placement.h>
 #include "hepnos/Exception.hpp"
 #include "hepnos/DataStore.hpp"
 #include "hepnos/DataSet.hpp"
