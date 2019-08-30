@@ -189,24 +189,15 @@ class DataStore::Impl {
         // make corresponding datastore entry
         auto& db = m_databases[sdskv_db_idx];
         // read the value
-        // find the size of the value, as a way to check if the key exists
-        // XXX optimization: instead of getting the size, we could try getting
-        // the data with a certain size and retry with the right size if it doesn't work
-        hg_size_t vsize;
+        if(data.size() == 0)
+            data.resize(2048); // eagerly allocate 2KB
         try {
-            vsize = db.length(key);
+            db.get(key, data);
         } catch(sdskv::exception& ex) {
             if(ex.error() == SDSKV_ERR_UNKNOWN_KEY)
                 return false;
             else
-                throw Exception("Error occured when calling sdskv::database::length");
-        }
-
-        data.resize(vsize);
-        try {
-            db.get(key, data);
-        } catch(sdskv::exception& ex) {
-            throw Exception("Error occured when calling sdskv::database::get");
+                throw Exception("Error occured when calling sdskv::database::get");
         }
         return true;
     }
