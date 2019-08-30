@@ -228,20 +228,14 @@ class DataStore::Impl {
         }
         ch_placement_find_closest(m_chi_sdskv, name_hash, 1, &sdskv_db_idx);
         const auto& db = m_databases[sdskv_db_idx];
-        // check if the key exists
-        bool key_exists;
-        try {
-            key_exists = db.exists(key);
-            std::cerr << "In store(), key_exists = " << key_exists << " for key = " << key << std::endl;
-        } catch(sdskv::exception& ex) {
-            throw Exception("Could not check if key exists in SDSKV (sdskv::database::exists error)");
-        }
-        if(key_exists) return ProductID();
-
         try {
             db.put(key, data);
         } catch(sdskv::exception& ex) {
-            throw Exception("Could not put key/value pair in SDSKV (sdskv::database::put error)");
+            if(ex.error() == SDSKV_ERR_KEYEXISTS) {
+                return ProductID();
+            } else {
+                throw Exception("Could not put key/value pair in SDSKV (sdskv::database::put error: " +std::string(ex.what()) + ")");
+            }
         }
         return product_id;
     }

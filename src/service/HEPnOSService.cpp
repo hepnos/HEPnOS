@@ -75,6 +75,7 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
                 config.db_name = db_name.c_str();
                 config.db_path = db_path.c_str();
                 config.db_type = db_type;
+                config.db_no_overwrite = 1;
                 db_id = provider->attach_database(config);
             }
         }
