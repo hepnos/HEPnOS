@@ -17,7 +17,10 @@ class Exception : public std::exception
 
     public:
 
+    Exception() = default;
     Exception(const std::string& msg) : m_msg(msg){}
+    Exception(const Exception&) = default;
+    Exception& operator=(const Exception&) = default;
 
     virtual const char* what() const noexcept override
     {
