@@ -115,8 +115,10 @@ class Run : public KeyValueContainer {
      *
      * @return a valid ProductID if the key did not already exist, an invalid one otherwise.
      */
-    ProductID storeRawData(const std::string& key, const std::vector<char>& buffer) override;
-
+    ProductID storeRawData(const std::string& key, const std::string& value) override;
+    ProductID storeRawData(std::string&& key, std::string&& value) override;
+    ProductID storeRawData(WriteBatch& batch, const std::string& key, const std::string& value) override;
+    ProductID storeRawData(WriteBatch& batch, std::string&& key, std::string&& value) override;
     /**
      * @brief Loads raw key/value data from this Run.
      *
@@ -125,7 +127,7 @@ class Run : public KeyValueContainer {
      *
      * @return true if the key exists, false otherwise.
      */
-    bool loadRawData(const std::string& key, std::vector<char>& buffer) const override;
+    bool loadRawData(const std::string& key, std::string& buffer) const override;
 
     /**
      * @brief Compares this Run with another Run. The Runs must point to

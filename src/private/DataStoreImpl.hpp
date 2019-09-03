@@ -56,9 +56,9 @@ class DataStore::Impl {
         // initialize SDSKV client
         try {
             m_sdskv_client = sdskv::client(m_mid);
-        } catch(...) {
+        } catch(sdskv::exception& ex) {
             cleanup();
-            throw Exception("Could not create SDSKV client");
+            throw Exception("Could not create SDSKV client (SDSKV error="+std::to_string(ex.error())+")");
         }
         // create list of sdskv provider handles
         YAML::Node sdskv = config["hepnos"]["providers"]["sdskv"];
@@ -72,7 +72,7 @@ class DataStore::Impl {
                 if(hret != HG_SUCCESS) {
                     margo_addr_free(m_mid,addr);
                     cleanup();
-                    throw Exception("margo_addr_lookup failed");
+                    throw Exception("margo_addr_lookup failed (MARGO error="+std::to_string(hret)+")");
                 }
                 m_addrs[str_addr] = addr;
             }
@@ -83,9 +83,9 @@ class DataStore::Impl {
                 try {
                     sdskv::provider_handle ph(m_sdskv_client, addr, provider_id);
                     dbs = m_sdskv_client.open(ph);
-                } catch(...) {
+                } catch(sdskv::exception& ex) {
                     cleanup();
-                    throw Exception("sdskv_count_databases failed");
+                    throw Exception("Could not open databases (SDSKV error="+std::to_string(ex.error())+")");
                 }
                 if(dbs.size() == 0) {
                     continue;
@@ -150,6 +150,8 @@ class DataStore::Impl {
         }
     }
 
+    public:
+
     static inline std::string buildKey(
             uint8_t level,
             const std::string& containerName,
@@ -169,13 +171,7 @@ class DataStore::Impl {
         return result;
     }
 
-    public:
-
-    bool load(uint8_t level, const std::string& containerName,
-            const std::string& objectName, std::vector<char>& data) const {
-        int ret;
-        // build key
-        auto key = buildKey(level, containerName, objectName);
+    unsigned long computeDbIndex(uint8_t level, const std::string& containerName, const std::string& key) const {
         // hash the name to get the provider id
         long unsigned sdskv_db_idx = 0;
         uint64_t name_hash;
@@ -186,6 +182,16 @@ class DataStore::Impl {
             name_hash = std::hash<std::string>()(key);
         }
         ch_placement_find_closest(m_chi_sdskv, name_hash, 1, &sdskv_db_idx);
+        return sdskv_db_idx;
+    }
+
+    bool load(uint8_t level, const std::string& containerName,
+            const std::string& objectName, std::string& data) const {
+        int ret;
+        // build key
+        auto key = buildKey(level, containerName, objectName);
+        // find out which DB to access
+        long unsigned sdskv_db_idx = computeDbIndex(level, containerName, key);
         // make corresponding datastore entry
         auto& db = m_databases[sdskv_db_idx];
         // read the value
@@ -197,27 +203,35 @@ class DataStore::Impl {
             if(ex.error() == SDSKV_ERR_UNKNOWN_KEY)
                 return false;
             else
-                throw Exception("Error occured when calling sdskv::database::get");
+                throw Exception("Error occured when calling sdskv::database::get (SDSKV error="+std::to_string(ex.error())+")");
         }
         return true;
     }
 
+    bool exists(uint8_t level, const std::string& containerName,
+            const std::string& objectName) const {
+        int ret;
+        // build key
+        auto key = buildKey(level, containerName, objectName);
+        // find out which DB to access
+        long unsigned sdskv_db_idx = computeDbIndex(level, containerName, key);
+        // make corresponding datastore entry
+        auto& db = m_databases[sdskv_db_idx];
+        try {
+            return db.exists(key);
+        } catch(sdskv::exception& ex) {
+            throw Exception("Error occured when calling sdskv::database::exists (SDSKV error="+std::to_string(ex.error())+")");
+        }
+        return false;
+    }
+
     ProductID store(uint8_t level, const std::string& containerName,
-            const std::string& objectName, const std::vector<char>& data) {
+            const std::string& objectName, const std::string& data) {
         // build full name
         auto key = buildKey(level, containerName, objectName);
+        // find out which DB to access
+        long unsigned sdskv_db_idx = computeDbIndex(level, containerName, key);
         // Create the product id
-        ProductID product_id(level, containerName, objectName);
-        // hash the name to get the provider id
-        long unsigned sdskv_db_idx = 0;
-        uint64_t name_hash;
-        if(level != 0) {
-            name_hash = std::hash<std::string>()(containerName);
-        } else {
-            // use the complete name for final objects (level 0)
-            name_hash = std::hash<std::string>()(key);
-        }
-        ch_placement_find_closest(m_chi_sdskv, name_hash, 1, &sdskv_db_idx);
         const auto& db = m_databases[sdskv_db_idx];
         try {
             db.put(key, data);
@@ -225,10 +239,22 @@ class DataStore::Impl {
             if(ex.error() == SDSKV_ERR_KEYEXISTS) {
                 return ProductID();
             } else {
-                throw Exception("Could not put key/value pair in SDSKV (sdskv::database::put error: " +std::string(ex.what()) + ")");
+                throw Exception("Error occured when calling sdskv::database::put (SDSKV error=" +std::to_string(ex.error()) + ")");
             }
         }
-        return product_id;
+        return ProductID(level, containerName, objectName);
+    }
+
+    void storeMultiple(unsigned long db_index, 
+            const std::vector<std::string> keys,
+            const std::vector<std::string> values) {
+        // Create the product id
+        const auto& db = m_databases[db_index];
+        try {
+            db.put(keys, values);
+        } catch(sdskv::exception& ex) {
+            throw Exception("Error occured when calling sdskv::database::put (SDSKV error=" +std::to_string(ex.error()) + ")");
+        }
     }
 
     size_t nextKeys(uint8_t level, const std::string& containerName,
@@ -257,8 +283,8 @@ class DataStore::Impl {
         std::vector<std::string> entries(maxKeys);
         try {
             db.list_keys(lb_entry, prefix, entries);
-        } catch(...) {
-            throw Exception("Error occured when calling sdskv::database::list_keys");
+        } catch(sdskv::exception& ex) {
+            throw Exception("Error occured when calling sdskv::database::list_keys (SDSKV error="+std::string(ex.what()) + ")");
         }
         keys.resize(0);
         for(const auto& entry : entries) {

@@ -8,6 +8,7 @@
 #include "private/SubRunImpl.hpp"
 #include "private/EventImpl.hpp"
 #include "private/DataStoreImpl.hpp"
+#include "private/WriteBatchImpl.hpp"
 
 namespace hepnos {
 
@@ -67,7 +68,7 @@ bool SubRun::valid() const {
     return m_impl && m_impl->m_datastore; 
 }
 
-ProductID SubRun::storeRawData(const std::string& key, const std::vector<char>& buffer) {
+ProductID SubRun::storeRawData(const std::string& key, const std::string& buffer) {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
@@ -75,7 +76,27 @@ ProductID SubRun::storeRawData(const std::string& key, const std::vector<char>& 
     return m_impl->m_datastore->m_impl->store(0, m_impl->fullpath(), key, buffer);
 }
 
-bool SubRun::loadRawData(const std::string& key, std::vector<char>& buffer) const {
+ProductID SubRun::storeRawData(std::string&& key, std::string&& buffer) {
+    return storeRawData(key, buffer); // call above function
+}
+
+ProductID SubRun::storeRawData(WriteBatch& batch, const std::string& key, const std::string& buffer) {
+    if(!valid()) {
+        throw Exception("Calling SubRun member function on invalid SubRun object");
+    }
+    // forward the call to the datastore's store function
+    return batch.m_impl->store(0, m_impl->fullpath(), key, buffer);
+}
+
+ProductID SubRun::storeRawData(WriteBatch& batch, std::string&& key, std::string&& buffer) {
+    if(!valid()) {
+        throw Exception("Calling SubRun member function on invalid SubRun object");
+    }
+    // forward the call to the datastore's store function
+    return batch.m_impl->store(0, m_impl->fullpath(), std::move(key), std::move(buffer));
+}
+
+bool SubRun::loadRawData(const std::string& key, std::string& buffer) const {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
@@ -109,7 +130,7 @@ Event SubRun::createEvent(const EventNumber& eventNumber) {
     }
     std::string parent = m_impl->fullpath();
     std::string eventStr = Event::Impl::makeKeyStringFromEventNumber(eventNumber);
-    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, eventStr, std::vector<char>());
+    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, eventStr, std::string());
     return Event(m_impl->m_datastore, m_impl->m_level+1, parent, eventNumber);
 }
 
@@ -125,10 +146,9 @@ SubRun::iterator SubRun::find(const EventNumber& eventNumber) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
     int ret;
-    std::vector<char> data;
     std::string parent = m_impl->fullpath();
     std::string eventStr = Event::Impl::makeKeyStringFromEventNumber(eventNumber);
-    bool b = m_impl->m_datastore->m_impl->load(m_impl->m_level+1, parent, eventStr, data);
+    bool b = m_impl->m_datastore->m_impl->exists(m_impl->m_level+1, parent, eventStr);
     if(!b) {
         return m_impl->m_end;
     }

@@ -7,6 +7,7 @@
 #include "private/RunImpl.hpp"
 #include "private/SubRunImpl.hpp"
 #include "private/DataStoreImpl.hpp"
+#include "private/WriteBatchImpl.hpp"
 
 namespace hepnos {
 
@@ -66,7 +67,7 @@ bool Run::valid() const {
 
 }
 
-ProductID Run::storeRawData(const std::string& key, const std::vector<char>& buffer) {
+ProductID Run::storeRawData(const std::string& key, const std::string& buffer) {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run object");
     }
@@ -74,7 +75,27 @@ ProductID Run::storeRawData(const std::string& key, const std::vector<char>& buf
     return m_impl->m_datastore->m_impl->store(0, m_impl->fullpath(), key, buffer);
 }
 
-bool Run::loadRawData(const std::string& key, std::vector<char>& buffer) const {
+ProductID Run::storeRawData(std::string&& key, std::string&& buffer) {
+    return storeRawData(key, buffer); // calls the above function
+}
+
+ProductID Run::storeRawData(WriteBatch& batch, const std::string& key, const std::string& buffer) {
+    if(!valid()) {
+        throw Exception("Calling Run member function on an invalid Run object");
+    }
+    // forward the call to the datastore's store function
+    return batch.m_impl->store(0, m_impl->fullpath(), key, buffer);
+}
+
+ProductID Run::storeRawData(WriteBatch& batch, std::string&& key, std::string&& buffer) {
+    if(!valid()) {
+        throw Exception("Calling Run member function on an invalid Run object");
+    }
+    // forward the call to the datastore's store function
+    return batch.m_impl->store(0, m_impl->fullpath(), std::move(key), std::move(buffer));
+}
+
+bool Run::loadRawData(const std::string& key, std::string& buffer) const {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run object");
     }
@@ -118,7 +139,7 @@ SubRun Run::createSubRun(const SubRunNumber& subRunNumber) {
     }
     std::string parent = m_impl->fullpath();
     std::string subRunStr = SubRun::Impl::makeKeyStringFromSubRunNumber(subRunNumber);
-    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, subRunStr, std::vector<char>());
+    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, subRunStr, std::string());
     return SubRun(m_impl->m_datastore, m_impl->m_level+1, parent, subRunNumber);
 }
 
@@ -134,10 +155,9 @@ Run::iterator Run::find(const SubRunNumber& subRunNumber) {
         throw Exception("Calling Run member function on an invalid Run object");
     }
     int ret;
-    std::vector<char> data;
     std::string parent = m_impl->fullpath();
     std::string subRunStr = SubRun::Impl::makeKeyStringFromSubRunNumber(subRunNumber);
-    bool b = m_impl->m_datastore->m_impl->load(m_impl->m_level+1, parent, subRunStr, data);
+    bool b = m_impl->m_datastore->m_impl->exists(m_impl->m_level+1, parent, subRunStr);
     if(!b) {
         return m_impl->m_end;
     }

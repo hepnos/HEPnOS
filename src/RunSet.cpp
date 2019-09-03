@@ -34,12 +34,11 @@ Run RunSet::operator[](const RunNumber& runNumber) {
 
 RunSet::iterator RunSet::find(const RunNumber& runNumber) {
     int ret;
-    std::vector<char> data;
     std::string parent = m_impl->m_dataset->fullname();
     std::string strNum = Run::Impl::makeKeyStringFromRunNumber(runNumber);
     auto datastore = m_impl->m_dataset->m_impl->m_datastore;
     auto level = m_impl->m_dataset->m_impl->m_level;
-    bool b = datastore->m_impl->load(level+1, parent, strNum, data);
+    bool b = datastore->m_impl->exists(level+1, parent, strNum);
     if(!b) return end();
     return iterator(Run(datastore, level+1, parent, runNumber));
 }

@@ -4,7 +4,8 @@ set(hepnos-src DataStore.cpp
 	       RunSet.cpp
 	       Run.cpp
 	       SubRun.cpp
-	       Event.cpp) 
+	       Event.cpp
+	       WriteBatch.cpp) 
 
 set(hepnos-service-src service/HEPnOSService.cpp
 		       service/ServiceConfig.cpp

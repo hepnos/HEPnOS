@@ -42,6 +42,9 @@ target_link_libraries(WriteAndRestartTest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DE
 add_executable(RestartAndReadTest RestartAndReadTest.cpp HEPnOSTestMain.cpp)
 target_link_libraries(RestartAndReadTest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DEPS})
 
+add_executable(WriteBatchTest WriteBatchTest.cpp HEPnOSTestMain.cpp)
+target_link_libraries(WriteBatchTest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DEPS})
+
 add_test(NAME DataStoreTest COMMAND run-test.sh ./DataStoreTest)
 add_test(NAME DataSetTest   COMMAND run-test.sh ./DataSetTest)
 add_test(NAME RunSetTest    COMMAND run-test.sh ./RunSetTest)
@@ -49,5 +52,6 @@ add_test(NAME RunTest       COMMAND run-test.sh ./RunTest)
 add_test(NAME SubRunTest    COMMAND run-test.sh ./SubRunTest)
 add_test(NAME EventTest     COMMAND run-test.sh ./EventTest)
 add_test(NAME LoadStoreTest COMMAND run-test.sh ./LoadStoreTest)
+add_test(NAME WriteBatchTest COMMAND run-test.sh ./WriteBatchTest)
 add_test(NAME PtrTest       COMMAND run-test.sh ./PtrTest)
 add_test(NAME RestartTest   COMMAND run-two-tests.sh ./WriteAndRestartTest ./RestartAndReadTest)

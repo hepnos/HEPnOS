@@ -6,6 +6,7 @@
 #include "hepnos/Event.hpp"
 #include "private/EventImpl.hpp"
 #include "private/DataStoreImpl.hpp"
+#include "private/WriteBatchImpl.hpp"
 
 namespace hepnos {
 
@@ -64,7 +65,7 @@ bool Event::valid() const {
 
 }
 
-ProductID Event::storeRawData(const std::string& key, const std::vector<char>& buffer) {
+ProductID Event::storeRawData(const std::string& key, const std::string& buffer) {
     if(!valid()) {
         throw Exception("Calling Event member function on an invalid Event object");
     }
@@ -72,7 +73,27 @@ ProductID Event::storeRawData(const std::string& key, const std::vector<char>& b
     return m_impl->m_datastore->m_impl->store(0, m_impl->fullpath(), key, buffer);
 }
 
-bool Event::loadRawData(const std::string& key, std::vector<char>& buffer) const {
+ProductID Event::storeRawData(std::string&& key, std::string&& buffer) {
+    return storeRawData(key, buffer); // call the above function
+}
+
+ProductID Event::storeRawData(WriteBatch& batch, const std::string& key, const std::string& buffer) {
+    if(!valid()) {
+        throw Exception("Calling Event member function on an invalid Event object");
+    }
+    // forward the call to the datastore's store function
+    return batch.m_impl->store(0, m_impl->fullpath(), key, buffer);
+}
+
+ProductID Event::storeRawData(WriteBatch& batch, std::string&& key, std::string&& buffer) {
+    if(!valid()) {
+        throw Exception("Calling Event member function on an invalid Event object");
+    }
+    // forward the call to the datastore's store function
+    return batch.m_impl->store(0, m_impl->fullpath(), std::move(key), std::move(buffer));
+}
+
+bool Event::loadRawData(const std::string& key, std::string& buffer) const {
     if(!valid()) {
         throw Exception("Calling Event member function on an invalid Event object");
     }

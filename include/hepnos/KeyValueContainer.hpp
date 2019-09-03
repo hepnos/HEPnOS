@@ -19,6 +19,8 @@
 
 namespace hepnos {
 
+class WriteBatch;
+
 class KeyValueContainer {
 
     public:
@@ -69,7 +71,13 @@ class KeyValueContainer {
      *
      * @return A valid ProductID if the key did not already exist, an invalid one otherwise.
      */
-    virtual ProductID storeRawData(const std::string& key, const std::vector<char>& buffer) = 0;
+    virtual ProductID storeRawData(const std::string& key, const std::string& value) = 0;
+
+    virtual ProductID storeRawData(std::string&& key, std::string&& value) = 0;
+
+    virtual ProductID storeRawData(WriteBatch& batch, const std::string& key, const std::string& value) = 0;
+
+    virtual ProductID storeRawData(WriteBatch& batch, std::string&& key, std::string&& value) = 0;
 
     /**
      * @brief Loads raw key/value data from this KeyValueContainer.
@@ -80,7 +88,7 @@ class KeyValueContainer {
      *
      * @return true if the key exists, false otherwise.
      */
-    virtual bool loadRawData(const std::string& key, std::vector<char>& buffer) const = 0;
+    virtual bool loadRawData(const std::string& key, std::string& buffer) const = 0;
 
     /**
      * @brief Stores a key/value pair into the KeyValueContainer.
@@ -99,18 +107,16 @@ class KeyValueContainer {
      */
     template<typename K, typename V>
     ProductID store(const K& key, const V& value) {
-        std::stringstream ss_value;
-        std::stringstream ss_key;
-        ss_key << key << "#" << demangle<V>();
-        boost::archive::binary_oarchive oa(ss_value);
-        try {
-            oa << value;
-        } catch(...) {
-            throw Exception("Exception occured during serialization");
-        }
-        std::string serialized = ss_value.str();
-        std::vector<char> buffer(serialized.begin(), serialized.end());
-        return storeRawData(ss_key.str(), buffer);
+        std::string key_str, val_str;
+        serializeKeyValue(key, value, key_str, val_str);
+        return storeRawData(std::move(key_str), std::move(val_str));
+    }
+
+    template<typename K, typename V>
+    ProductID store(WriteBatch& batch, const K& key, const V& value) {
+        std::string key_str, val_str;
+        serializeKeyValue(key, value, key_str, val_str);
+        return storeRawData(batch, std::move(key_str), std::move(val_str));
     }
 
     /**
@@ -130,15 +136,14 @@ class KeyValueContainer {
      */
     template<typename K, typename V>
     bool load(const K& key, V& value) const {
-        std::vector<char> buffer;
+        std::string buffer;
         std::stringstream ss_key;
         ss_key << key << "#" << demangle<V>();
         if(!loadRawData(ss_key.str(), buffer)) {
             return false;
         }
         try {
-            std::string serialized(buffer.begin(), buffer.end());
-            std::stringstream ss(serialized);
+            std::stringstream ss(buffer);
             //boost::archive::binary_iarchive ia(ss);
             InputArchive ia(getDataStore(), ss);
             ia >> value;
@@ -146,6 +151,24 @@ class KeyValueContainer {
             throw Exception("Exception occured during serialization");
         }
         return true;
+    }
+
+    private:
+
+    template<typename K, typename V>
+    static void serializeKeyValue(const K& key, const V& value,
+            std::string& key_str, std::string& value_str) {
+        std::stringstream ss_value;
+        std::stringstream ss_key;
+        ss_key << key << "#" << demangle<V>();
+        key_str = std::move(ss_key.str());
+        boost::archive::binary_oarchive oa(ss_value);
+        try {
+            oa << value;
+        } catch(...) {
+            throw Exception("Exception occured during serialization");
+        }
+        value_str = ss_value.str();
     }
 };
 
