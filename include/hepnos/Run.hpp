@@ -313,6 +313,7 @@ class Run : public KeyValueContainer {
      * @return a handle to the created or existing SubRun.
      */
     SubRun createSubRun(const SubRunNumber& subRunNumber);
+    SubRun createSubRun(WriteBatch& batch, const SubRunNumber& subRunNumber);
 };
 
 class Run::const_iterator {

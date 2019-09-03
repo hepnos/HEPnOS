@@ -303,6 +303,7 @@ class SubRun : public KeyValueContainer {
      * @return a handle to the created or existing Event.
      */
     Event createEvent(const EventNumber& eventNumber);
+    Event createEvent(WriteBatch& batch, const EventNumber& eventNumber);
 };
 
 class SubRun::const_iterator {

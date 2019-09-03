@@ -134,6 +134,16 @@ Event SubRun::createEvent(const EventNumber& eventNumber) {
     return Event(m_impl->m_datastore, m_impl->m_level+1, parent, eventNumber);
 }
 
+Event SubRun::createEvent(WriteBatch& batch, const EventNumber& eventNumber) {
+    if(!valid()) {
+        throw Exception("Calling SubRun member function on invalid SubRun object");
+    }
+    std::string parent = m_impl->fullpath();
+    std::string eventStr = Event::Impl::makeKeyStringFromEventNumber(eventNumber);
+    batch.m_impl->store(m_impl->m_level+1, parent, eventStr, std::string());
+    return Event(m_impl->m_datastore, m_impl->m_level+1, parent, eventNumber);
+}
+
 Event SubRun::operator[](const EventNumber& eventNumber) const {
     auto it = find(eventNumber);
     if(!it->valid())

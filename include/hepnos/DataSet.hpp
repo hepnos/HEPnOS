@@ -225,6 +225,7 @@ class DataSet : public KeyValueContainer {
      * @return A Run instance pointing to the created run.
      */
     Run createRun(const RunNumber& runNumber);
+    Run createRun(WriteBatch& batch, const RunNumber& runNumber);
 
     typedef DataStore::const_iterator const_iterator;
     typedef DataStore::iterator iterator;

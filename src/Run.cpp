@@ -143,6 +143,16 @@ SubRun Run::createSubRun(const SubRunNumber& subRunNumber) {
     return SubRun(m_impl->m_datastore, m_impl->m_level+1, parent, subRunNumber);
 }
 
+SubRun Run::createSubRun(WriteBatch& batch, const SubRunNumber& subRunNumber) {
+    if(!valid()) {
+        throw Exception("Calling Run member function on an invalid Run object");
+    }
+    std::string parent = m_impl->fullpath();
+    std::string subRunStr = SubRun::Impl::makeKeyStringFromSubRunNumber(subRunNumber);
+    batch.m_impl->store(m_impl->m_level+1, parent, subRunStr, std::string());
+    return SubRun(m_impl->m_datastore, m_impl->m_level+1, parent, subRunNumber);
+}
+
 SubRun Run::operator[](const SubRunNumber& subRunNumber) const {
     auto it = find(subRunNumber);
     if(!it->valid())

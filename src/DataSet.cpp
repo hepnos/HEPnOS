@@ -188,6 +188,16 @@ Run DataSet::createRun(const RunNumber& runNumber) {
     return Run(m_impl->m_datastore, m_impl->m_level+1, parent, runNumber);
 }
 
+Run DataSet::createRun(WriteBatch& batch, const RunNumber& runNumber) {
+    if(InvalidRunNumber == runNumber) {
+        throw Exception("Trying to create a Run with InvalidRunNumber");
+    }
+    std::string parent = fullname();
+    std::string runStr = Run::Impl::makeKeyStringFromRunNumber(runNumber);
+    batch.m_impl->store(m_impl->m_level+1, parent, runStr, std::string());
+    return Run(m_impl->m_datastore, m_impl->m_level+1, parent, runNumber);
+}
+
 DataSet DataSet::operator[](const std::string& datasetName) const {
     auto it = find(datasetName);
     if(!it->valid())

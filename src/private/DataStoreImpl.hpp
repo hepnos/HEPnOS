@@ -14,10 +14,10 @@
 #include <yaml-cpp/yaml.h>
 #include <sdskv-client.hpp>
 #include <ch-placement.h>
-//#include "KeyTypes.hpp"
 #include "hepnos/Exception.hpp"
 #include "hepnos/DataStore.hpp"
 #include "hepnos/DataSet.hpp"
+#include "StringHash.hpp"
 
 namespace hepnos {
 
@@ -176,10 +176,10 @@ class DataStore::Impl {
         long unsigned sdskv_db_idx = 0;
         uint64_t name_hash;
         if(level != 0) {
-            name_hash = std::hash<std::string>()(containerName);
+            name_hash = hashString(containerName);
         } else {
             // use the complete name for final objects (level 0)
-            name_hash = std::hash<std::string>()(key);
+            name_hash = hashString(key);
         }
         ch_placement_find_closest(m_chi_sdskv, name_hash, 1, &sdskv_db_idx);
         return sdskv_db_idx;
@@ -264,7 +264,7 @@ class DataStore::Impl {
         if(level == 0) return 0; // cannot iterate at object level
         // hash the name to get the provider id
         long unsigned db_idx = 0;
-        uint64_t h = std::hash<std::string>()(containerName);
+        uint64_t h = hashString(containerName);
         ch_placement_find_closest(m_chi_sdskv, h, 1, &db_idx);
         // make an entry for the lower bound
         auto lb_entry = buildKey(level, containerName, lower);
