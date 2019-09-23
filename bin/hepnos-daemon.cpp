@@ -9,13 +9,7 @@
 #include <vector>
 #include <unistd.h>
 #include <mpi.h>
-#include <margo.h>
-#include <bake-server.h>
-#include <sdskv-server.h>
-#include <yaml-cpp/yaml.h>
 #include "hepnos-service.h"
-
-#define ASSERT(__cond, __msg, ...) { if(!(__cond)) { fprintf(stderr, "[%s:%d] " __msg, __FILE__, __LINE__, __VA_ARGS__); exit(-1); } }
 
 void usage(void)
 {

@@ -19,6 +19,7 @@ class Run;
 class SubRun;
 class Event;
 template<typename T, typename C = std::vector<T>> class Ptr;
+class WriteBatch;
 
 /**
  * The DataStore class is the main handle referencing an HEPnOS service.
@@ -32,6 +33,7 @@ class DataStore {
     friend class Run;
     friend class SubRun;
     friend class Event;
+    friend class WriteBatch;
 
     public:
 
@@ -250,6 +252,18 @@ class DataStore {
     DataSet createDataSet(const std::string& name);
 
     /**
+     * @brief Creates a dataset with a given name inside the data store.
+     * This function takes a WriteBatch instance, the dataset will be
+     * actually created when this batch is flushed or destroyed.
+     *
+     * @param batch WriteBatch in which to enqueue the creation.
+     * @param name Name of the dataset.
+     *
+     * @return A DataSet instance pointing to the created dataset.
+     */
+    DataSet createDataSet(WriteBatch& batch, const std::string& name);
+
+    /**
      * @brief Create a pointer to a product. The type T used must
      * match the type of the product corresponding to the provided
      * product ID. Using a different type will result in undefined
@@ -315,7 +329,7 @@ class DataStore {
      *
      * @return true if the data was loaded successfuly, false otherwise.
      */
-    bool loadRawProduct(const ProductID& productID, std::vector<char>& buffer);
+    bool loadRawProduct(const ProductID& productID, std::string& buffer);
 };
 
 class DataStore::const_iterator {
@@ -560,7 +574,7 @@ Ptr<T,C> DataStore::makePtr(const ProductID& productID, std::size_t index) {
 
 template<typename T>
 bool DataStore::loadProduct(const ProductID& productID, T& t) {
-    std::vector<char> buffer;
+    std::string buffer;
     if(!loadRawProduct(productID, buffer)) {
         return false;
     }

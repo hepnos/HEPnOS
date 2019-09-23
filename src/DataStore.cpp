@@ -6,14 +6,12 @@
 #include <vector>
 #include <functional>
 #include <iostream>
-#include <yaml-cpp/yaml.h>
-#include <sdskv-client.h>
-#include <bake-client.h>
-#include <ch-placement.h>
 #include "hepnos/Exception.hpp"
 #include "hepnos/DataStore.hpp"
 #include "hepnos/DataSet.hpp"
+#include "hepnos/WriteBatch.hpp"
 #include "private/DataStoreImpl.hpp"
+#include "private/WriteBatchImpl.hpp"
 
 namespace hepnos {
 
@@ -44,6 +42,7 @@ DataStore& DataStore::operator=(DataStore&& other) {
         m_impl->cleanup();
     }
     m_impl = std::move(other.m_impl);
+    return *this;
 }
     
 DataStore::~DataStore() {
@@ -77,7 +76,7 @@ DataStore::iterator DataStore::find(const std::string& datasetPath) {
         datasetName   = datasetPath.substr(c+1);
     }
 
-    std::vector<char> data;
+    std::string data;
     bool b = m_impl->load(level, containerName, datasetName, data);
     if(!b) {
         return m_impl->m_end;
@@ -178,7 +177,19 @@ DataSet DataStore::createDataSet(const std::string& name) {
     || name.find('%') != std::string::npos) {
         throw Exception("Invalid character ('/' or '%') in dataset name");
     }
-    m_impl->store(1, "", name, std::vector<char>());
+    m_impl->store(1, "", name, std::string());
+    return DataSet(this, 1, "", name);
+}
+
+DataSet DataStore::createDataSet(WriteBatch& batch, const std::string& name) {
+    if(!m_impl) {
+        throw Exception("Calling DataStore member function on an invalid DataStore object");
+    }
+    if(name.find('/') != std::string::npos
+    || name.find('%') != std::string::npos) {
+        throw Exception("Invalid character ('/' or '%') in dataset name");
+    }
+    batch.m_impl->store(1, "", name, std::string());
     return DataSet(this, 1, "", name);
 }
 
@@ -191,7 +202,7 @@ void DataStore::shutdown() {
     }
 }
 
-bool DataStore::loadRawProduct(const ProductID& productID, std::vector<char>& buffer) {
+bool DataStore::loadRawProduct(const ProductID& productID, std::string& buffer) {
     if(!m_impl) {
         throw Exception("Calling DataStore member function on an invalid DataStore object");
     }

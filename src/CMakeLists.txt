@@ -4,7 +4,8 @@ set(hepnos-src DataStore.cpp
 	       RunSet.cpp
 	       Run.cpp
 	       SubRun.cpp
-	       Event.cpp) 
+	       Event.cpp
+	       WriteBatch.cpp) 
 
 set(hepnos-service-src service/HEPnOSService.cpp
 		       service/ServiceConfig.cpp
@@ -26,7 +27,7 @@ set (hepnos-vers "${HEPNOS_VERSION_MAJOR}.${HEPNOS_VERSION_MINOR}")
 set (HEPNOS_VERSION "${hepnos-vers}.${HEPNOS_VERSION_PATCH}")
 
 add_library(hepnos ${hepnos-src})
-target_link_libraries (hepnos mercury margo yaml-cpp sdskv-client bake-client ch-placement)
+target_link_libraries (hepnos mercury margo yaml-cpp sdskv-client ch-placement)
 target_include_directories (hepnos PUBLIC $<INSTALL_INTERFACE:include>)
 
 # local include's BEFORE, in case old incompatable .h files in prefix/include
@@ -40,7 +41,7 @@ set_target_properties (hepnos
     SOVERSION ${HEPNOS_VERSION_MAJOR})
 
 add_library(hepnos-service ${hepnos-service-src})
-target_link_libraries (hepnos mercury margo yaml-cpp sdskv-client sdskv-server bake-client bake-server ch-placement)
+target_link_libraries (hepnos mercury margo yaml-cpp sdskv-client sdskv-server ch-placement)
 target_include_directories (hepnos-service PUBLIC $<INSTALL_INTERFACE:include>)
 
 # local include's BEFORE, in case old incompatable .h files in prefix/include

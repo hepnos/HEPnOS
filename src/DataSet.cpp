@@ -10,6 +10,7 @@
 #include "private/RunImpl.hpp"
 #include "private/DataSetImpl.hpp"
 #include "private/DataStoreImpl.hpp"
+#include "private/WriteBatchImpl.hpp"
 
 namespace hepnos {
 
@@ -93,7 +94,7 @@ bool DataSet::valid() const {
     return m_impl && m_impl->m_datastore; 
 }
 
-ProductID DataSet::storeRawData(const std::string& key, const std::vector<char>& buffer) {
+ProductID DataSet::storeRawData(const std::string& key, const std::string& buffer) {
     if(!valid()) {
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
@@ -101,7 +102,27 @@ ProductID DataSet::storeRawData(const std::string& key, const std::vector<char>&
     return m_impl->m_datastore->m_impl->store(0, fullname(), key, buffer);
 }
 
-bool DataSet::loadRawData(const std::string& key, std::vector<char>& buffer) const {
+ProductID DataSet::storeRawData(std::string&& key, std::string&& buffer) {
+    return storeRawData(key, buffer); // will call the function above
+}
+
+ProductID DataSet::storeRawData(WriteBatch& batch, const std::string& key, const std::string& buffer) {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
+    // forward the call to the datastore's store function
+    return batch.m_impl->store(0, fullname(), key, buffer);
+}
+
+ProductID DataSet::storeRawData(WriteBatch& batch, std::string&& key, std::string&& buffer) {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
+    // forward the call to the datastore's store function
+    return batch.m_impl->store(0, fullname(), std::move(key), std::move(buffer));
+}
+
+bool DataSet::loadRawData(const std::string& key, std::string& buffer) const {
     if(!valid()) {
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
@@ -153,7 +174,7 @@ DataSet DataSet::createDataSet(const std::string& name) {
         throw Exception("Invalid character '/' or '%' in dataset name");
     }
     std::string parent = fullname();
-    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, name, std::vector<char>());
+    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, name, std::string());
     return DataSet(m_impl->m_datastore, m_impl->m_level+1, parent, name);
 }
 
@@ -163,7 +184,17 @@ Run DataSet::createRun(const RunNumber& runNumber) {
     }
     std::string parent = fullname();
     std::string runStr = Run::Impl::makeKeyStringFromRunNumber(runNumber);
-    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, runStr, std::vector<char>());
+    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, runStr, std::string());
+    return Run(m_impl->m_datastore, m_impl->m_level+1, parent, runNumber);
+}
+
+Run DataSet::createRun(WriteBatch& batch, const RunNumber& runNumber) {
+    if(InvalidRunNumber == runNumber) {
+        throw Exception("Trying to create a Run with InvalidRunNumber");
+    }
+    std::string parent = fullname();
+    std::string runStr = Run::Impl::makeKeyStringFromRunNumber(runNumber);
+    batch.m_impl->store(m_impl->m_level+1, parent, runStr, std::string());
     return Run(m_impl->m_datastore, m_impl->m_level+1, parent, runNumber);
 }
 
@@ -206,9 +237,7 @@ DataSet::iterator DataSet::find(const std::string& datasetPath) {
         datasetName   = datasetPath.substr(c+1);
     }
 
-    std::vector<char> data;
-
-    bool b = m_impl->m_datastore->m_impl->load(level, containerName, datasetName, data);
+    bool b = m_impl->m_datastore->m_impl->exists(level, containerName, datasetName);
     if(!b) {
         return m_impl->m_datastore->end();
     }

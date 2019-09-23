@@ -11,8 +11,7 @@
 #include <unistd.h>
 #include <mpi.h>
 #include <margo.h>
-#include <bake-server.h>
-#include <sdskv-server.h>
+#include <sdskv-server.hpp>
 #include "ServiceConfig.hpp"
 #include "ConnectionInfoGenerator.hpp"
 #include "hepnos-service.h"
@@ -57,34 +56,11 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
     hg_size_t self_addr_str_size = 128;
     margo_addr_to_string(mid, self_addr_str, &self_addr_str_size, self_addr);
 
-    if(config->hasStorage()) {
-        for(auto bake_provider_id = 0; bake_provider_id < config->getNumStorageProviders(); bake_provider_id++) {
-            /* create provider */
-            bake_provider_t bake_prov;
-            ret = bake_provider_register(mid, bake_provider_id, BAKE_ABT_POOL_DEFAULT, &bake_prov);
-            ASSERT(ret == 0, "bake_provider_register() failed (ret = %d)\n", ret);
-            /* create databases */
-            for(unsigned i=0; i < config->getNumStorageTargets(); i++) {
-                auto bake_target_name = config->getStoragePath(rank, bake_provider_id, i);
-                size_t bake_target_size = config->getStorageSize()*(1024*1024);
-                if(-1 == access(bake_target_name.c_str(), F_OK)) {
-                    ret = bake_makepool(bake_target_name.c_str(), bake_target_size, 0664);
-                    ASSERT(ret == 0, "bake_makepool() failed (ret = %d)\n", ret);
-                }
-                bake_target_id_t bake_tid;
-                ret = bake_provider_add_storage_target(bake_prov, bake_target_name.c_str(), &bake_tid);
-                ASSERT(ret == 0, "bake_provider_add_storage_target() failed to add target %s (ret = %d)\n",
-                    bake_target_name.c_str(), ret);
-            }
-        }
-    }
-
     if(config->hasDatabase()) {
         /* SDSKV provider initialization */
         for(auto sdskv_provider_id = 0; sdskv_provider_id < config->getNumDatabaseProviders(); sdskv_provider_id++) {
-            sdskv_provider_t sdskv_prov;
-            ret = sdskv_provider_register(mid, sdskv_provider_id, SDSKV_ABT_POOL_DEFAULT, &sdskv_prov);
-            ASSERT(ret == 0, "sdskv_provider_register() failed (ret = %d)\n", ret);
+
+            sdskv::provider* provider = sdskv::provider::create(mid, sdskv_provider_id, SDSKV_ABT_POOL_DEFAULT);
 
             for(unsigned i=0 ; i < config->getNumDatabaseTargets(); i++)  {
                 auto db_path = config->getDatabasePath(rank, sdskv_provider_id, i);
@@ -99,8 +75,8 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
                 config.db_name = db_name.c_str();
                 config.db_path = db_path.c_str();
                 config.db_type = db_type;
-                ret = sdskv_provider_attach_database(sdskv_prov, &config,  &db_id);
-                ASSERT(ret == 0, "sdskv_provider_attach_database() failed (ret = %d)\n", ret);
+                config.db_no_overwrite = 1;
+                db_id = provider->attach_database(config);
             }
         }
     }

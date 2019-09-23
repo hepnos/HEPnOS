@@ -13,5 +13,6 @@
 #include <hepnos/RunSet.hpp>
 #include <hepnos/SubRun.hpp>
 #include <hepnos/SubRunNumber.hpp>
+#include <hepnos/WriteBatch.hpp>
 
 #endif

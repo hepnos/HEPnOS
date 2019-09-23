@@ -11,14 +11,16 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/string.hpp>
 
-#include <hepnos/DataStore.hpp>
 
 namespace hepnos {
+
+class WriteBatch;
+class DataStore;
 
 class ProductID {
 
     friend class DataStore;
-    friend class DataStore::Impl;
+    friend class WriteBatch;
     friend class boost::serialization::access;
 
     private:
