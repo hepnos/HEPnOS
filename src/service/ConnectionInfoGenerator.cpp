@@ -33,7 +33,7 @@ void ConnectionInfoGenerator::generateFile(MPI_Comm comm, const std::string& fil
     MPI_Comm_size(comm, &size);
 
     unsigned j=0;
-    while(addr[j] != '\0' && addr[j] != ':') j++;
+    while(addr[j] != '\0' && addr[j] != ':' && addr[j] != ';') j++;
     std::string proto(addr, j);
 
     // Exchange addresses
