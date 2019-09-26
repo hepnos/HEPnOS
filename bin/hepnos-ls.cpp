@@ -3,16 +3,16 @@
 
 void navigate_subrun(int level, hepnos::SubRun& sr) {
     for(int i=0; i < level; i++) std::cout << " ";
-    std::cout << "| " << sr.number() << std::endl;
+    std::cout << "| [S] " << sr.number() << std::endl;
     for(auto& e : sr) {
         for(int i=0; i < level+1; i++) std::cout << " ";
-        std::cout << "| " << e.number() << std::endl;
+        std::cout << "| [E] " << e.number() << std::endl;
     }
 }
 
 void navigate_run(int level, hepnos::Run& r) {
     for(int i=0; i < level; i++) std::cout << " ";
-    std::cout << "| " << r.number() << std::endl;
+    std::cout << "| [R] " << r.number() << std::endl;
     for(auto& sr : r) {
         navigate_subrun(level+1, sr);
     }
@@ -20,7 +20,7 @@ void navigate_run(int level, hepnos::Run& r) {
 
 void navigate_dataset(int level, hepnos::DataSet& ds) {
     for(int i=0; i < level; i++) std::cout << " ";
-    std::cout << "| " << ds.name() << std::endl;
+    std::cout << "| [D] " << ds.name() << std::endl;
     for(auto& sub_ds : ds) {
         navigate_dataset(level+1, sub_ds);
     }
