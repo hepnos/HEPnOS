@@ -7,7 +7,7 @@
 #      -DCMAKE_PREFIX_PATH='/dir1;/dir2;/dir3'
 #
 
-cmake_minimum_required (VERSION 3.14)
+cmake_minimum_required (VERSION 3.12)
 project (hepnos CXX)
 
 add_definitions (-g)
