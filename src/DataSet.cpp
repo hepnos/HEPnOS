@@ -253,7 +253,9 @@ DataSet::iterator DataSet::begin() {
     if(!valid()) {
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
-    DataSet ds(m_impl->m_datastore, m_impl->m_level+1, fullname(),"");
+    // we use the prefix "&" because we need something that comes after "%"
+    // (which represents runs) and is not going to be in a dataset name
+    DataSet ds(m_impl->m_datastore, m_impl->m_level+1, fullname(),"&");
     ds = ds.next();
     if(ds.valid()) return iterator(ds);
     else return end();
