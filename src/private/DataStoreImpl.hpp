@@ -251,7 +251,7 @@ class DataStore::Impl {
         // Create the product id
         const auto& db = m_databases[db_index];
         try {
-            db.put(keys, values);
+            db.put_multi(keys, values);
         } catch(sdskv::exception& ex) {
             throw Exception("Error occured when calling sdskv::database::put (SDSKV error=" +std::to_string(ex.error()) + ")");
         }
