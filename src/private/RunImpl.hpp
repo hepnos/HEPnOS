@@ -8,6 +8,7 @@
 
 #include <sstream>
 #include <iomanip>
+#include <memory>
 #include "hepnos/Run.hpp"
 
 namespace hepnos {
@@ -18,11 +19,11 @@ class Run::Impl {
 
         DataStore*   m_datastore;
         uint8_t      m_level;
-        std::string  m_container;
+        std::shared_ptr<std::string>  m_container;
         RunNumber    m_run_nr;
         iterator     m_end;
 
-        Impl(DataStore* ds, uint8_t level, const std::string& container, const RunNumber& rn)
+        Impl(DataStore* ds, uint8_t level, const std::shared_ptr<std::string>& container, const RunNumber& rn)
         : m_datastore(ds)
         , m_level(level)
         , m_container(container)
@@ -39,7 +40,7 @@ class Run::Impl {
         }
 
         std::string fullpath() const {
-            return m_container + std::string("/") + makeKeyStringFromRunNumber(m_run_nr);
+            return *m_container + std::string("/") + makeKeyStringFromRunNumber(m_run_nr);
         }
 };
 

@@ -36,6 +36,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 # packages we depend on
 include (xpkg-import)
 find_package (mercury CONFIG REQUIRED)
+find_package (thallium CONFIG REQUIRED)
 find_package (Boost REQUIRED COMPONENTS serialization)
 include_directories(${Boost_INCLUDE_DIRS})
 xpkg_import_module (margo REQUIRED margo)

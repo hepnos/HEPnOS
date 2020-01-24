@@ -7,6 +7,7 @@
 #define __HEPNOS_PRIVATE_SUBRUN_IMPL_H
 
 #include <sstream>
+#include <memory>
 #include <iomanip>
 #include "hepnos/SubRun.hpp"
 
@@ -18,11 +19,11 @@ class SubRun::Impl {
 
         DataStore*   m_datastore;
         uint8_t      m_level;
-        std::string  m_container;
+        std::shared_ptr<std::string>  m_container;
         SubRunNumber m_subrun_nr;
         iterator     m_end;
 
-        Impl(DataStore* ds, uint8_t level, const std::string& container, const SubRunNumber& rn)
+        Impl(DataStore* ds, uint8_t level, const std::shared_ptr<std::string>& container, const SubRunNumber& rn)
         : m_datastore(ds)
         , m_level(level)
         , m_container(container)
@@ -39,7 +40,7 @@ class SubRun::Impl {
         }
 
         std::string fullpath() const {
-            return m_container + std::string("/") + makeKeyStringFromSubRunNumber();
+            return *m_container + std::string("/") + makeKeyStringFromSubRunNumber();
         }
 };
 

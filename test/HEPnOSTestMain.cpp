@@ -1,3 +1,4 @@
+#include <mpi.h>
 #include <cppunit/CompilerOutputter.h>
 #include <cppunit/XmlOutputter.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
@@ -9,6 +10,8 @@ hepnos::DataStore* datastore;
 int main(int argc, char* argv[])
 {
     if(argc != 2) return 1;
+
+    MPI_Init(&argc, &argv);
 
     sleep(1);
     // Create the datastore
@@ -27,8 +30,13 @@ int main(int argc, char* argv[])
     // Run the tests.
     bool wasSucessful = runner.run();
 
-    datastore->shutdown();
+    MPI_Barrier(MPI_COMM_WORLD);
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if(rank == 0) datastore->shutdown();
     delete datastore;
+
+    MPI_Finalize();
 
     // Return error code 1 if the one of test failed.
     return wasSucessful ? 0 : 1;

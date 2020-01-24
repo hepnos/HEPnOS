@@ -10,17 +10,18 @@
 #include <cstring>
 #include <unistd.h>
 #include <mpi.h>
-#include <margo.h>
+#include <thallium.hpp>
 #include <sdskv-server.hpp>
 #include "ServiceConfig.hpp"
 #include "ConnectionInfoGenerator.hpp"
 #include "hepnos-service.h"
 
+namespace tl = thallium;
+
 #define ASSERT(__cond, __msg, ...) { if(!(__cond)) { fprintf(stderr, "[%s:%d] " __msg, __FILE__, __LINE__, __VA_ARGS__); exit(-1); } }
 
 void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* connection_file)
 {
-    margo_instance_id mid;
     int ret;
     int rank;
 
@@ -38,29 +39,29 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
         return;
     }
 
-    /* Margo initialization */
-    mid = margo_init(config->getAddress().c_str(), MARGO_SERVER_MODE, 0, config->getNumThreads()-1);
-    if (mid == MARGO_INSTANCE_NULL)
-    {
-        std::cerr << "Error: unable to initialize margo" << std::endl;
+    std::unique_ptr<tl::engine> engine;
+    try {
+        engine = std::make_unique<tl::engine>(
+                    config->getAddress(),
+                    THALLIUM_SERVER_MODE,
+                    false, config->getNumThreads()-1);
+
+    } catch(std::exception& ex) {
+        std::cerr << "Error: unable to initialize thallium" << std::endl;
+        std::cerr << "Exception: " << ex.what() << std::endl;
         std::cerr << "Aborting." << std::endl;
         MPI_Abort(MPI_COMM_WORLD, -1);
         return;
     }
-    margo_enable_remote_shutdown(mid);
-
-    /* Get self address as string */
-    hg_addr_t self_addr;
-    margo_addr_self(mid, &self_addr);
-    char self_addr_str[128];
-    hg_size_t self_addr_str_size = 128;
-    margo_addr_to_string(mid, self_addr_str, &self_addr_str_size, self_addr);
+    engine->enable_remote_shutdown();
+    auto self_addr_str  = static_cast<std::string>(engine->self());
 
     if(config->hasDatabase()) {
         /* SDSKV provider initialization */
         for(auto sdskv_provider_id = 0; sdskv_provider_id < config->getNumDatabaseProviders(); sdskv_provider_id++) {
 
-            sdskv::provider* provider = sdskv::provider::create(mid, sdskv_provider_id, SDSKV_ABT_POOL_DEFAULT);
+            sdskv::provider* provider = sdskv::provider::create(
+                    engine->get_margo_instance(), sdskv_provider_id, SDSKV_ABT_POOL_DEFAULT);
 
             for(unsigned i=0 ; i < config->getNumDatabaseTargets(); i++)  {
                 auto db_path = config->getDatabasePath(rank, sdskv_provider_id, i);
@@ -81,12 +82,10 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
         }
     }
 
-    margo_addr_free(mid, self_addr);
-
     hepnos::ConnectionInfoGenerator fileGen(self_addr_str, 
             config->getNumDatabaseProviders(),
             config->getNumStorageProviders());
     fileGen.generateFile(MPI_COMM_WORLD, connection_file);
 
-    margo_wait_for_finalize(mid);
+    engine->wait_for_finalize();
 }

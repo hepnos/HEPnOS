@@ -16,12 +16,12 @@ class DataSet::Impl {
 
         DataStore*   m_datastore;
         uint8_t      m_level;
-        std::string  m_container;
+        std::shared_ptr<std::string>  m_container;
         std::string  m_name;
         RunSet       m_runset;
 
         Impl(DataSet* dataset, DataStore* ds, uint8_t level, 
-                const std::string& container, const std::string& name)
+                const std::shared_ptr<std::string>& container, const std::string& name)
         : m_datastore(ds)
         , m_level(level)
         , m_container(container)

@@ -33,7 +33,7 @@ class SubRun : public KeyValueContainer {
      * @param container Full name of the dataset containing the run.
      * @param run SubRun number.
      */
-    SubRun(DataStore* datastore, uint8_t level, const std::string& container, const SubRunNumber& run);
+    SubRun(DataStore* datastore, uint8_t level, const std::shared_ptr<std::string>& container, const SubRunNumber& run);
 
     public:
 

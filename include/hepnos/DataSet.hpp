@@ -7,6 +7,7 @@
 #define __HEPNOS_DATA_SET_H
 
 #include <memory>
+#include <mpi.h>
 #include <hepnos/Exception.hpp>
 #include <hepnos/RunNumber.hpp>
 #include <hepnos/DataStore.hpp>
@@ -47,7 +48,7 @@ class DataSet : public KeyValueContainer {
      * @param container Full name of the parent DataSet ("" if no parent).
      * @param name Name of the DataSet.
      */
-    DataSet(DataStore* ds, uint8_t level, const std::string& container, const std::string& name);
+    DataSet(DataStore* ds, uint8_t level, const std::shared_ptr<std::string>& container, const std::string& name);
 
 
     /**
@@ -393,6 +394,19 @@ class DataSet : public KeyValueContainer {
      * @return a Run corresponding to the provided run number.
      */
     Run operator[](const RunNumber& runNumber) const;
+
+    /**
+     * @brief Executes a callback for each event in the hierarchy down
+     * from this DataSet. The events are dispatched to members of the comm
+     * MPI communicator.
+     *
+     * The callback should not make MPI calls.
+     *
+     * @param comm MPI communicator.
+     * @param callback Callback that will be called on each item.
+     */
+    void foreach(MPI_Comm comm, 
+            const std::function<void(const Run&, const SubRun&, const Event&)>& callback);
 };
 
 }

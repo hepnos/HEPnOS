@@ -11,9 +11,9 @@
 namespace hepnos {
 
 Event::Event()
-: m_impl(std::make_unique<Impl>(nullptr, 0, "", InvalidEventNumber)) {} 
+: m_impl(std::make_unique<Impl>(nullptr, 0, std::make_shared<std::string>(""), InvalidEventNumber)) {} 
 
-Event::Event(DataStore* ds, uint8_t level, const std::string& container, const EventNumber& rn)
+Event::Event(DataStore* ds, uint8_t level, const std::shared_ptr<std::string>& container, const EventNumber& rn)
 : m_impl(std::make_unique<Impl>(ds, level, container, rn)) { }
 
 Event::Event(const Event& other) {
@@ -46,10 +46,10 @@ Event Event::next() const {
    
     std::vector<std::string> keys;
     size_t s = m_impl->m_datastore->m_impl->nextKeys(
-            m_impl->m_level, m_impl->m_container, 
+            m_impl->m_level, *m_impl->m_container, 
             m_impl->makeKeyStringFromEventNumber(), keys, 1);
     if(s == 0) return Event();
-    size_t i = m_impl->m_container.size()+1;
+    size_t i = m_impl->m_container->size()+1;
     if(keys[0].size() <= i) return Event();
     if(keys[0][i] != '%') return Event();
     std::stringstream strEventNumber;
@@ -107,10 +107,10 @@ bool Event::operator==(const Event& other) const {
     if(!v1 && !v2) return true;
     if(!v1 &&  v2) return false;
     if(v1  && !v2) return false;
-    return m_impl->m_datastore == other.m_impl->m_datastore
-        && m_impl->m_level     == other.m_impl->m_level
-        && m_impl->m_container == other.m_impl->m_container
-        && m_impl->m_event_nr  == other.m_impl->m_event_nr;
+    return m_impl->m_datastore  == other.m_impl->m_datastore
+        && m_impl->m_level      == other.m_impl->m_level
+        && *m_impl->m_container == *other.m_impl->m_container
+        && m_impl->m_event_nr   == other.m_impl->m_event_nr;
 }
 
 bool Event::operator!=(const Event& other) const {

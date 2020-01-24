@@ -32,7 +32,7 @@ class Event : public KeyValueContainer {
      * @param container Full name of the container containing the event.
      * @param n Event number.
      */
-    Event(DataStore* datastore, uint8_t level, const std::string& container, const EventNumber& n);
+    Event(DataStore* datastore, uint8_t level, const std::shared_ptr<std::string>& container, const EventNumber& n);
 
     public:
 

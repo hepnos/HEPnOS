@@ -12,9 +12,9 @@
 namespace hepnos {
 
 Run::Run()
-: m_impl(std::make_unique<Run::Impl>(nullptr, 0, "", InvalidRunNumber)) {} 
+: m_impl(std::make_unique<Run::Impl>(nullptr, 0, std::make_shared<std::string>(""), InvalidRunNumber)) {} 
 
-Run::Run(DataStore* ds, uint8_t level, const std::string& container, const RunNumber& rn)
+Run::Run(DataStore* ds, uint8_t level, const std::shared_ptr<std::string>& container, const RunNumber& rn)
 : m_impl(std::make_unique<Run::Impl>(ds, level, container, rn)) { }
 
 Run::Run(const Run& other) {
@@ -48,10 +48,10 @@ Run Run::next() const {
    
     std::vector<std::string> keys;
     size_t s = m_impl->m_datastore->m_impl->nextKeys(
-            m_impl->m_level, m_impl->m_container, 
+            m_impl->m_level, *m_impl->m_container, 
             m_impl->makeKeyStringFromRunNumber(), keys, 1);
     if(s == 0) return Run();
-    size_t i = m_impl->m_container.size()+1;
+    size_t i = m_impl->m_container->size()+1;
     if(keys[0].size() <= i) return Run();
     if(keys[0][i] != '%') return Run();
     std::stringstream strRunNumber;
@@ -111,7 +111,7 @@ bool Run::operator==(const Run& other) const {
     if(!v1 && v2)  return false;
     return m_impl->m_datastore == other.m_impl->m_datastore
         && m_impl->m_level     == other.m_impl->m_level
-        && m_impl->m_container == other.m_impl->m_container
+        && *m_impl->m_container == *other.m_impl->m_container
         && m_impl->m_run_nr    == other.m_impl->m_run_nr;
 }
 
@@ -130,7 +130,7 @@ const std::string& Run::container() const {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run object");
     }
-    return m_impl->m_container;
+    return *m_impl->m_container;
 }
 
 SubRun Run::createSubRun(const SubRunNumber& subRunNumber) {
@@ -140,7 +140,8 @@ SubRun Run::createSubRun(const SubRunNumber& subRunNumber) {
     std::string parent = m_impl->fullpath();
     std::string subRunStr = SubRun::Impl::makeKeyStringFromSubRunNumber(subRunNumber);
     m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, subRunStr, std::string());
-    return SubRun(m_impl->m_datastore, m_impl->m_level+1, parent, subRunNumber);
+    return SubRun(m_impl->m_datastore, m_impl->m_level+1, 
+            std::make_shared<std::string>(parent), subRunNumber);
 }
 
 SubRun Run::createSubRun(WriteBatch& batch, const SubRunNumber& subRunNumber) {
@@ -150,7 +151,8 @@ SubRun Run::createSubRun(WriteBatch& batch, const SubRunNumber& subRunNumber) {
     std::string parent = m_impl->fullpath();
     std::string subRunStr = SubRun::Impl::makeKeyStringFromSubRunNumber(subRunNumber);
     batch.m_impl->store(m_impl->m_level+1, parent, subRunStr, std::string());
-    return SubRun(m_impl->m_datastore, m_impl->m_level+1, parent, subRunNumber);
+    return SubRun(m_impl->m_datastore, m_impl->m_level+1,
+            std::make_shared<std::string>(parent), subRunNumber);
 }
 
 SubRun Run::operator[](const SubRunNumber& subRunNumber) const {
@@ -171,7 +173,8 @@ Run::iterator Run::find(const SubRunNumber& subRunNumber) {
     if(!b) {
         return m_impl->m_end;
     }
-    return iterator(SubRun(m_impl->m_datastore, m_impl->m_level+1, parent, subRunNumber));
+    return iterator(SubRun(m_impl->m_datastore, m_impl->m_level+1,
+                std::make_shared<std::string>(parent), subRunNumber));
 }
 
 Run::const_iterator Run::find(const SubRunNumber& subRunNumber) const {
@@ -186,7 +189,7 @@ Run::iterator Run::begin() {
     auto level = m_impl->m_level;
     auto datastore = m_impl->m_datastore;
     std::string container = m_impl->fullpath();
-    SubRun subrun(datastore, level+1, container, 0);
+    SubRun subrun(datastore, level+1, std::make_shared<std::string>(container), 0);
     subrun = subrun.next();
 
     if(subrun.valid()) return iterator(subrun);
@@ -230,7 +233,7 @@ Run::iterator Run::lower_bound(const SubRunNumber& lb) {
         } else {
             SubRun subrun(m_impl->m_datastore, 
                     m_impl->m_level+1,
-                    m_impl->fullpath(), 0);
+                    std::make_shared<std::string>(m_impl->fullpath()), 0);
             subrun = subrun.next();
             if(!subrun.valid()) return end();
             else return iterator(subrun);
@@ -243,7 +246,7 @@ Run::iterator Run::lower_bound(const SubRunNumber& lb) {
         }
         SubRun subrun(m_impl->m_datastore,
                 m_impl->m_level+1,
-                m_impl->fullpath(), lb-1);
+                std::make_shared<std::string>(m_impl->fullpath()), lb-1);
         subrun = subrun.next();
         if(!subrun.valid()) return end();
         else return iterator(subrun);
@@ -261,7 +264,7 @@ Run::iterator Run::upper_bound(const SubRunNumber& ub) {
     }
     SubRun subrun(m_impl->m_datastore, 
             m_impl->m_level+1, 
-            m_impl->fullpath(), ub);
+            std::make_shared<std::string>(m_impl->fullpath()), ub);
     subrun = subrun.next();
     if(!subrun.valid()) return end();
     else return iterator(subrun);

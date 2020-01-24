@@ -36,7 +36,8 @@ class Run : public KeyValueContainer {
      * @param container Full name of the dataset containing the run.
      * @param run Run number.
      */
-    Run(DataStore* datastore, uint8_t level, const std::string& container, const RunNumber& run);
+    Run(DataStore* datastore, uint8_t level,
+            const std::shared_ptr<std::string>& container, const RunNumber& run);
 
     public:
 

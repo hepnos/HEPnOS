@@ -5,6 +5,8 @@ if [ -z "$MKTEMP" ] ; then
     exit 1
 fi
 
+timeout_sec=${2:-10}
+
 source test-util.sh
 
 TEST_DIR=`$MKTEMP -d /tmp/hepnos-XXXXXX`
@@ -18,7 +20,7 @@ hepnos_test_start_servers 2 1 20 $CFG_FILE $CON_FILE
 export HEPNOS_CONFIG_FILE=$CON_FILE
 
 # run a connect test client
-run_to 10 $1 $CON_FILE
+run_to ${timeout_sec} $1 $CON_FILE
 if [ $? -ne 0 ]; then
     wait
     exit 1

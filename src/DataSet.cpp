@@ -15,20 +15,20 @@
 namespace hepnos {
 
 DataSet::DataSet()
-: m_impl(std::make_unique<DataSet::Impl>(this, nullptr, 0, "", "")) {}
+: m_impl(std::make_unique<DataSet::Impl>(this, nullptr, 0, std::make_shared<std::string>(""), "")) {}
 
 DataSet::DataSet(DataStore* ds, uint8_t level, const std::string& fullname)
-: m_impl(std::make_unique<DataSet::Impl>(this, ds, level, "", "")) {
+: m_impl(std::make_unique<DataSet::Impl>(this, ds, level, std::make_shared<std::string>(""), "")) {
     size_t p = fullname.find_last_of('/');
     if(p == std::string::npos) {
         m_impl->m_name = fullname;
     } else {
         m_impl->m_name = fullname.substr(p+1);
-        m_impl->m_container = fullname.substr(0, p);
+        m_impl->m_container = std::make_shared<std::string>(fullname.substr(0, p));
     }
 }
 
-DataSet::DataSet(DataStore* ds, uint8_t level, const std::string& container, const std::string& name) 
+DataSet::DataSet(DataStore* ds, uint8_t level, const std::shared_ptr<std::string>& container, const std::string& name) 
 : m_impl(std::make_unique<DataSet::Impl>(this, ds, level, container, name)) {}
 
 DataSet::DataSet(const DataSet& other) {
@@ -85,7 +85,7 @@ DataSet DataSet::next() const {
    
     std::vector<std::string> keys; 
     size_t s = m_impl->m_datastore->m_impl->nextKeys(
-            m_impl->m_level, m_impl->m_container, m_impl->m_name, keys, 1);
+            m_impl->m_level, *m_impl->m_container, m_impl->m_name, keys, 1);
     if(s == 0) return DataSet();
     return DataSet(m_impl->m_datastore, m_impl->m_level, keys[0]);
 }
@@ -136,10 +136,10 @@ bool DataSet::operator==(const DataSet& other) const {
     if(!v1 && !v2) return true;
     if(v1  && !v2) return false;
     if(!v2 &&  v2) return false;
-    return m_impl->m_datastore == other.m_impl->m_datastore
-        && m_impl->m_level     == other.m_impl->m_level
-        && m_impl->m_container == other.m_impl->m_container
-        && m_impl->m_name      == other.m_impl->m_name;
+    return m_impl->m_datastore  == other.m_impl->m_datastore
+        && m_impl->m_level      == other.m_impl->m_level
+        && *m_impl->m_container == *other.m_impl->m_container
+        && m_impl->m_name       == other.m_impl->m_name;
 }
 
 bool DataSet::operator!=(const DataSet& other) const {
@@ -157,7 +157,7 @@ const std::string& DataSet::container() const {
     if(!valid()) {
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
-    return m_impl->m_container;
+    return *m_impl->m_container;
 }
 
 std::string DataSet::fullname() const {
@@ -175,7 +175,7 @@ DataSet DataSet::createDataSet(const std::string& name) {
     }
     std::string parent = fullname();
     m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, name, std::string());
-    return DataSet(m_impl->m_datastore, m_impl->m_level+1, parent, name);
+    return DataSet(m_impl->m_datastore, m_impl->m_level+1, std::make_shared<std::string>(parent), name);
 }
 
 Run DataSet::createRun(const RunNumber& runNumber) {
@@ -185,7 +185,8 @@ Run DataSet::createRun(const RunNumber& runNumber) {
     std::string parent = fullname();
     std::string runStr = Run::Impl::makeKeyStringFromRunNumber(runNumber);
     m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, runStr, std::string());
-    return Run(m_impl->m_datastore, m_impl->m_level+1, parent, runNumber);
+    return Run(m_impl->m_datastore, m_impl->m_level+1,
+            std::make_shared<std::string>(parent), runNumber);
 }
 
 Run DataSet::createRun(WriteBatch& batch, const RunNumber& runNumber) {
@@ -195,7 +196,8 @@ Run DataSet::createRun(WriteBatch& batch, const RunNumber& runNumber) {
     std::string parent = fullname();
     std::string runStr = Run::Impl::makeKeyStringFromRunNumber(runNumber);
     batch.m_impl->store(m_impl->m_level+1, parent, runStr, std::string());
-    return Run(m_impl->m_datastore, m_impl->m_level+1, parent, runNumber);
+    return Run(m_impl->m_datastore, m_impl->m_level+1,
+            std::make_shared<std::string>(parent), runNumber);
 }
 
 DataSet DataSet::operator[](const std::string& datasetName) const {
@@ -241,7 +243,7 @@ DataSet::iterator DataSet::find(const std::string& datasetPath) {
     if(!b) {
         return m_impl->m_datastore->end();
     }
-    return iterator(DataSet(m_impl->m_datastore, level, containerName, datasetName));
+    return iterator(DataSet(m_impl->m_datastore, level, std::make_shared<std::string>(containerName), datasetName));
 }
 
 DataSet::const_iterator DataSet::find(const std::string& datasetName) const {
@@ -255,7 +257,7 @@ DataSet::iterator DataSet::begin() {
     }
     // we use the prefix "&" because we need something that comes after "%"
     // (which represents runs) and is not going to be in a dataset name
-    DataSet ds(m_impl->m_datastore, m_impl->m_level+1, fullname(),"&");
+    DataSet ds(m_impl->m_datastore, m_impl->m_level+1, std::make_shared<std::string>(fullname()),"&");
     ds = ds.next();
     if(ds.valid()) return iterator(ds);
     else return end();
@@ -303,7 +305,7 @@ DataSet::iterator DataSet::lower_bound(const std::string& lb) {
         ++it;
         return it;
     }
-    DataSet ds(m_impl->m_datastore, m_impl->m_level+1, fullname(), lb2);
+    DataSet ds(m_impl->m_datastore, m_impl->m_level+1, std::make_shared<std::string>(fullname()), lb2);
     ds = ds.next();
     if(!ds.valid()) return end();
     else return iterator(ds);
@@ -318,7 +320,7 @@ DataSet::iterator DataSet::upper_bound(const std::string& ub) {
     if(!valid()) {
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
-    DataSet ds(m_impl->m_datastore, m_impl->m_level+1, fullname(), ub);
+    DataSet ds(m_impl->m_datastore, m_impl->m_level+1, std::make_shared<std::string>(fullname()), ub);
     ds = ds.next();
     if(!ds.valid()) return end();
     else return iterator(ds);
@@ -338,6 +340,12 @@ RunSet& DataSet::runs() {
 
 const RunSet& DataSet::runs() const {
     return const_cast<DataSet*>(this)->runs();
+}
+
+void DataSet::foreach(MPI_Comm comm,
+        const std::function<void(const Run&, const SubRun&, const Event&)>& callback)
+{
+    // TODO
 }
 
 }

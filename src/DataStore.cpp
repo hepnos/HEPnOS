@@ -81,7 +81,7 @@ DataStore::iterator DataStore::find(const std::string& datasetPath) {
     if(!b) {
         return m_impl->m_end;
     }
-    return iterator(DataSet(this, level, containerName, datasetName));
+    return iterator(DataSet(this, level, std::make_shared<std::string>(containerName), datasetName));
 }
 
 DataSet DataStore::operator[](const std::string& datasetName) const {
@@ -100,7 +100,7 @@ DataStore::iterator DataStore::begin() {
     if(!m_impl) {
         throw Exception("Calling DataStore member function on an invalid DataStore object");
     }
-    DataSet ds(this, 1, "", "");
+    DataSet ds(this, 1, std::make_shared<std::string>(""), "");
     ds = ds.next();
     if(ds.valid()) return iterator(std::move(ds));
     else return end();
@@ -143,7 +143,7 @@ DataStore::iterator DataStore::lower_bound(const std::string& lb) {
         ++it;
         return it;
     }
-    DataSet ds(this, 1, "", lb2);
+    DataSet ds(this, 1, std::make_shared<std::string>(""), lb2);
     ds = ds.next();
     if(!ds.valid()) return end();
     else return iterator(std::move(ds));
@@ -158,7 +158,7 @@ DataStore::iterator DataStore::upper_bound(const std::string& ub) {
     if(!m_impl) {
         throw Exception("Calling DataStore member function on an invalid DataStore object");
     }
-    DataSet ds(this, 1, "", ub);
+    DataSet ds(this, 1, std::make_shared<std::string>(""), ub);
     ds = ds.next();
     if(!ds.valid()) return end();
     else return iterator(std::move(ds));
@@ -178,7 +178,7 @@ DataSet DataStore::createDataSet(const std::string& name) {
         throw Exception("Invalid character ('/' or '%') in dataset name");
     }
     m_impl->store(1, "", name, std::string());
-    return DataSet(this, 1, "", name);
+    return DataSet(this, 1, std::make_shared<std::string>(""), name);
 }
 
 DataSet DataStore::createDataSet(WriteBatch& batch, const std::string& name) {
@@ -190,7 +190,7 @@ DataSet DataStore::createDataSet(WriteBatch& batch, const std::string& name) {
         throw Exception("Invalid character ('/' or '%') in dataset name");
     }
     batch.m_impl->store(1, "", name, std::string());
-    return DataSet(this, 1, "", name);
+    return DataSet(this, 1, std::make_shared<std::string>(""), name);
 }
 
 void DataStore::shutdown() {

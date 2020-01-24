@@ -4,6 +4,7 @@
  * See COPYRIGHT in top-level directory.
  */
 
+#include <memory>
 #include "hepnos/SubRun.hpp"
 #include "private/SubRunImpl.hpp"
 #include "private/EventImpl.hpp"
@@ -13,9 +14,9 @@
 namespace hepnos {
 
 SubRun::SubRun()
-: m_impl(std::make_unique<Impl>(nullptr, 0, "", InvalidSubRunNumber)) {} 
+: m_impl(std::make_unique<Impl>(nullptr, 0, std::make_shared<std::string>(""), InvalidSubRunNumber)) {} 
 
-SubRun::SubRun(DataStore* ds, uint8_t level, const std::string& container, const SubRunNumber& rn)
+SubRun::SubRun(DataStore* ds, uint8_t level, const std::shared_ptr<std::string>& container, const SubRunNumber& rn)
 : m_impl(std::make_unique<Impl>(ds, level, container, rn)) { }
 
 SubRun::SubRun(const SubRun& other) {   
@@ -50,10 +51,10 @@ SubRun SubRun::next() const {
    
     std::vector<std::string> keys;
     size_t s = m_impl->m_datastore->m_impl->nextKeys(
-            m_impl->m_level, m_impl->m_container, 
+            m_impl->m_level, *m_impl->m_container, 
             m_impl->makeKeyStringFromSubRunNumber(), keys, 1);
     if(s == 0) return SubRun();
-    size_t i = m_impl->m_container.size()+1;
+    size_t i = m_impl->m_container->size()+1;
     if(keys[0].size() <= i) return SubRun();
     if(keys[0][i] != '%') return SubRun();
     std::stringstream strSubRunNumber;
@@ -131,7 +132,8 @@ Event SubRun::createEvent(const EventNumber& eventNumber) {
     std::string parent = m_impl->fullpath();
     std::string eventStr = Event::Impl::makeKeyStringFromEventNumber(eventNumber);
     m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, eventStr, std::string());
-    return Event(m_impl->m_datastore, m_impl->m_level+1, parent, eventNumber);
+    return Event(m_impl->m_datastore, m_impl->m_level+1,
+            std::make_shared<std::string>(parent), eventNumber);
 }
 
 Event SubRun::createEvent(WriteBatch& batch, const EventNumber& eventNumber) {
@@ -141,7 +143,8 @@ Event SubRun::createEvent(WriteBatch& batch, const EventNumber& eventNumber) {
     std::string parent = m_impl->fullpath();
     std::string eventStr = Event::Impl::makeKeyStringFromEventNumber(eventNumber);
     batch.m_impl->store(m_impl->m_level+1, parent, eventStr, std::string());
-    return Event(m_impl->m_datastore, m_impl->m_level+1, parent, eventNumber);
+    return Event(m_impl->m_datastore, m_impl->m_level+1,
+            std::make_shared<std::string>(parent), eventNumber);
 }
 
 Event SubRun::operator[](const EventNumber& eventNumber) const {
@@ -162,7 +165,8 @@ SubRun::iterator SubRun::find(const EventNumber& eventNumber) {
     if(!b) {
         return m_impl->m_end;
     }
-    return iterator(Event(m_impl->m_datastore, m_impl->m_level+1, parent, eventNumber));
+    return iterator(Event(m_impl->m_datastore, m_impl->m_level+1,
+                std::make_shared<std::string>(parent), eventNumber));
 }
 
 SubRun::const_iterator SubRun::find(const EventNumber& eventNumber) const {
@@ -177,7 +181,7 @@ SubRun::iterator SubRun::begin() {
     auto level = m_impl->m_level;
     auto datastore = m_impl->m_datastore;
     std::string container = m_impl->fullpath();
-    Event event(datastore, level+1, container, 0);
+    Event event(datastore, level+1, std::make_shared<std::string>(container), 0);
     event = event.next();
 
     if(event.valid()) return iterator(std::move(event));
@@ -221,7 +225,7 @@ SubRun::iterator SubRun::lower_bound(const EventNumber& lb) {
         } else {
             Event event(m_impl->m_datastore, 
                     m_impl->m_level+1,
-                    m_impl->fullpath(), 0);
+                    std::make_shared<std::string>(m_impl->fullpath()), 0);
             event = event.next();
             if(!event.valid()) return end();
             else return iterator(event);
@@ -234,7 +238,7 @@ SubRun::iterator SubRun::lower_bound(const EventNumber& lb) {
         }
         Event event(m_impl->m_datastore,
                 m_impl->m_level+1,
-                m_impl->fullpath(), lb-1);
+                std::make_shared<std::string>(m_impl->fullpath()), lb-1);
         event = event.next();
         if(!event.valid()) return end();
         else return iterator(event);
@@ -252,7 +256,7 @@ SubRun::iterator SubRun::upper_bound(const EventNumber& ub) {
     }
     Event event(m_impl->m_datastore, 
             m_impl->m_level+1, 
-            m_impl->fullpath(), ub);
+            std::make_shared<std::string>(m_impl->fullpath()), ub);
     event = event.next();
     if(!event.valid()) return end();
     else return iterator(event);
