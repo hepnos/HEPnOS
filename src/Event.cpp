@@ -51,12 +51,8 @@ Event Event::next() const {
     if(s == 0) return Event();
     size_t i = m_impl->m_container->size()+1;
     if(keys[0].size() <= i) return Event();
-    if(keys[0][i] != '%') return Event();
-    std::stringstream strEventNumber;
-    strEventNumber << std::hex << keys[0].substr(i+1);
-    EventNumber n;
-    strEventNumber >> n;
-
+    EventNumber n = Impl::parseEventNumberFromKeyString(&keys[0][i]);
+    if(n == InvalidEventNumber) return Event();
     return Event(m_impl->m_datastore, m_impl->m_level, m_impl->m_container, n);
 }
 

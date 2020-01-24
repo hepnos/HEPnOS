@@ -56,12 +56,8 @@ SubRun SubRun::next() const {
     if(s == 0) return SubRun();
     size_t i = m_impl->m_container->size()+1;
     if(keys[0].size() <= i) return SubRun();
-    if(keys[0][i] != '%') return SubRun();
-    std::stringstream strSubRunNumber;
-    strSubRunNumber << std::hex << keys[0].substr(i+1);
-    SubRunNumber rn;
-    strSubRunNumber >> rn;
-
+    SubRunNumber rn = Impl::parseSubRunNumberFromKeyString(&keys[0][i]);
+    if(rn == InvalidSubRunNumber) return SubRun();
     return SubRun(m_impl->m_datastore, m_impl->m_level, m_impl->m_container, rn);
 }
 

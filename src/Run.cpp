@@ -53,12 +53,8 @@ Run Run::next() const {
     if(s == 0) return Run();
     size_t i = m_impl->m_container->size()+1;
     if(keys[0].size() <= i) return Run();
-    if(keys[0][i] != '%') return Run();
-    std::stringstream strRunNumber;
-    strRunNumber << std::hex << keys[0].substr(i+1);
-    RunNumber rn;
-    strRunNumber >> rn;
-
+    RunNumber rn = Impl::parseRunNumberFromKeyString(&keys[0][i]);
+    if(rn == InvalidRunNumber) return Run();
     return Run(m_impl->m_datastore, m_impl->m_level, m_impl->m_container, rn);
 }
 
