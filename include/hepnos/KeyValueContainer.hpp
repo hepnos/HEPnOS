@@ -144,7 +144,6 @@ class KeyValueContainer {
         }
         try {
             std::stringstream ss(buffer);
-            //boost::archive::binary_iarchive ia(ss);
             InputArchive ia(getDataStore(), ss);
             ia >> value;
         } catch(...) {
@@ -162,7 +161,7 @@ class KeyValueContainer {
         std::stringstream ss_key;
         ss_key << key << "#" << demangle<V>();
         key_str = std::move(ss_key.str());
-        boost::archive::binary_oarchive oa(ss_value);
+        boost::archive::binary_oarchive oa(ss_value, boost::archive::archive_flags::no_header);
         try {
             oa << value;
         } catch(...) {

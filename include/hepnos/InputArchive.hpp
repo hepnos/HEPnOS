@@ -36,7 +36,7 @@ class InputArchive : public iarchive {
 
     template<typename ... Args>
     InputArchive(DataStore* datastore, Args&& ... args)
-    : iarchive(std::forward<Args>(args)..., 0)
+    : iarchive(std::forward<Args>(args)..., boost::archive::archive_flags::no_header)
     , m_datastore(datastore) {}
 
     DataStore* getDataStore() const {
