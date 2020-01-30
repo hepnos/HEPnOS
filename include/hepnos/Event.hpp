@@ -109,10 +109,8 @@ class Event : public KeyValueContainer {
      *
      * @return a valid ProductID if the key did not already exist, an invalid one otherwise.
      */
-    ProductID storeRawData(const std::string& key, const std::string& value) override;
-    ProductID storeRawData(std::string&& key, std::string&& value) override;
-    ProductID storeRawData(WriteBatch& batch, const std::string& key, const std::string& value) override;
-    ProductID storeRawData(WriteBatch& batch, std::string&& key, std::string&& value) override;
+    ProductID storeRawData(const std::string& key, const char* value, size_t vsize) override;
+    ProductID storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) override;
 
     /**
      * @brief Loads raw key/value data from this Event.
@@ -123,6 +121,7 @@ class Event : public KeyValueContainer {
      * @return true if the key exists, false otherwise.
      */
     bool loadRawData(const std::string& key, std::string& value) const override;
+    bool loadRawData(const std::string& key, char* value, size_t* vsize) const override;
 
     /**
      * @brief Compares this Event with another Event. The Events must point to

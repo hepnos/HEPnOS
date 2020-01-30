@@ -177,7 +177,7 @@ DataSet DataStore::createDataSet(const std::string& name) {
     || name.find('%') != std::string::npos) {
         throw Exception("Invalid character ('/' or '%') in dataset name");
     }
-    m_impl->store(1, "", name, std::string());
+    m_impl->store(1, "", name);
     return DataSet(this, 1, std::make_shared<std::string>(""), name);
 }
 
@@ -189,7 +189,7 @@ DataSet DataStore::createDataSet(WriteBatch& batch, const std::string& name) {
     || name.find('%') != std::string::npos) {
         throw Exception("Invalid character ('/' or '%') in dataset name");
     }
-    batch.m_impl->store(1, "", name, std::string());
+    batch.m_impl->store(1, "", name);
     return DataSet(this, 1, std::make_shared<std::string>(""), name);
 }
 
@@ -207,6 +207,13 @@ bool DataStore::loadRawProduct(const ProductID& productID, std::string& buffer) 
         throw Exception("Calling DataStore member function on an invalid DataStore object");
     }
     return m_impl->load(productID.m_level, productID.m_containerName, productID.m_objectName, buffer);
+}
+
+bool DataStore::loadRawProduct(const ProductID& productID, char* data, size_t* size) {
+    if(!m_impl) {
+        throw Exception("Calling DataStore member function on an invalid DataStore object");
+    }
+    return m_impl->load(productID.m_level, productID.m_containerName, productID.m_objectName, data, size);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////

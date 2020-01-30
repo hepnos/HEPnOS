@@ -94,32 +94,20 @@ bool DataSet::valid() const {
     return m_impl && m_impl->m_datastore; 
 }
 
-ProductID DataSet::storeRawData(const std::string& key, const std::string& buffer) {
+ProductID DataSet::storeRawData(const std::string& key, const char* value, size_t vsize) {
     if(!valid()) {
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
     // forward the call to the datastore's store function
-    return m_impl->m_datastore->m_impl->store(0, fullname(), key, buffer);
+    return m_impl->m_datastore->m_impl->store(0, fullname(), key, value, vsize);
 }
 
-ProductID DataSet::storeRawData(std::string&& key, std::string&& buffer) {
-    return storeRawData(key, buffer); // will call the function above
-}
-
-ProductID DataSet::storeRawData(WriteBatch& batch, const std::string& key, const std::string& buffer) {
+ProductID DataSet::storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) {
     if(!valid()) {
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
     // forward the call to the datastore's store function
-    return batch.m_impl->store(0, fullname(), key, buffer);
-}
-
-ProductID DataSet::storeRawData(WriteBatch& batch, std::string&& key, std::string&& buffer) {
-    if(!valid()) {
-        throw Exception("Calling DataSet member function on an invalid DataSet");
-    }
-    // forward the call to the datastore's store function
-    return batch.m_impl->store(0, fullname(), std::move(key), std::move(buffer));
+    return batch.m_impl->store(0, fullname(), key, value, vsize);
 }
 
 bool DataSet::loadRawData(const std::string& key, std::string& buffer) const {
@@ -128,6 +116,14 @@ bool DataSet::loadRawData(const std::string& key, std::string& buffer) const {
     }
     // forward the call to the datastore's load function
     return m_impl->m_datastore->m_impl->load(0, fullname(), key, buffer);
+}
+
+bool DataSet::loadRawData(const std::string& key, char* value, size_t* vsize) const {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
+    // forward the call to the datastore's load function
+    return m_impl->m_datastore->m_impl->load(0, fullname(), key, value, vsize);
 }
 
 bool DataSet::operator==(const DataSet& other) const {
@@ -174,7 +170,7 @@ DataSet DataSet::createDataSet(const std::string& name) {
         throw Exception("Invalid character '/' or '%' in dataset name");
     }
     std::string parent = fullname();
-    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, name, std::string());
+    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, name);
     return DataSet(m_impl->m_datastore, m_impl->m_level+1, std::make_shared<std::string>(parent), name);
 }
 
@@ -184,7 +180,7 @@ Run DataSet::createRun(const RunNumber& runNumber) {
     }
     std::string parent = fullname();
     std::string runStr = Run::Impl::makeKeyStringFromRunNumber(runNumber);
-    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, runStr, std::string());
+    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, runStr);
     return Run(m_impl->m_datastore, m_impl->m_level+1,
             std::make_shared<std::string>(parent), runNumber);
 }
@@ -195,7 +191,7 @@ Run DataSet::createRun(WriteBatch& batch, const RunNumber& runNumber) {
     }
     std::string parent = fullname();
     std::string runStr = Run::Impl::makeKeyStringFromRunNumber(runNumber);
-    batch.m_impl->store(m_impl->m_level+1, parent, runStr, std::string());
+    batch.m_impl->store(m_impl->m_level+1, parent, runStr);
     return Run(m_impl->m_datastore, m_impl->m_level+1,
             std::make_shared<std::string>(parent), runNumber);
 }

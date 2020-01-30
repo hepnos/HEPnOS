@@ -61,32 +61,20 @@ bool Event::valid() const {
 
 }
 
-ProductID Event::storeRawData(const std::string& key, const std::string& buffer) {
+ProductID Event::storeRawData(const std::string& key, const char* value, size_t vsize) {
     if(!valid()) {
         throw Exception("Calling Event member function on an invalid Event object");
     }
     // forward the call to the datastore's store function
-    return m_impl->m_datastore->m_impl->store(0, m_impl->fullpath(), key, buffer);
+    return m_impl->m_datastore->m_impl->store(0, m_impl->fullpath(), key, value, vsize);
 }
 
-ProductID Event::storeRawData(std::string&& key, std::string&& buffer) {
-    return storeRawData(key, buffer); // call the above function
-}
-
-ProductID Event::storeRawData(WriteBatch& batch, const std::string& key, const std::string& buffer) {
+ProductID Event::storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) {
     if(!valid()) {
         throw Exception("Calling Event member function on an invalid Event object");
     }
     // forward the call to the datastore's store function
-    return batch.m_impl->store(0, m_impl->fullpath(), key, buffer);
-}
-
-ProductID Event::storeRawData(WriteBatch& batch, std::string&& key, std::string&& buffer) {
-    if(!valid()) {
-        throw Exception("Calling Event member function on an invalid Event object");
-    }
-    // forward the call to the datastore's store function
-    return batch.m_impl->store(0, m_impl->fullpath(), std::move(key), std::move(buffer));
+    return batch.m_impl->store(0, m_impl->fullpath(), key, value, vsize);
 }
 
 bool Event::loadRawData(const std::string& key, std::string& buffer) const {
@@ -95,6 +83,14 @@ bool Event::loadRawData(const std::string& key, std::string& buffer) const {
     }
     // forward the call to the datastore's load function
     return m_impl->m_datastore->m_impl->load(0, m_impl->fullpath(), key, buffer);
+}
+
+bool Event::loadRawData(const std::string& key, char* value, size_t* vsize) const {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
+    // forward the call to the datastore's load function
+    return m_impl->m_datastore->m_impl->load(0, m_impl->fullpath(), key, value, vsize);
 }
 
 bool Event::operator==(const Event& other) const {

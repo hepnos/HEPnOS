@@ -63,32 +63,20 @@ bool Run::valid() const {
 
 }
 
-ProductID Run::storeRawData(const std::string& key, const std::string& buffer) {
+ProductID Run::storeRawData(const std::string& key, const char* value, size_t vsize) {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run object");
     }
     // forward the call to the datastore's store function
-    return m_impl->m_datastore->m_impl->store(0, m_impl->fullpath(), key, buffer);
+    return m_impl->m_datastore->m_impl->store(0, m_impl->fullpath(), key, value, vsize);
 }
 
-ProductID Run::storeRawData(std::string&& key, std::string&& buffer) {
-    return storeRawData(key, buffer); // calls the above function
-}
-
-ProductID Run::storeRawData(WriteBatch& batch, const std::string& key, const std::string& buffer) {
+ProductID Run::storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run object");
     }
     // forward the call to the datastore's store function
-    return batch.m_impl->store(0, m_impl->fullpath(), key, buffer);
-}
-
-ProductID Run::storeRawData(WriteBatch& batch, std::string&& key, std::string&& buffer) {
-    if(!valid()) {
-        throw Exception("Calling Run member function on an invalid Run object");
-    }
-    // forward the call to the datastore's store function
-    return batch.m_impl->store(0, m_impl->fullpath(), std::move(key), std::move(buffer));
+    return batch.m_impl->store(0, m_impl->fullpath(), key, value, vsize);
 }
 
 bool Run::loadRawData(const std::string& key, std::string& buffer) const {
@@ -97,6 +85,14 @@ bool Run::loadRawData(const std::string& key, std::string& buffer) const {
     }
     // forward the call to the datastore's load function
     return m_impl->m_datastore->m_impl->load(0, m_impl->fullpath(), key, buffer);
+}
+
+bool Run::loadRawData(const std::string& key, char* value, size_t* vsize) const {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
+    // forward the call to the datastore's load function
+    return m_impl->m_datastore->m_impl->load(0, m_impl->fullpath(), key, value, vsize);
 }
 
 bool Run::operator==(const Run& other) const {
@@ -135,7 +131,7 @@ SubRun Run::createSubRun(const SubRunNumber& subRunNumber) {
     }
     std::string parent = m_impl->fullpath();
     std::string subRunStr = SubRun::Impl::makeKeyStringFromSubRunNumber(subRunNumber);
-    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, subRunStr, std::string());
+    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, subRunStr);
     return SubRun(m_impl->m_datastore, m_impl->m_level+1, 
             std::make_shared<std::string>(parent), subRunNumber);
 }
@@ -146,7 +142,7 @@ SubRun Run::createSubRun(WriteBatch& batch, const SubRunNumber& subRunNumber) {
     }
     std::string parent = m_impl->fullpath();
     std::string subRunStr = SubRun::Impl::makeKeyStringFromSubRunNumber(subRunNumber);
-    batch.m_impl->store(m_impl->m_level+1, parent, subRunStr, std::string());
+    batch.m_impl->store(m_impl->m_level+1, parent, subRunStr);
     return SubRun(m_impl->m_datastore, m_impl->m_level+1,
             std::make_shared<std::string>(parent), subRunNumber);
 }

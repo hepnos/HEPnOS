@@ -330,6 +330,13 @@ class DataStore {
      * @return true if the data was loaded successfuly, false otherwise.
      */
     bool loadRawProduct(const ProductID& productID, std::string& buffer);
+    bool loadRawProduct(const ProductID& productID, char* value, size_t* value_size);
+
+    template<typename T>
+    bool loadProductImpl(const ProductID& productID, T& t, const std::integral_constant<bool, false>&);
+    template<typename T>
+    bool loadProductImpl(const ProductID& productID, T& t, const std::integral_constant<bool, true>&);
+
 };
 
 class DataStore::const_iterator {
@@ -574,6 +581,11 @@ Ptr<T,C> DataStore::makePtr(const ProductID& productID, std::size_t index) {
 
 template<typename T>
 bool DataStore::loadProduct(const ProductID& productID, T& t) {
+    return loadProductImpl(productID, t, std::is_pod<T>());
+}
+
+template<typename T>
+bool DataStore::loadProductImpl(const ProductID& productID, T& t, const std::integral_constant<bool, false>&) {
     std::string buffer;
     if(!loadRawProduct(productID, buffer)) {
         return false;
@@ -587,6 +599,16 @@ bool DataStore::loadProduct(const ProductID& productID, T& t) {
         throw Exception("Exception occured during serialization");
     }
     return true;
+}
+
+template<typename T>
+bool DataStore::loadProductImpl(const ProductID& productID, T& t, const std::integral_constant<bool, true>&) {
+    size_t value_size = sizeof(t);
+    if(loadRawProduct(productID, reinterpret_cast<char*>(&t), &value_size)) {
+        return value_size == sizeof(t);
+    } else {
+        return false;
+    }
 }
 
 }

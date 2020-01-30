@@ -67,17 +67,25 @@ class KeyValueContainer {
      * This function is virtual and must be overloaded in the child class.
      *
      * @param key Key
-     * @param buffer Value
+     * @param value Value pointer
+     * @param vsize Value size (in bytes)
      *
      * @return A valid ProductID if the key did not already exist, an invalid one otherwise.
      */
-    virtual ProductID storeRawData(const std::string& key, const std::string& value) = 0;
+    virtual ProductID storeRawData(const std::string& key, const char* value, size_t vsize) = 0;
 
-    virtual ProductID storeRawData(std::string&& key, std::string&& value) = 0;
-
-    virtual ProductID storeRawData(WriteBatch& batch, const std::string& key, const std::string& value) = 0;
-
-    virtual ProductID storeRawData(WriteBatch& batch, std::string&& key, std::string&& value) = 0;
+    /**
+     * @brief Stores raw key/value data in a WriteBatch.
+     * This function is virtual and must be overloaded in the child class.
+     *
+     * @param batch Batch in which to write.
+     * @param key Key
+     * @param value Value pointer
+     * @param vsize Value size (in bytes)
+     *
+     * @return 
+     */
+    virtual ProductID storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) = 0;
 
     /**
      * @brief Loads raw key/value data from this KeyValueContainer.
@@ -89,6 +97,8 @@ class KeyValueContainer {
      * @return true if the key exists, false otherwise.
      */
     virtual bool loadRawData(const std::string& key, std::string& buffer) const = 0;
+
+    virtual bool loadRawData(const std::string& key, char* value, size_t* vsize) const = 0;
 
     /**
      * @brief Stores a key/value pair into the KeyValueContainer.
@@ -107,16 +117,12 @@ class KeyValueContainer {
      */
     template<typename K, typename V>
     ProductID store(const K& key, const V& value) {
-        std::string key_str, val_str;
-        serializeKeyValue(key, value, key_str, val_str);
-        return storeRawData(std::move(key_str), std::move(val_str));
+        return storeImpl(key, value, std::is_pod<V>());
     }
 
     template<typename K, typename V>
     ProductID store(WriteBatch& batch, const K& key, const V& value) {
-        std::string key_str, val_str;
-        serializeKeyValue(key, value, key_str, val_str);
-        return storeRawData(batch, std::move(key_str), std::move(val_str));
+        return storeImpl(batch, key, value, std::is_pod<V>());
     }
 
     /**
@@ -136,6 +142,59 @@ class KeyValueContainer {
      */
     template<typename K, typename V>
     bool load(const K& key, V& value) const {
+        return loadImpl(key, value, std::is_pod<V>());
+    }
+
+    private:
+
+    template<typename K, typename V>
+    ProductID storeImpl(const K& key, const V& value,
+            const std::integral_constant<bool, false>&) {
+        std::string key_str, val_str;
+        serializeKeyValue(key, value, key_str, val_str);
+        return storeRawData(key_str, val_str.data(), val_str.size());
+    }
+
+    template<typename K, typename V>
+    ProductID storeImpl(WriteBatch& batch, const K& key, const V& value,
+            const std::integral_constant<bool, false>&) {
+        std::string key_str, val_str;
+        serializeKeyValue(key, value, key_str, val_str);
+        return storeRawData(batch, key_str, val_str.data(), val_str.size());
+    }
+
+    template<typename K, typename V>
+    ProductID storeImpl(const K& key, const V& value,
+            const std::integral_constant<bool, true>&) {
+        std::string key_str;
+        serializeKeyValue(key, value, key_str);
+        return storeRawData(key_str, reinterpret_cast<const char*>(&value), sizeof(value));
+    }
+
+    template<typename K, typename V>
+    ProductID storeImpl(WriteBatch& batch, const K& key, const V& value,
+            const std::integral_constant<bool, true>&) {
+        std::string key_str;
+        serializeKeyValue(key, value, key_str);
+        return storeRawData(batch, key_str, reinterpret_cast<const char*>(&value), sizeof(value));
+    }
+
+    template<typename K, typename V>
+    bool loadImpl(const K& key, V& value,
+            const std::integral_constant<bool, true>&) const {
+        std::string buffer;
+        std::stringstream ss_key;
+        ss_key << key << "#" << demangle<V>();
+        size_t vsize = sizeof(value);
+        if(!loadRawData(ss_key.str(), reinterpret_cast<char*>(&value), &vsize)) {
+            return false;
+        }
+        return vsize == sizeof(value);
+    }
+
+    template<typename K, typename V>
+    bool loadImpl(const K& key, V& value,
+            const std::integral_constant<bool, false>&) const {
         std::string buffer;
         std::stringstream ss_key;
         ss_key << key << "#" << demangle<V>();
@@ -152,15 +211,11 @@ class KeyValueContainer {
         return true;
     }
 
-    private:
-
     template<typename K, typename V>
     static void serializeKeyValue(const K& key, const V& value,
             std::string& key_str, std::string& value_str) {
+        serializeKeyValue(key, value, key_str);
         std::stringstream ss_value;
-        std::stringstream ss_key;
-        ss_key << key << "#" << demangle<V>();
-        key_str = std::move(ss_key.str());
         boost::archive::binary_oarchive oa(ss_value, boost::archive::archive_flags::no_header);
         try {
             oa << value;
@@ -168,6 +223,13 @@ class KeyValueContainer {
             throw Exception("Exception occured during serialization");
         }
         value_str = ss_value.str();
+    }
+
+    template<typename K, typename V>
+    static void serializeKeyValue(const K& key, const V& value, std::string& key_str) {
+        std::stringstream ss_key;
+        ss_key << key << "#" << demangle<V>();
+        key_str = std::move(ss_key.str());
     }
 };
 

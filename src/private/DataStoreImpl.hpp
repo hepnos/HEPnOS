@@ -208,6 +208,29 @@ class DataStore::Impl {
         return true;
     }
 
+    bool load(uint8_t level, const std::string& containerName,
+            const std::string& objectName, char* value, size_t* vsize) const {
+        int ret;
+        // build key
+        auto key = buildKey(level, containerName, objectName);
+        // find out which DB to access
+        long unsigned sdskv_db_idx = computeDbIndex(level, containerName, key);
+        // make corresponding datastore entry
+        auto& db = m_databases[sdskv_db_idx];
+        // read the value
+        try {
+            db.get(key.data(), key.size(), value, vsize);
+        } catch(sdskv::exception& ex) {
+            if(ex.error() == SDSKV_ERR_UNKNOWN_KEY)
+                return false;
+            else if(ex.error() == SDSKV_ERR_SIZE)
+                return false;
+            else
+                throw Exception("Error occured when calling sdskv::database::get (SDSKV error="+std::to_string(ex.error())+")");
+        }
+        return true;
+    }
+
     bool exists(uint8_t level, const std::string& containerName,
             const std::string& objectName) const {
         int ret;
@@ -226,7 +249,7 @@ class DataStore::Impl {
     }
 
     ProductID store(uint8_t level, const std::string& containerName,
-            const std::string& objectName, const std::string& data) {
+            const std::string& objectName, const char* data=nullptr, size_t data_size=0) {
         // build full name
         auto key = buildKey(level, containerName, objectName);
         // find out which DB to access
@@ -234,7 +257,7 @@ class DataStore::Impl {
         // Create the product id
         const auto& db = m_databases[sdskv_db_idx];
         try {
-            db.put(key, data);
+            db.put(key.data(), key.size(), data, data_size);
         } catch(sdskv::exception& ex) {
             if(ex.error() == SDSKV_ERR_KEYEXISTS) {
                 return ProductID();
@@ -246,8 +269,8 @@ class DataStore::Impl {
     }
 
     void storeMultiple(unsigned long db_index, 
-            const std::vector<std::string> keys,
-            const std::vector<std::string> values) {
+            const std::vector<std::string>& keys,
+            const std::vector<std::string>& values) {
         // Create the product id
         const auto& db = m_databases[db_index];
         try {

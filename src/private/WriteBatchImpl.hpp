@@ -50,21 +50,15 @@ class WriteBatch::Impl {
         Impl(DataStore* ds)
         : m_datastore(ds) {}
 
-        ProductID store(uint8_t level, const std::string& containerName, const std::string& objectName, const std::string& content) {
+        ProductID store(uint8_t level, const std::string& containerName, const std::string& objectName, const char* content=nullptr, size_t size=0) {
             std::string key = DataStore::Impl::buildKey(level, containerName, objectName);
             auto db_idx = m_datastore->m_impl->computeDbIndex(level, containerName, key);
             auto& e = m_entries[db_idx];
             e.first.push_back(std::move(key));
-            e.second.push_back(content);
-            return ProductID(level, containerName, objectName);
-        }
-
-        ProductID store(uint8_t level, const std::string& containerName, const std::string& objectName, std::string&& content) {
-            std::string key = DataStore::Impl::buildKey(level, containerName, objectName);
-            auto db_idx = m_datastore->m_impl->computeDbIndex(level, containerName, key);
-            auto& e = m_entries[db_idx];
-            e.first.push_back(std::move(key));
-            e.second.push_back(std::move(content));
+            if(content == nullptr)
+                e.second.push_back(std::string());
+            else
+                e.second.push_back(std::string(content, size));
             return ProductID(level, containerName, objectName);
         }
 

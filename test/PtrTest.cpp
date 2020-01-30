@@ -1,4 +1,5 @@
 #include <map>
+#include <type_traits>
 #include <boost/serialization/map.hpp>
 #include "PtrTest.hpp"
 #include "CppUnitAdditionalMacros.hpp"
@@ -34,6 +35,9 @@ void PtrTest::testMakePtr() {
     CPPUNIT_ASSERT(run.valid());
     CPPUNIT_ASSERT(subrun.valid());
     CPPUNIT_ASSERT(event.valid());
+
+    CPPUNIT_ASSERT(!std::is_pod<hepnos::Ptr<TestObjectA>>::value);
+    CPPUNIT_ASSERT(!std::is_pod<hepnos::Ptr<TestObjectB>>::value);
 
     TestObjectA objA;
     objA.x() = 44;
