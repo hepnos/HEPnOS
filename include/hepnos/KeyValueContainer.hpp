@@ -120,9 +120,44 @@ class KeyValueContainer {
         return storeImpl(key, value, std::is_pod<V>());
     }
 
+    /**
+     * @brief Stores a key/value pair into the WriteBatch.
+     * The type of the key should have operator<< available
+     * to stream it into a std::stringstream for the purpose
+     * of converting it into an std::string. The resulting
+     * string must not have the "/", or "%" characters. The
+     * type of the value must be serializable using Boost.
+     *
+     * @tparam K type of the key.
+     * @tparam V type of the value.
+     * @param key Key to store.
+     * @param value Value to store.
+     *
+     * @return true if the key was found. false otherwise.
+     */
     template<typename K, typename V>
     ProductID store(WriteBatch& batch, const K& key, const V& value) {
         return storeImpl(batch, key, value, std::is_pod<V>());
+    }
+
+    /**
+     * @brief Version of store when the value is an std::vector.
+     */
+    template<typename K, typename V>
+    ProductID store(const K& key, const std::vector<V>& value, int start=0, int end=-1) {
+        std::string key_str, val_str;
+        serializeKeyValueVector(std::is_pod<V>(), key, value, key_str, val_str, start, end);
+        return storeRawData(key_str, val_str.data(), val_str.size());
+    }
+
+    /**
+     * @brief Version of store when the value is an std::vector.
+     */
+    template<typename K, typename V>
+    ProductID store(WriteBatch& batch, const K& key, const std::vector<V>& value, int start=0, int end=-1) {
+        std::string key_str, val_str;
+        serializeKeyValueVector(std::is_pod<V>(), key, value, key_str, val_str, start, end);
+        return storeRawData(batch, key_str, val_str.data(), val_str.size());
     }
 
     /**
@@ -145,8 +180,20 @@ class KeyValueContainer {
         return loadImpl(key, value, std::is_pod<V>());
     }
 
+    /**
+     * @brief Version of load for vectors.
+     */
+    template<typename K, typename V>
+    bool load(const K& key, std::vector<V>& value) const {
+        return loadVectorImpl(key, value, std::is_pod<V>());
+    }
+
     private:
 
+    /**
+     * @brief Implementation of the store function when the value is
+     * not an std::vector and not a POD.
+     */
     template<typename K, typename V>
     ProductID storeImpl(const K& key, const V& value,
             const std::integral_constant<bool, false>&) {
@@ -155,6 +202,10 @@ class KeyValueContainer {
         return storeRawData(key_str, val_str.data(), val_str.size());
     }
 
+    /**
+     * @brief Implementation of the store function with WriteBatch
+     * and the value type is not am std::vector and not a POD.
+     */
     template<typename K, typename V>
     ProductID storeImpl(WriteBatch& batch, const K& key, const V& value,
             const std::integral_constant<bool, false>&) {
@@ -163,6 +214,10 @@ class KeyValueContainer {
         return storeRawData(batch, key_str, val_str.data(), val_str.size());
     }
 
+    /**
+     * @brief Implementation of the store function when the value
+     * type is a POD.
+     */
     template<typename K, typename V>
     ProductID storeImpl(const K& key, const V& value,
             const std::integral_constant<bool, true>&) {
@@ -171,6 +226,10 @@ class KeyValueContainer {
         return storeRawData(key_str, reinterpret_cast<const char*>(&value), sizeof(value));
     }
 
+    /**
+     * @brief Implementation of the store function with WriteBatch
+     * when the value type is a POD.
+     */
     template<typename K, typename V>
     ProductID storeImpl(WriteBatch& batch, const K& key, const V& value,
             const std::integral_constant<bool, true>&) {
@@ -179,6 +238,9 @@ class KeyValueContainer {
         return storeRawData(batch, key_str, reinterpret_cast<const char*>(&value), sizeof(value));
     }
 
+    /**
+     * @brief Implementation of the load function when the value type is a POD.
+     */
     template<typename K, typename V>
     bool loadImpl(const K& key, V& value,
             const std::integral_constant<bool, true>&) const {
@@ -192,6 +254,9 @@ class KeyValueContainer {
         return vsize == sizeof(value);
     }
 
+    /**
+     * @brief Implementation of the load function when the value type is not a POD.
+     */
     template<typename K, typename V>
     bool loadImpl(const K& key, V& value,
             const std::integral_constant<bool, false>&) const {
@@ -211,6 +276,61 @@ class KeyValueContainer {
         return true;
     }
 
+    /**
+     * @brief Implementation of the load function when the value type is a vector of POD.
+     */
+    template<typename K, typename V>
+    bool loadVectorImpl(const K& key, std::vector<V>& value,
+            const std::integral_constant<bool, true>&) const {
+        std::string buffer;
+        std::stringstream ss_key;
+        ss_key << key << "#" << demangle<std::vector<V>>();
+        if(!loadRawData(ss_key.str(), buffer)) {
+            return false;
+        }
+        size_t count = 0;
+        if(buffer.size() < sizeof(count)) {
+            return false;
+        }
+        std::memcpy(&count, buffer.data(), sizeof(count));
+        if(buffer.size() != sizeof(count) + count*sizeof(V)) {
+            return false;
+        }
+        value.resize(count);
+        std::memcpy(value.data(), buffer.data()+sizeof(count), count*sizeof(V));
+        return true;
+    }
+
+    /**
+     * @brief Implementation of the load function when the value type is a vector of non-POD.
+     */
+    template<typename K, typename V>
+    bool loadVectorImpl(const K& key, std::vector<V>& value,
+            const std::integral_constant<bool, false>&) const {
+        std::string buffer;
+        std::stringstream ss_key;
+        ss_key << key << "#" << demangle<std::vector<V>>();
+        if(!loadRawData(ss_key.str(), buffer)) {
+            return false;
+        }
+        try {
+            std::stringstream ss(buffer);
+            InputArchive ia(getDataStore(), ss);
+            size_t count = 0;
+            ia >> count;
+            value.resize(count);
+            for(unsigned i=0; i<count; i++) {
+                ia >> value[i];
+            }
+        } catch(...) {
+            throw Exception("Exception occured during serialization");
+        }
+        return true;
+    }
+    /**
+     * @brief Creates the string key based on the provided key
+     * and the type of the value. Serializes the value into a string.
+     */
     template<typename K, typename V>
     static void serializeKeyValue(const K& key, const V& value,
             std::string& key_str, std::string& value_str) {
@@ -225,11 +345,60 @@ class KeyValueContainer {
         value_str = ss_value.str();
     }
 
+    /**
+     * @brief Creates the string key based on the provided key
+     * and the type of the value.
+     */
     template<typename K, typename V>
     static void serializeKeyValue(const K& key, const V& value, std::string& key_str) {
         std::stringstream ss_key;
         ss_key << key << "#" << demangle<V>();
         key_str = std::move(ss_key.str());
+    }
+
+    /**
+     * @brief Version of serializeKeyValue for vectors of non-POD datatypes.
+     */
+    template<typename K, typename V>
+    static void serializeKeyValueVector(const std::integral_constant<bool, false>&,
+            const K& key, const std::vector<V>& value,
+            std::string& key_str, std::string& value_str,
+            int start, int end) {
+        if(end == -1)
+            end = value.size();
+        if(start < 0 || start > end || end > value.size())
+            throw Exception("Invalid range when storing vector");
+        serializeKeyValue(key, value, key_str);
+        std::stringstream ss_value;
+        boost::archive::binary_oarchive oa(ss_value, boost::archive::archive_flags::no_header);
+        try {
+            size_t count = end-start;
+            oa << count;
+            for(auto i = start; i < end; i++)
+                oa << value[i];
+        } catch(...) {
+            throw Exception("Exception occured during serialization");
+        }
+        value_str = ss_value.str();
+    }
+
+    /**
+     * @brief Version of serializeKeyValue for vectors of POD datatypes.
+     */
+    template<typename K, typename V>
+    static void serializeKeyValueVector(const std::integral_constant<bool, true>&,
+            const K& key, const std::vector<V>& value,
+            std::string& key_str, std::string& value_str,
+            int start, int end) {
+        if(end == -1)
+            end = value.size();
+        if(start < 0 || start > end || end > value.size())
+            throw Exception("Invalid range when storing vector");
+        serializeKeyValue(key, value, key_str);
+        size_t count = end-start;
+        value_str.resize(sizeof(count) + count*sizeof(V));
+        std::memcpy(const_cast<char*>(value_str.data()), &count, sizeof(count));
+        std::memcpy(const_cast<char*>(value_str.data())+sizeof(count), &value[start], count*sizeof(V));
     }
 };
 

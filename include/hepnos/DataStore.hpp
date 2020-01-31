@@ -309,6 +309,12 @@ class DataStore {
     bool loadProduct(const ProductID& productID, T& t);
 
     /**
+     * @brief Specialization of loadProduct for vectors.
+     */
+    template<typename T>
+    bool loadProduct(const ProductID& productID, std::vector<T>& t);
+
+    /**
      * @brief Shuts down the HEPnOS service.
      */
     void shutdown();
@@ -337,6 +343,10 @@ class DataStore {
     template<typename T>
     bool loadProductImpl(const ProductID& productID, T& t, const std::integral_constant<bool, true>&);
 
+    template<typename T>
+    bool loadProductImpl(const ProductID& productID, std::vector<T>& t, const std::integral_constant<bool, false>&);
+    template<typename T>
+    bool loadProductImpl(const ProductID& productID, std::vector<T>& t, const std::integral_constant<bool, true>&);
 };
 
 class DataStore::const_iterator {
@@ -585,13 +595,17 @@ bool DataStore::loadProduct(const ProductID& productID, T& t) {
 }
 
 template<typename T>
+bool DataStore::loadProduct(const ProductID& productID, std::vector<T>& t) {
+    return loadProductImpl(productID, t, std::is_pod<T>());
+}
+
+template<typename T>
 bool DataStore::loadProductImpl(const ProductID& productID, T& t, const std::integral_constant<bool, false>&) {
     std::string buffer;
     if(!loadRawProduct(productID, buffer)) {
         return false;
     }
-    std::string serialized(buffer.begin(), buffer.end());
-    std::stringstream ss(serialized);
+    std::stringstream ss(buffer);
     InputArchive ia(this, ss);
     try {
         ia >> t;
@@ -609,6 +623,42 @@ bool DataStore::loadProductImpl(const ProductID& productID, T& t, const std::int
     } else {
         return false;
     }
+}
+
+template<typename T>
+bool DataStore::loadProductImpl(const ProductID& productID, std::vector<T>& t, const std::integral_constant<bool, false>&) {
+    std::string buffer;
+    if(!loadRawProduct(productID, buffer)) {
+        return false;
+    }
+    std::stringstream ss(buffer);
+    InputArchive ia(this, ss);
+    try {
+        size_t count = 0;
+        ia >> count;
+        t.resize(count);
+        for(unsigned i=0; i < count; i++) {
+            ia >> t[i];
+        }
+    } catch(...) {
+        throw Exception("Exception occured during serialization");
+    }
+    return true;
+}
+
+template<typename T>
+bool DataStore::loadProductImpl(const ProductID& productID, std::vector<T>& t, const std::integral_constant<bool, true>&) {
+    std::string buffer;
+    if(!loadRawProduct(productID, buffer)) {
+        return false;
+    }
+    size_t count = 0;
+    if(buffer.size() < sizeof(count)) return false;
+    std::memcpy(&count, buffer.data(), sizeof(count));
+    if(buffer.size() != sizeof(count) + count*sizeof(T)) return false;
+    t.resize(count);
+    std::memcpy(t.data(), buffer.data() + sizeof(count), sizeof(T)*count);
+    return true;
 }
 
 }

@@ -33,6 +33,9 @@ target_link_libraries(EventTest ${CPPUNIT_LIBRARIES} hepnos)
 add_executable(LoadStoreTest LoadStoreTest.cpp HEPnOSTestMain.cpp)
 target_link_libraries(LoadStoreTest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DEPS})
 
+add_executable(LoadStoreVectorsTest LoadStoreVectorsTest.cpp HEPnOSTestMain.cpp)
+target_link_libraries(LoadStoreVectorsTest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DEPS})
+
 add_executable(PtrTest PtrTest.cpp HEPnOSTestMain.cpp)
 target_link_libraries(PtrTest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DEPS})
 
@@ -55,6 +58,7 @@ add_test(NAME RunTest       COMMAND run-test.sh ./RunTest)
 add_test(NAME SubRunTest    COMMAND run-test.sh ./SubRunTest)
 add_test(NAME EventTest     COMMAND run-test.sh ./EventTest)
 add_test(NAME LoadStoreTest COMMAND run-test.sh ./LoadStoreTest)
+add_test(NAME LoadStoreVectorsTest COMMAND run-test.sh ./LoadStoreVectorsTest)
 add_test(NAME WriteBatchTest COMMAND run-test.sh ./WriteBatchTest)
 add_test(NAME PtrTest       COMMAND run-test.sh ./PtrTest)
 add_test(NAME RestartTest   COMMAND run-two-tests.sh ./WriteAndRestartTest ./RestartAndReadTest)
