@@ -167,10 +167,11 @@ static YAML::Node loadAndValidate(const std::string& filename) {
         throw Exception("\"database.type\" field not found in configuration file.");
     }
     std::string db_type = config["database"]["type"].as<std::string>();
-    if(db_type != "map"
+    if(db_type != "null"
+    && db_type != "map"
     && db_type != "ldb"
     && db_type != "bdb") {
-        throw Exception("\"database.type\" field should be \"map\", \"ldb\", or \"bdb\".");
+        throw Exception("\"database.type\" field should be \"null\", \"map\", \"ldb\", or \"bdb\".");
     }
     if(config["storage"]) {
         if(!config["storage"]["path"]) {

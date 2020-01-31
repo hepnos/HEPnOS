@@ -67,6 +67,7 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
                 auto db_path = config->getDatabasePath(rank, sdskv_provider_id, i);
                 auto db_name = config->getDatabaseName(rank, sdskv_provider_id, i);
                 sdskv_db_type_t db_type;
+                if(config->getDatabaseType() == "null") db_type = KVDB_NULL;
                 if(config->getDatabaseType() == "map") db_type = KVDB_MAP;
                 if(config->getDatabaseType() == "ldb") db_type = KVDB_LEVELDB;
                 if(config->getDatabaseType() == "bdb") db_type = KVDB_BERKELEYDB;
