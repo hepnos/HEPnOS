@@ -4,7 +4,7 @@
  * See COPYRIGHT in top-level directory.
  */
 #include "hepnos.hpp"
-#include "private/WriteBatchImpl.hpp"
+#include "WriteBatchImpl.hpp"
 
 namespace hepnos {
 

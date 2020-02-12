@@ -10,8 +10,8 @@
 #include "hepnos/DataStore.hpp"
 #include "hepnos/DataSet.hpp"
 #include "hepnos/WriteBatch.hpp"
-#include "private/DataStoreImpl.hpp"
-#include "private/WriteBatchImpl.hpp"
+#include "DataStoreImpl.hpp"
+#include "WriteBatchImpl.hpp"
 
 namespace hepnos {
 

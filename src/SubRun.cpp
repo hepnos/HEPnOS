@@ -6,10 +6,10 @@
 
 #include <memory>
 #include "hepnos/SubRun.hpp"
-#include "private/SubRunImpl.hpp"
-#include "private/EventImpl.hpp"
-#include "private/DataStoreImpl.hpp"
-#include "private/WriteBatchImpl.hpp"
+#include "SubRunImpl.hpp"
+#include "EventImpl.hpp"
+#include "DataStoreImpl.hpp"
+#include "WriteBatchImpl.hpp"
 
 namespace hepnos {
 

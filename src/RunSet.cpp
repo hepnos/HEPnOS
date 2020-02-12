@@ -8,10 +8,10 @@
 #include <string>
 #include "hepnos/DataSet.hpp"
 #include "hepnos/RunSet.hpp"
-#include "private/DataSetImpl.hpp"
-#include "private/DataStoreImpl.hpp"
-#include "private/RunImpl.hpp"
-#include "private/RunSetImpl.hpp"
+#include "DataSetImpl.hpp"
+#include "DataStoreImpl.hpp"
+#include "RunImpl.hpp"
+#include "RunSetImpl.hpp"
 
 namespace hepnos {
 

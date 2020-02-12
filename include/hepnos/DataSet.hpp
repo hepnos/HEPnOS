@@ -393,19 +393,6 @@ class DataSet : public KeyValueContainer {
      * @return a Run corresponding to the provided run number.
      */
     Run operator[](const RunNumber& runNumber) const;
-
-    /**
-     * @brief Executes a callback for each event in the hierarchy down
-     * from this DataSet. The events are dispatched to members of the comm
-     * MPI communicator.
-     *
-     * The callback should not make MPI calls.
-     *
-     * @param comm MPI communicator.
-     * @param callback Callback that will be called on each item.
-     */
-    void foreach(MPI_Comm comm, 
-            const std::function<void(const Run&, const SubRun&, const Event&)>& callback);
 };
 
 }

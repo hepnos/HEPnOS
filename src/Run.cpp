@@ -4,10 +4,10 @@
  * See COPYRIGHT in top-level directory.
  */
 #include "hepnos/Run.hpp"
-#include "private/RunImpl.hpp"
-#include "private/SubRunImpl.hpp"
-#include "private/DataStoreImpl.hpp"
-#include "private/WriteBatchImpl.hpp"
+#include "RunImpl.hpp"
+#include "SubRunImpl.hpp"
+#include "DataStoreImpl.hpp"
+#include "WriteBatchImpl.hpp"
 
 namespace hepnos {
 

@@ -4,9 +4,9 @@
  * See COPYRIGHT in top-level directory.
  */
 #include "hepnos/Event.hpp"
-#include "private/EventImpl.hpp"
-#include "private/DataStoreImpl.hpp"
-#include "private/WriteBatchImpl.hpp"
+#include "EventImpl.hpp"
+#include "DataStoreImpl.hpp"
+#include "WriteBatchImpl.hpp"
 
 namespace hepnos {
 

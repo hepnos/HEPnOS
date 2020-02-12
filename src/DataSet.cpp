@@ -6,11 +6,11 @@
 #include "hepnos/DataSet.hpp"
 #include "hepnos/Run.hpp"
 #include "hepnos/RunSet.hpp"
-#include "private/RunSetImpl.hpp"
-#include "private/RunImpl.hpp"
-#include "private/DataSetImpl.hpp"
-#include "private/DataStoreImpl.hpp"
-#include "private/WriteBatchImpl.hpp"
+#include "RunSetImpl.hpp"
+#include "RunImpl.hpp"
+#include "DataSetImpl.hpp"
+#include "DataStoreImpl.hpp"
+#include "WriteBatchImpl.hpp"
 
 namespace hepnos {
 
@@ -336,12 +336,6 @@ RunSet& DataSet::runs() {
 
 const RunSet& DataSet::runs() const {
     return const_cast<DataSet*>(this)->runs();
-}
-
-void DataSet::foreach(MPI_Comm comm,
-        const std::function<void(const Run&, const SubRun&, const Event&)>& callback)
-{
-    // TODO
 }
 
 }

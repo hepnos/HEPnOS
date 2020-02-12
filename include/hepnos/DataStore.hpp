@@ -336,15 +336,71 @@ class DataStore {
      * @return true if the data was loaded successfuly, false otherwise.
      */
     bool loadRawProduct(const ProductID& productID, std::string& buffer);
+
+    /**
+     * @brief Loads the raw data corresponding to a product into a buffer.
+     *
+     * @param productID Product id.
+     * @param value Buffer in which to place the raw data.
+     * @param value_size Size of the input buffer, set to size of the actual data after the call.
+     *
+     * @return true if the data was loaded successfuly, false otherwise.
+     */
     bool loadRawProduct(const ProductID& productID, char* value, size_t* value_size);
 
+    /**
+     * @brief Loads the raw data of a product directly into the product itself,
+     * with the product type T not a POD type.
+     *
+     * @tparam T Type of the product.
+     * @param productID Product id.
+     * @param t Product.
+     * @param std::integral_constant type trait indicating T is non-POD.
+     *
+     * @return true if the data was loaded successfuly, false otherwise.
+     */
     template<typename T>
     bool loadProductImpl(const ProductID& productID, T& t, const std::integral_constant<bool, false>&);
+
+    /**
+     * @brief Loads the raw data of a product directly into the product itself,
+     * with the product type T being a POD type.
+     *
+     * @tparam T Type of the product.
+     * @param productID Product id.
+     * @param t Product.
+     * @param std::integral_constant type trait indicating T is POD.
+     *
+     * @return true if the data was loaded successfuly, false otherwise. 
+     */
     template<typename T>
     bool loadProductImpl(const ProductID& productID, T& t, const std::integral_constant<bool, true>&);
 
+    /**
+     * @brief Loads the raw data of a product with the product type being an std::vector
+     * of non-POD type.
+     *
+     * @tparam T Type of vector elements.
+     * @param productID Product id.
+     * @param t Product.
+     * @param std::integral_constant type trait indicating T is non-POD.
+     *
+     * @return true if the data was loaded successfuly, false otherwise.
+     */
     template<typename T>
     bool loadProductImpl(const ProductID& productID, std::vector<T>& t, const std::integral_constant<bool, false>&);
+
+    /**
+     * @brief Loads the raw data of a product with the product type being an std::vector
+     * of POD type.
+     *
+     * @tparam T Type of vector elements.
+     * @param productID Product id.
+     * @param t Product.
+     * @param std::integral_constant type trait indicating T is POD.
+     *
+     * @return true if the data was loaded successfuly, false otherwise.
+     */
     template<typename T>
     bool loadProductImpl(const ProductID& productID, std::vector<T>& t, const std::integral_constant<bool, true>&);
 };
