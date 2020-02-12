@@ -51,7 +51,7 @@ Event Event::next() const {
     if(s == 0) return Event();
     size_t i = m_impl->m_container->size()+1;
     if(keys[0].size() <= i) return Event();
-    EventNumber n = Impl::parseEventNumberFromKeyString(&keys[0][i]);
+    EventNumber n = parseNumberFromKeyString<EventNumber>(&keys[0][i]);
     if(n == InvalidEventNumber) return Event();
     return Event(m_impl->m_datastore, m_impl->m_level, m_impl->m_container, n);
 }

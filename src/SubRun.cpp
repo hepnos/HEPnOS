@@ -56,7 +56,7 @@ SubRun SubRun::next() const {
     if(s == 0) return SubRun();
     size_t i = m_impl->m_container->size()+1;
     if(keys[0].size() <= i) return SubRun();
-    SubRunNumber rn = Impl::parseSubRunNumberFromKeyString(&keys[0][i]);
+    SubRunNumber rn = parseNumberFromKeyString<SubRunNumber>(&keys[0][i]);
     if(rn == InvalidSubRunNumber) return SubRun();
     return SubRun(m_impl->m_datastore, m_impl->m_level, m_impl->m_container, rn);
 }
@@ -122,7 +122,7 @@ Event SubRun::createEvent(const EventNumber& eventNumber) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
     std::string parent = m_impl->fullpath();
-    std::string eventStr = Event::Impl::makeKeyStringFromEventNumber(eventNumber);
+    std::string eventStr = makeKeyStringFromNumber(eventNumber);
     m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, eventStr);
     return Event(m_impl->m_datastore, m_impl->m_level+1,
             std::make_shared<std::string>(parent), eventNumber);
@@ -133,7 +133,7 @@ Event SubRun::createEvent(WriteBatch& batch, const EventNumber& eventNumber) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
     std::string parent = m_impl->fullpath();
-    std::string eventStr = Event::Impl::makeKeyStringFromEventNumber(eventNumber);
+    std::string eventStr = makeKeyStringFromNumber(eventNumber);
     batch.m_impl->store(m_impl->m_level+1, parent, eventStr);
     return Event(m_impl->m_datastore, m_impl->m_level+1,
             std::make_shared<std::string>(parent), eventNumber);
@@ -152,7 +152,7 @@ SubRun::iterator SubRun::find(const EventNumber& eventNumber) {
     }
     int ret;
     std::string parent = m_impl->fullpath();
-    std::string eventStr = Event::Impl::makeKeyStringFromEventNumber(eventNumber);
+    std::string eventStr = makeKeyStringFromNumber(eventNumber);
     bool b = m_impl->m_datastore->m_impl->exists(m_impl->m_level+1, parent, eventStr);
     if(!b) {
         return m_impl->m_end;

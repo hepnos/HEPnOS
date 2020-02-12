@@ -179,7 +179,7 @@ Run DataSet::createRun(const RunNumber& runNumber) {
         throw Exception("Trying to create a Run with InvalidRunNumber");
     }
     std::string parent = fullname();
-    std::string runStr = Run::Impl::makeKeyStringFromRunNumber(runNumber);
+    std::string runStr = makeKeyStringFromNumber(runNumber);
     m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, runStr);
     return Run(m_impl->m_datastore, m_impl->m_level+1,
             std::make_shared<std::string>(parent), runNumber);
@@ -190,7 +190,7 @@ Run DataSet::createRun(WriteBatch& batch, const RunNumber& runNumber) {
         throw Exception("Trying to create a Run with InvalidRunNumber");
     }
     std::string parent = fullname();
-    std::string runStr = Run::Impl::makeKeyStringFromRunNumber(runNumber);
+    std::string runStr = makeKeyStringFromNumber(runNumber);
     batch.m_impl->store(m_impl->m_level+1, parent, runStr);
     return Run(m_impl->m_datastore, m_impl->m_level+1,
             std::make_shared<std::string>(parent), runNumber);

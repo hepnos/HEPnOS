@@ -35,7 +35,7 @@ Run RunSet::operator[](const RunNumber& runNumber) {
 RunSet::iterator RunSet::find(const RunNumber& runNumber) {
     int ret;
     std::string parent = m_impl->m_dataset->fullname();
-    std::string strNum = Run::Impl::makeKeyStringFromRunNumber(runNumber);
+    std::string strNum = makeKeyStringFromNumber(runNumber);
     auto datastore = m_impl->m_dataset->m_impl->m_datastore;
     auto level = m_impl->m_dataset->m_impl->m_level;
     bool b = datastore->m_impl->exists(level+1, parent, strNum);
