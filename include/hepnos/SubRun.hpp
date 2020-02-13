@@ -23,17 +23,13 @@ class SubRun : public KeyValueContainer {
     friend class Run;
 
     class Impl;
-    std::unique_ptr<Impl> m_impl;
+    std::shared_ptr<Impl> m_impl;
 
     /**
      * @brief Constructor.
-     *
-     * @param datastore Pointer to the DataStore managing the underlying data.
-     * @param level Level of nesting.
-     * @param container Full name of the dataset containing the run.
-     * @param run SubRun number.
      */
-    SubRun(DataStore* datastore, uint8_t level, const std::shared_ptr<std::string>& container, const SubRunNumber& run);
+    SubRun(std::shared_ptr<Impl>&& impl);
+    SubRun(const std::shared_ptr<Impl>& impl);
 
     public:
 
@@ -49,14 +45,14 @@ class SubRun : public KeyValueContainer {
      *
      * @param other SubRun to copy.
      */
-    SubRun(const SubRun& other);
+    SubRun(const SubRun& other) = default;
 
     /**
      * @brief Move constructor.
      *
      * @param other SubRun to move.
      */
-    SubRun(SubRun&& other);
+    SubRun(SubRun&& other) = default;
 
     /**
      * @brief Copy-assignment operator.
@@ -65,7 +61,7 @@ class SubRun : public KeyValueContainer {
      *
      * @return Reference to this Run.
      */
-    SubRun& operator=(const SubRun& other);
+    SubRun& operator=(const SubRun& other) = default;
 
     /**
      * @brief Move-assignment operator.
@@ -74,17 +70,17 @@ class SubRun : public KeyValueContainer {
      *
      * @return Reference to this Run.
      */
-    SubRun& operator=(SubRun&& other);
+    SubRun& operator=(SubRun&& other) = default;
 
     /**
      * @brief Destructor.
      */
-    ~SubRun();
+    ~SubRun() = default;
 
     /**
-     * @brief Overrides getDataStore from KeyValueContainer class.
+     * @brief Overrides datastore from KeyValueContainer class.
      */
-    DataStore* getDataStore() const override;
+    DataStore datastore() const override;
 
     /**
      * @brief Returns the next SubRun in the same container,

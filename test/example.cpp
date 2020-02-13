@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
         exit(-1);
     }
 
-    DataStore datastore(argv[1]);
+    DataStore datastore = DataStore::connect(argv[1]);
 
     DataSet ds = datastore.createDataSet("fermilab");
 

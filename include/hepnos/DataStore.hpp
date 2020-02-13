@@ -44,7 +44,7 @@ class DataStore {
      * the name of the configuration file from the environment
      * variable HEPNOS_CONFIG_FILE.
      */
-    DataStore();
+    static DataStore connect();
 
     /**
      * @brief Constructor. Initializes the DataStore using a YAML
@@ -53,24 +53,29 @@ class DataStore {
      *
      * @param configFile Path to a YAML configuration file.
      */
-    DataStore(const std::string& configFile);
+    static DataStore connect(const std::string& configFile);
 
     /**
-     * @brief Copy constructor is deleted.
+     * @brief Default constructor (for an invalid DataStore not yet initialized).
      */
-    DataStore(const DataStore&) = delete;
+    DataStore() = default;
+
+    /**
+     * @brief Copy constructor.
+     */
+    DataStore(const DataStore&) = default;
 
     /**
      * @brief Move constructor.
      *
      * @param other DataStore to move from.
      */
-    DataStore(DataStore&& other);
+    DataStore(DataStore&& other) = default;
 
     /**
-     * @brief Copy-assignment operator. Deleted.
+     * @brief Copy-assignment operator.
      */
-    DataStore& operator=(const DataStore&) = delete;
+    DataStore& operator=(const DataStore&) = default;
 
     /**
      * @brief Move-assignment operator.
@@ -79,12 +84,17 @@ class DataStore {
      *
      * @return This DataStore.
      */
-    DataStore& operator=(DataStore&& other);
+    DataStore& operator=(DataStore&& other) = default;
     
     /**
      * @brief Destructor.
      */
-    ~DataStore();
+    ~DataStore() = default;
+
+    /**
+     * @brief Indicated whether the DataStore is valid (i.e. connected).
+     */
+    bool valid() const;
 
     /**
      * @brief Accesses an existing DataSet using the []
@@ -325,7 +335,15 @@ class DataStore {
      * @brief Implementation of the class (using Pimpl idiom)
      */
     class Impl;
-    std::unique_ptr<Impl> m_impl; /*!< Pointer to implementation */
+    std::shared_ptr<Impl> m_impl; /*!< Pointer to implementation */
+
+    /**
+     * @brief Constructor from a pointer to implementation.
+     *
+     * @param impl
+     */
+    DataStore(std::shared_ptr<Impl>&& impl);
+    DataStore(const std::shared_ptr<Impl>& impl);
 
     /**
      * @brief Loads the raw data corresponding to a product.
@@ -637,12 +655,12 @@ namespace hepnos {
 
 template<typename T>
 Ptr<T> DataStore::makePtr(const ProductID& productID) {
-    return Ptr<T>(this, productID);
+    return Ptr<T>(*this, productID);
 }
 
 template<typename T, typename C = std::vector<T>>
 Ptr<T,C> DataStore::makePtr(const ProductID& productID, std::size_t index) {
-    return Ptr<T,C>(this, productID, index);
+    return Ptr<T,C>(*this, productID, index);
 }
 
 template<typename T>
@@ -662,7 +680,7 @@ bool DataStore::loadProductImpl(const ProductID& productID, T& t, const std::int
         return false;
     }
     std::stringstream ss(buffer);
-    InputArchive ia(this, ss);
+    InputArchive ia(*this, ss);
     try {
         ia >> t;
     } catch(...) {
@@ -688,7 +706,7 @@ bool DataStore::loadProductImpl(const ProductID& productID, std::vector<T>& t, c
         return false;
     }
     std::stringstream ss(buffer);
-    InputArchive ia(this, ss);
+    InputArchive ia(*this, ss);
     try {
         size_t count = 0;
         ia >> count;

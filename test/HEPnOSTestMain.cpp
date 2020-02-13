@@ -5,7 +5,7 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <hepnos.hpp>
 
-hepnos::DataStore* datastore;
+hepnos::DataStore* datastore = nullptr;
 
 int main(int argc, char* argv[])
 {
@@ -15,7 +15,8 @@ int main(int argc, char* argv[])
 
     sleep(1);
     // Create the datastore
-    datastore = new hepnos::DataStore(argv[1]);
+    hepnos::DataStore ds = hepnos::DataStore::connect(argv[1]);
+    datastore = &ds;
 
     // Get the top level suite from the registry
     CppUnit::Test *suite = CppUnit::TestFactoryRegistry::getRegistry().makeTest();
@@ -33,8 +34,7 @@ int main(int argc, char* argv[])
     MPI_Barrier(MPI_COMM_WORLD);
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if(rank == 0) datastore->shutdown();
-    delete datastore;
+    if(rank == 0) ds.shutdown();
 
     MPI_Finalize();
 

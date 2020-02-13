@@ -16,6 +16,7 @@
 #include <hepnos/ProductID.hpp>
 #include <hepnos/Demangle.hpp>
 #include <hepnos/Exception.hpp>
+#include <hepnos/DataStore.hpp>
 
 namespace hepnos {
 
@@ -60,7 +61,7 @@ class KeyValueContainer {
      *
      * @return DataStore.
      */
-    virtual DataStore* getDataStore() const = 0;
+    virtual DataStore datastore() const = 0;
 
     /**
      * @brief Stores raw key/value data in this KeyValueContainer.
@@ -268,7 +269,7 @@ class KeyValueContainer {
         }
         try {
             std::stringstream ss(buffer);
-            InputArchive ia(getDataStore(), ss);
+            InputArchive ia(datastore(), ss);
             ia >> value;
         } catch(...) {
             throw Exception("Exception occured during serialization");
@@ -315,7 +316,7 @@ class KeyValueContainer {
         }
         try {
             std::stringstream ss(buffer);
-            InputArchive ia(getDataStore(), ss);
+            InputArchive ia(datastore(), ss);
             size_t count = 0;
             ia >> count;
             value.resize(count);

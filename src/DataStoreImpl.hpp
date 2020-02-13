@@ -35,7 +35,7 @@ class DataStore::Impl {
     struct ch_placement_instance*             m_chi_sdskv;    // ch-placement instance for SDSKV
     const DataStore::iterator                 m_end;          // iterator for the end() of the DataStore
 
-    Impl(DataStore* parent)
+    Impl()
     : m_mid(MARGO_INSTANCE_NULL)
     , m_chi_sdskv(nullptr)
     , m_end() {}

@@ -9,6 +9,7 @@
 #include <sstream>
 #include <iomanip>
 #include <memory>
+#include "DataStoreImpl.hpp"
 #include "hepnos/Run.hpp"
 #include "NumberUtil.hpp"
 
@@ -18,14 +19,15 @@ class Run::Impl {
 
     public:
 
-        DataStore*                    m_datastore;
-        uint8_t                       m_level;
-        std::shared_ptr<std::string>  m_dataset_name;
-        RunNumber                     m_run_number;
+        std::shared_ptr<DataStore::Impl> m_datastore;
+        uint8_t                          m_level;
+        std::shared_ptr<std::string>     m_dataset_name;
+        RunNumber                        m_run_number;
 
         static iterator m_end;
 
-        Impl(DataStore* ds, uint8_t level,
+        Impl(const std::shared_ptr<DataStore::Impl>& ds,
+             uint8_t level,
              const std::shared_ptr<std::string>& dataset,
              const RunNumber& rn)
         : m_datastore(ds)
@@ -37,8 +39,12 @@ class Run::Impl {
             return makeKeyStringFromNumber(m_run_number);
         }
 
+        std::string container() const {
+            return *m_dataset_name;
+        }
+
         std::string fullpath() const {
-            return *m_dataset_name + std::string("/") + makeKeyStringFromRunNumber();
+            return *m_dataset_name + "/" + makeKeyStringFromRunNumber();
         }
 };
 

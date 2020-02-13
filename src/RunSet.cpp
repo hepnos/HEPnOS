@@ -11,7 +11,6 @@
 #include "DataSetImpl.hpp"
 #include "DataStoreImpl.hpp"
 #include "RunImpl.hpp"
-#include "RunSetImpl.hpp"
 
 namespace hepnos {
 
@@ -19,11 +18,13 @@ namespace hepnos {
 // RunSet implementation
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-RunSet::RunSet(DataSet* ds)
-: m_impl(std::make_unique<RunSet::Impl>(ds)) {
-}
+static RunSet::iterator RunSet_end;
 
-RunSet::~RunSet() {}
+RunSet::RunSet(const std::shared_ptr<Impl>& impl)
+: m_impl(impl) {}
+
+RunSet::RunSet(std::shared_ptr<Impl>&& impl)
+: m_impl(std::move(impl)) {}
 
 Run RunSet::operator[](const RunNumber& runNumber) {
     auto it = find(runNumber);
@@ -32,15 +33,24 @@ Run RunSet::operator[](const RunNumber& runNumber) {
     return std::move(*it);
 }
 
+DataStore RunSet::datastore() const {
+    return DataStore(m_impl->m_datastore);
+}
+
 RunSet::iterator RunSet::find(const RunNumber& runNumber) {
     int ret;
-    std::string parent = m_impl->m_dataset->fullname();
+    std::string parent = m_impl->fullname();
     std::string strNum = makeKeyStringFromNumber(runNumber);
-    auto datastore = m_impl->m_dataset->m_impl->m_datastore;
-    auto level = m_impl->m_dataset->m_impl->m_level;
-    bool b = datastore->m_impl->exists(level+1, parent, strNum);
+    auto datastore = m_impl->m_datastore;
+    auto level = m_impl->m_level;
+    bool b = datastore->exists(level+1, parent, strNum);
     if(!b) return end();
-    return iterator(Run(datastore, level+1, std::make_shared<std::string>(parent), runNumber));
+    return iterator(
+            std::make_shared<Run::Impl>(
+                datastore,
+                level+1,
+                std::make_shared<std::string>(parent),
+                runNumber));
 }
 
 RunSet::const_iterator RunSet::find(const RunNumber& runNumber) const {
@@ -52,10 +62,12 @@ RunSet::iterator RunSet::begin() {
     auto it = find(0);
     if(it != end()) return *it;
 
-    auto ds_level = m_impl->m_dataset->m_impl->m_level;
-    auto datastore = m_impl->m_dataset->m_impl->m_datastore;
-    std::string container = m_impl->m_dataset->fullname();
-    Run run(datastore, ds_level+1, std::make_shared<std::string>(container), 0);
+    auto ds_level = m_impl->m_level;
+    auto datastore = m_impl->m_datastore;
+    std::string container = m_impl->fullname();
+    auto new_run_impl = std::make_shared<Run::Impl>(datastore,
+            ds_level+1, std::make_shared<std::string>(container), 0);
+    Run run(std::move(new_run_impl));
     run = run.next();
 
     if(run.valid()) return iterator(run);
@@ -63,7 +75,7 @@ RunSet::iterator RunSet::begin() {
 }
 
 RunSet::iterator RunSet::end() {
-    return m_impl->m_end;
+    return RunSet_end;
 }
 
 RunSet::const_iterator RunSet::cbegin() const {
@@ -71,7 +83,7 @@ RunSet::const_iterator RunSet::cbegin() const {
 }
 
 RunSet::const_iterator RunSet::cend() const {
-    return m_impl->m_end;
+    return RunSet_end;
 }
 
 RunSet::const_iterator RunSet::begin() const {
@@ -79,7 +91,7 @@ RunSet::const_iterator RunSet::begin() const {
 }
 
 RunSet::const_iterator RunSet::end() const {
-    return m_impl->m_end;
+    return RunSet_end;
 }
 
 RunSet::iterator RunSet::lower_bound(const RunNumber& lb) {
@@ -88,9 +100,10 @@ RunSet::iterator RunSet::lower_bound(const RunNumber& lb) {
         if(it != end()) {
             return it;
         } else {
-            Run run(m_impl->m_dataset->m_impl->m_datastore, 
-                    m_impl->m_dataset->m_impl->m_level+1,
-                    std::make_shared<std::string>(m_impl->m_dataset->fullname()), 0);
+            Run run(std::make_shared<Run::Impl>(
+                    m_impl->m_datastore, 
+                    m_impl->m_level+1,
+                    std::make_shared<std::string>(m_impl->fullname()), 0));
             run = run.next();
             if(!run.valid()) return end();
             else return iterator(run);
@@ -101,9 +114,10 @@ RunSet::iterator RunSet::lower_bound(const RunNumber& lb) {
             ++it;
             return it;
         }
-        Run run(m_impl->m_dataset->m_impl->m_datastore,
-                m_impl->m_dataset->m_impl->m_level+1,
-                std::make_shared<std::string>(m_impl->m_dataset->fullname()), lb-1);
+        Run run(std::make_shared<Run::Impl>(
+                m_impl->m_datastore, 
+                m_impl->m_level+1,
+                std::make_shared<std::string>(m_impl->fullname()), lb-1));
         run = run.next();
         if(!run.valid()) return end();
         else return iterator(run);
@@ -116,9 +130,9 @@ RunSet::const_iterator RunSet::lower_bound(const RunNumber& lb) const {
 }
 
 RunSet::iterator RunSet::upper_bound(const RunNumber& ub) {
-    Run run(m_impl->m_dataset->m_impl->m_datastore, 
-            m_impl->m_dataset->m_impl->m_level+1, 
-            std::make_shared<std::string>(m_impl->m_dataset->fullname()), ub);
+    Run run(std::make_shared<Run::Impl>(m_impl->m_datastore, 
+            m_impl->m_level+1, 
+            std::make_shared<std::string>(m_impl->fullname()), ub));
     run = run.next();
     if(!run.valid()) return end();
     else return iterator(run);

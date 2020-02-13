@@ -30,7 +30,7 @@ class Ptr {
 
     private:
 
-    DataStore*  m_datastore         = nullptr;
+    DataStore   m_datastore;
     ProductID   m_product_id       = ProductID();
     std::size_t m_index            = 0;
     bool        m_is_in_container  = false;
@@ -38,14 +38,14 @@ class Ptr {
     T*          m_data             = nullptr;
     size_t*     m_refcount         = nullptr;
 
-    Ptr(DataStore* datastore, const ProductID& product_id)
+    Ptr(const DataStore& datastore, const ProductID& product_id)
     : m_datastore(datastore)
     , m_product_id(product_id)
     , m_index(0)
     , m_is_in_container(false)
     , m_refcount(new size_t(1)) {}
 
-    Ptr(DataStore* datastore, const ProductID& product_id, std::size_t index)
+    Ptr(const DataStore& datastore, const ProductID& product_id, std::size_t index)
     : m_datastore(datastore)
     , m_product_id(product_id)
     , m_index(index)
@@ -136,7 +136,6 @@ class Ptr {
         m_is_in_container = other.m_is_in_container;
         m_container       = other.m_container;
         m_refcount        = other.m_refcount;
-        other.m_datastore = nullptr;
         other.m_index     = 0;
         other.m_container = nullptr;
         other.m_refcount  = nullptr;
@@ -165,7 +164,6 @@ class Ptr {
                 }
             }
         }
-        m_datastore        = nullptr;
         m_product_id       = ProductID();
         m_index            = 0;
         m_is_in_container  = false;
@@ -182,7 +180,7 @@ class Ptr {
      * underlying service, false otherwise.
      */
     bool valid() const {
-        return m_datastore != nullptr && m_product_id.valid();
+        return m_datastore.valid() && m_product_id.valid();
     }
 
     /**
@@ -268,7 +266,7 @@ class Ptr {
      */
     template<typename Archive>
     void load(Archive& ar, const unsigned int version) {
-        m_datastore = ar.getDataStore();
+        m_datastore = ar.datastore();
         ar & m_product_id;
         ar & m_is_in_container;
         if(m_is_in_container) {
@@ -284,14 +282,14 @@ class Ptr {
     void loadData() {
         if(m_is_in_container) {
             m_container = new C();
-            if(!(m_datastore->loadProduct(m_product_id, *m_container))) {
+            if(!(m_datastore.loadProduct(m_product_id, *m_container))) {
                 throw Exception("Could not load product from DataStore");
             }
             m_data = &((*m_container)[m_index]);
         } else {
             m_data = new T();
             m_container = nullptr;
-            if(!(m_datastore->loadProduct(m_product_id, *m_data))) {
+            if(!(m_datastore.loadProduct(m_product_id, *m_data))) {
                 throw Exception("Could not load product from DataStore");
             }
         }

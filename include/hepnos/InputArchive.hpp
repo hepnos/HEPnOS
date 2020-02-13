@@ -30,16 +30,21 @@ class InputArchive : public iarchive {
 
     private:
 
-    DataStore* m_datastore = nullptr;
+    DataStore m_datastore; 
 
     public:
 
     template<typename ... Args>
-    InputArchive(DataStore* datastore, Args&& ... args)
+    InputArchive(DataStore&& datastore, Args&& ... args)
+    : iarchive(std::forward<Args>(args)..., boost::archive::archive_flags::no_header)
+    , m_datastore(std::move(datastore)) {}
+
+    template<typename ... Args>
+    InputArchive(const DataStore& datastore, Args&& ... args)
     : iarchive(std::forward<Args>(args)..., boost::archive::archive_flags::no_header)
     , m_datastore(datastore) {}
 
-    DataStore* getDataStore() const {
+    DataStore datastore() const {
         return m_datastore;
     }
 

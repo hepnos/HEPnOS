@@ -21,51 +21,49 @@ namespace hepnos {
  */
 class RunSet {
 
-    friend class DataSet::Impl;
     friend class DataSet;
 
     private:
 
     /**
-     * @brief Constructor.
-     *
-     * @param ds DataSet to which this RunSet belongs.
-     */
-    RunSet(DataSet* ds);
-
-    /**
      * @brief Implementation class (used for the Pimpl idiom).
      */
-    class Impl;
+    using Impl = DataSet::Impl;
 
-    std::unique_ptr<Impl> m_impl; /*!< Pointer to implementation. */
+    std::shared_ptr<Impl> m_impl; /*!< Pointer to implementation. */
+
+    /**
+     * @brief Constructor.
+     */
+    RunSet(const std::shared_ptr<Impl>& impl);
+    RunSet(std::shared_ptr<Impl>&& impl);
 
     public:
 
     typedef Run value_type;
 
     /**
-     * @brief Copy-constructor. Deleted.
+     * @brief Copy-constructor.
      *
      * @param other RunSet to copy.
      */
-    RunSet(const RunSet& other) = delete;
+    RunSet(const RunSet& other) = default;
 
     /**
      * @brief Move-constructor. Deleted.
      *
      * @param other RunSet to move.
      */
-    RunSet(RunSet&& other) = delete;
+    RunSet(RunSet&& other) = default;
 
     /**
-     * @brief Copy-assignment operator. Deleted.
+     * @brief Copy-assignment operator.
      *
      * @param other RunSet to copy.
      *
      * @return this.
      */
-    RunSet& operator=(const RunSet& other) = delete;
+    RunSet& operator=(const RunSet& other) = default;
 
     /**
      * @brief Move-assignment operator. Deleted.
@@ -74,15 +72,20 @@ class RunSet {
      *
      * @return this.
      */
-    RunSet& operator=(RunSet&& other) = delete;
+    RunSet& operator=(RunSet&& other) = default;
 
     /**
      * @brief Destructor.
      */
-    ~RunSet();
+    ~RunSet() = default;
 
     class const_iterator;
     class iterator;
+
+    /**
+     * @brief Get the DataStore to which this RunSet belongs.
+     */
+    DataStore datastore() const;
 
     /**
      * @brief Accesses an existing Run using the []

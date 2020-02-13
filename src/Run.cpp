@@ -14,42 +14,26 @@ namespace hepnos {
 Run::iterator Run::Impl::m_end;
 
 Run::Run()
-: m_impl(std::make_unique<Run::Impl>(nullptr, 0, std::make_shared<std::string>(""), InvalidRunNumber)) {} 
+: m_impl(std::make_shared<Impl>(nullptr, 0, std::make_shared<std::string>(""), InvalidRunNumber)) {} 
 
-Run::Run(DataStore* ds, uint8_t level, const std::shared_ptr<std::string>& container, const RunNumber& rn)
-: m_impl(std::make_unique<Run::Impl>(ds, level, container, rn)) { }
+Run::Run(std::shared_ptr<Impl>&& impl)
+: m_impl(std::move(impl)) { }
 
-Run::Run(const Run& other) {
-    if(other.m_impl)
-        m_impl = std::make_unique<Run::Impl>(*other.m_impl);
-}
+Run::Run(const std::shared_ptr<Impl>& impl)
+: m_impl(impl) { }
 
-Run::Run(Run&&) = default;
-
-Run& Run::operator=(const Run& other) {
-    if(this == &other) return *this;
-    if(other.m_impl) {
-        m_impl = std::make_unique<Run::Impl>(*other.m_impl);
-    }
-    return *this;
-}
-
-Run& Run::operator=(Run&&) = default;
-
-Run::~Run() = default; 
-
-DataStore* Run::getDataStore() const {
+DataStore Run::datastore() const {
     if(!valid()) { 
         throw Exception("Calling Run member function on an invalid Run object");
     }
-    return m_impl->m_datastore;
+    return DataStore(m_impl->m_datastore);
 }
 
 Run Run::next() const {
     if(!valid()) return Run();
    
     std::vector<std::string> keys;
-    size_t s = m_impl->m_datastore->m_impl->nextKeys(
+    size_t s = m_impl->m_datastore->nextKeys(
             m_impl->m_level, *m_impl->m_dataset_name, 
             m_impl->makeKeyStringFromRunNumber(), keys, 1);
     if(s == 0) return Run();
@@ -57,8 +41,11 @@ Run Run::next() const {
     if(keys[0].size() <= i) return Run();
     RunNumber rn = parseNumberFromKeyString<RunNumber>(&keys[0][i]);
     if(rn == InvalidRunNumber) return Run();
-    return Run(m_impl->m_datastore, m_impl->m_level,
-               m_impl->m_dataset_name, rn);
+    return Run(std::make_shared<Impl>(
+               m_impl->m_datastore,
+               m_impl->m_level,
+               m_impl->m_dataset_name, 
+               rn));
 }
 
 bool Run::valid() const {
@@ -71,7 +58,7 @@ ProductID Run::storeRawData(const std::string& key, const char* value, size_t vs
         throw Exception("Calling Run member function on an invalid Run object");
     }
     // forward the call to the datastore's store function
-    return m_impl->m_datastore->m_impl->store(0, m_impl->fullpath(), key, value, vsize);
+    return m_impl->m_datastore->store(0, m_impl->fullpath(), key, value, vsize);
 }
 
 ProductID Run::storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) {
@@ -87,7 +74,7 @@ bool Run::loadRawData(const std::string& key, std::string& buffer) const {
         throw Exception("Calling Run member function on an invalid Run object");
     }
     // forward the call to the datastore's load function
-    return m_impl->m_datastore->m_impl->load(0, m_impl->fullpath(), key, buffer);
+    return m_impl->m_datastore->load(0, m_impl->fullpath(), key, buffer);
 }
 
 bool Run::loadRawData(const std::string& key, char* value, size_t* vsize) const {
@@ -95,7 +82,7 @@ bool Run::loadRawData(const std::string& key, char* value, size_t* vsize) const 
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
     // forward the call to the datastore's load function
-    return m_impl->m_datastore->m_impl->load(0, m_impl->fullpath(), key, value, vsize);
+    return m_impl->m_datastore->load(0, m_impl->fullpath(), key, value, vsize);
 }
 
 bool Run::operator==(const Run& other) const {
@@ -135,9 +122,11 @@ SubRun Run::createSubRun(const SubRunNumber& subRunNumber) {
     }
     std::string parent = m_impl->fullpath();
     std::string subRunStr = makeKeyStringFromNumber(subRunNumber);
-    m_impl->m_datastore->m_impl->store(m_impl->m_level+1, parent, subRunStr);
-    return SubRun(m_impl->m_datastore, m_impl->m_level+1, 
-            std::make_shared<std::string>(parent), subRunNumber);
+    m_impl->m_datastore->store(m_impl->m_level+1, parent, subRunStr);
+    auto new_subrun_impl = std::make_shared<SubRun::Impl>(
+            m_impl->m_datastore, m_impl->m_level+1, 
+            m_impl->m_dataset_name, m_impl->m_run_number, subRunNumber);
+    return SubRun(std::move(new_subrun_impl));
 }
 
 SubRun Run::createSubRun(WriteBatch& batch, const SubRunNumber& subRunNumber) {
@@ -147,8 +136,10 @@ SubRun Run::createSubRun(WriteBatch& batch, const SubRunNumber& subRunNumber) {
     std::string parent = m_impl->fullpath();
     std::string subRunStr = makeKeyStringFromNumber(subRunNumber);
     batch.m_impl->store(m_impl->m_level+1, parent, subRunStr);
-    return SubRun(m_impl->m_datastore, m_impl->m_level+1,
-            std::make_shared<std::string>(parent), subRunNumber);
+    auto new_subrun_impl = std::make_shared<SubRun::Impl>(
+            m_impl->m_datastore, m_impl->m_level+1, 
+            m_impl->m_dataset_name, m_impl->m_run_number, subRunNumber);
+    return SubRun(std::move(new_subrun_impl));
 }
 
 SubRun Run::operator[](const SubRunNumber& subRunNumber) const {
@@ -165,12 +156,14 @@ Run::iterator Run::find(const SubRunNumber& subRunNumber) {
     int ret;
     std::string parent = m_impl->fullpath();
     std::string subRunStr = makeKeyStringFromNumber(subRunNumber);
-    bool b = m_impl->m_datastore->m_impl->exists(m_impl->m_level+1, parent, subRunStr);
+    bool b = m_impl->m_datastore->exists(m_impl->m_level+1, parent, subRunStr);
     if(!b) {
         return m_impl->m_end;
     }
-    return iterator(SubRun(m_impl->m_datastore, m_impl->m_level+1,
-                std::make_shared<std::string>(parent), subRunNumber));
+    auto new_subrun_impl = std::make_shared<SubRun::Impl>(
+            m_impl->m_datastore, m_impl->m_level+1, 
+            m_impl->m_dataset_name, m_impl->m_run_number, subRunNumber);
+    return iterator(SubRun(std::move(new_subrun_impl)));
 }
 
 Run::const_iterator Run::find(const SubRunNumber& subRunNumber) const {
@@ -182,10 +175,11 @@ Run::iterator Run::begin() {
     auto it = find(0);
     if(it != end()) return *it;
 
-    auto level = m_impl->m_level;
-    auto datastore = m_impl->m_datastore;
-    std::string container = m_impl->fullpath();
-    SubRun subrun(datastore, level+1, std::make_shared<std::string>(container), 0);
+    auto new_subrun_impl = std::make_shared<SubRun::Impl>(
+            m_impl->m_datastore, m_impl->m_level+1, 
+            m_impl->m_dataset_name, m_impl->m_run_number, 0);
+
+    SubRun subrun(std::move(new_subrun_impl));
     subrun = subrun.next();
 
     if(subrun.valid()) return iterator(subrun);
@@ -227,9 +221,10 @@ Run::iterator Run::lower_bound(const SubRunNumber& lb) {
         if(it != end()) {
             return it;
         } else {
-            SubRun subrun(m_impl->m_datastore, 
-                    m_impl->m_level+1,
-                    std::make_shared<std::string>(m_impl->fullpath()), 0);
+            auto new_subrun_impl = std::make_shared<SubRun::Impl>(
+                    m_impl->m_datastore, m_impl->m_level+1, 
+                    m_impl->m_dataset_name, m_impl->m_run_number, 0);
+            SubRun subrun(std::move(new_subrun_impl));
             subrun = subrun.next();
             if(!subrun.valid()) return end();
             else return iterator(subrun);
@@ -240,9 +235,10 @@ Run::iterator Run::lower_bound(const SubRunNumber& lb) {
             ++it;
             return it;
         }
-        SubRun subrun(m_impl->m_datastore,
-                m_impl->m_level+1,
-                std::make_shared<std::string>(m_impl->fullpath()), lb-1);
+        auto new_subrun_impl = std::make_shared<SubRun::Impl>(
+                m_impl->m_datastore, m_impl->m_level+1, 
+                m_impl->m_dataset_name, m_impl->m_run_number, lb-1);
+        SubRun subrun(std::move(new_subrun_impl));
         subrun = subrun.next();
         if(!subrun.valid()) return end();
         else return iterator(subrun);
@@ -258,9 +254,10 @@ Run::iterator Run::upper_bound(const SubRunNumber& ub) {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run object");
     }
-    SubRun subrun(m_impl->m_datastore, 
-            m_impl->m_level+1, 
-            std::make_shared<std::string>(m_impl->fullpath()), ub);
+    auto new_subrun_impl = std::make_shared<SubRun::Impl>(
+            m_impl->m_datastore, m_impl->m_level+1, 
+            m_impl->m_dataset_name, m_impl->m_run_number, ub);
+    SubRun subrun(std::move(new_subrun_impl));
     subrun = subrun.next();
     if(!subrun.valid()) return end();
     else return iterator(subrun);

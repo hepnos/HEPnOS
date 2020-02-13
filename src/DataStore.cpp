@@ -10,6 +10,7 @@
 #include "hepnos/DataStore.hpp"
 #include "hepnos/DataSet.hpp"
 #include "hepnos/WriteBatch.hpp"
+#include "DataSetImpl.hpp"
 #include "DataStoreImpl.hpp"
 #include "WriteBatchImpl.hpp"
 
@@ -19,36 +20,30 @@ namespace hepnos {
 // DataStore implementation
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-DataStore::DataStore() 
-: m_impl(std::make_unique<DataStore::Impl>(this)) {
+DataStore::DataStore(std::shared_ptr<Impl>&& impl)
+: m_impl(std::move(impl)) {}
+
+DataStore::DataStore(const std::shared_ptr<Impl>& impl)
+: m_impl(impl) {}
+
+bool DataStore::valid() const {
+    return m_impl != nullptr;
+}
+
+DataStore DataStore::connect() { 
     char* file = getenv("HEPNOS_CONFIG_FILE");
     if(file == nullptr) 
         throw Exception("HEPNOS_CONFIG_FILE environment variable not set");
     std::string configFile(file);
-    m_impl->init(configFile);
+    auto impl = std::make_shared<Impl>();
+    impl->init(configFile);
+    return DataStore(std::move(impl));
 }
 
-DataStore::DataStore(const std::string& configFile) 
-: m_impl(std::make_unique<DataStore::Impl>(this)) {
-    m_impl->init(configFile);
-}
-
-DataStore::DataStore(DataStore&& other)
-: m_impl(std::move(other.m_impl)) {}
-
-DataStore& DataStore::operator=(DataStore&& other) {
-    if(&other == this) return *this;
-    if(m_impl) {
-        m_impl->cleanup();
-    }
-    m_impl = std::move(other.m_impl);
-    return *this;
-}
-    
-DataStore::~DataStore() {
-    if(m_impl) {
-        m_impl->cleanup();
-    }
+DataStore DataStore::connect(const std::string& configFile) {
+    auto impl = std::make_shared<Impl>();
+    impl->init(configFile);
+    return DataStore(std::move(impl));
 }
 
 DataStore::iterator DataStore::find(const std::string& datasetPath) {
@@ -81,7 +76,10 @@ DataStore::iterator DataStore::find(const std::string& datasetPath) {
     if(!b) {
         return m_impl->m_end;
     }
-    return iterator(DataSet(this, level, std::make_shared<std::string>(containerName), datasetName));
+    return iterator(
+            DataSet(
+                std::make_shared<DataSet::Impl>(
+                    m_impl, level, std::make_shared<std::string>(containerName), datasetName)));
 }
 
 DataSet DataStore::operator[](const std::string& datasetName) const {
@@ -100,7 +98,9 @@ DataStore::iterator DataStore::begin() {
     if(!m_impl) {
         throw Exception("Calling DataStore member function on an invalid DataStore object");
     }
-    DataSet ds(this, 1, std::make_shared<std::string>(""), "");
+    DataSet ds(
+            std::make_shared<DataSet::Impl>(
+                m_impl, 1, std::make_shared<std::string>(""), ""));
     ds = ds.next();
     if(ds.valid()) return iterator(std::move(ds));
     else return end();
@@ -143,7 +143,9 @@ DataStore::iterator DataStore::lower_bound(const std::string& lb) {
         ++it;
         return it;
     }
-    DataSet ds(this, 1, std::make_shared<std::string>(""), lb2);
+    DataSet ds(
+            std::make_shared<DataSet::Impl>(
+                m_impl, 1, std::make_shared<std::string>(""), lb2));
     ds = ds.next();
     if(!ds.valid()) return end();
     else return iterator(std::move(ds));
@@ -158,7 +160,9 @@ DataStore::iterator DataStore::upper_bound(const std::string& ub) {
     if(!m_impl) {
         throw Exception("Calling DataStore member function on an invalid DataStore object");
     }
-    DataSet ds(this, 1, std::make_shared<std::string>(""), ub);
+    DataSet ds(
+            std::make_shared<DataSet::Impl>(
+                m_impl, 1, std::make_shared<std::string>(""), ub));
     ds = ds.next();
     if(!ds.valid()) return end();
     else return iterator(std::move(ds));
@@ -178,7 +182,9 @@ DataSet DataStore::createDataSet(const std::string& name) {
         throw Exception("Invalid character ('/' or '%') in dataset name");
     }
     m_impl->store(1, "", name);
-    return DataSet(this, 1, std::make_shared<std::string>(""), name);
+    return DataSet(
+            std::make_shared<DataSet::Impl>(
+                m_impl, 1, std::make_shared<std::string>(""), name));
 }
 
 DataSet DataStore::createDataSet(WriteBatch& batch, const std::string& name) {
@@ -190,7 +196,9 @@ DataSet DataStore::createDataSet(WriteBatch& batch, const std::string& name) {
         throw Exception("Invalid character ('/' or '%') in dataset name");
     }
     batch.m_impl->store(1, "", name);
-    return DataSet(this, 1, std::make_shared<std::string>(""), name);
+    return DataSet(
+            std::make_shared<DataSet::Impl>(
+                m_impl, 1, std::make_shared<std::string>(""), name));
 }
 
 void DataStore::shutdown() {

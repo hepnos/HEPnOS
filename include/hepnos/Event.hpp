@@ -22,17 +22,13 @@ class Event : public KeyValueContainer {
     friend class SubRun;
 
     class Impl;
-    std::unique_ptr<Impl> m_impl;
+    std::shared_ptr<Impl> m_impl;
 
     /**
      * @brief Constructor.
-     *
-     * @param datastore Pointer to the DataStore managing the underlying data.
-     * @param level Level of nesting.
-     * @param container Full name of the container containing the event.
-     * @param n Event number.
      */
-    Event(DataStore* datastore, uint8_t level, const std::shared_ptr<std::string>& container, const EventNumber& n);
+    Event(std::shared_ptr<Impl>&& impl);
+    Event(const std::shared_ptr<Impl>& impl);
 
     public:
 
@@ -46,14 +42,14 @@ class Event : public KeyValueContainer {
      *
      * @param other Event to copy.
      */
-    Event(const Event& other);
+    Event(const Event& other) = default;
 
     /**
      * @brief Move constructor.
      *
      * @param other Event to move.
      */
-    Event(Event&& other);
+    Event(Event&& other) = default;
 
     /**
      * @brief Copy-assignment operator.
@@ -62,7 +58,7 @@ class Event : public KeyValueContainer {
      *
      * @return Reference to this Run.
      */
-    Event& operator=(const Event& other);
+    Event& operator=(const Event& other) = default;
 
     /**
      * @brief Move-assignment operator.
@@ -71,17 +67,17 @@ class Event : public KeyValueContainer {
      *
      * @return Reference to this Run.
      */
-    Event& operator=(Event&& other);
+    Event& operator=(Event&& other) = default;
 
     /**
      * @brief Destructor.
      */
-    ~Event();
+    ~Event() = default;
 
     /**
-     * @brief Overrides getDataStore from KeyValueContainer class.
+     * @brief Overrides datastore() from KeyValueContainer class.
      */
-    DataStore* getDataStore() const override;
+    DataStore datastore() const override;
 
     /**
      * @brief Returns the next Event in the same container,

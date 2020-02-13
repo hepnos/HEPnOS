@@ -32,31 +32,17 @@ class DataSet : public KeyValueContainer {
     private:
 
     /**
-     * @brief Constructor.
-     *
-     * @param ds DataStore to which this DataSet belongs.
-     * @param level Level of nesting.
-     * @param fullname Full name of the DataSet.
-     */
-    DataSet(DataStore* ds, uint8_t level, const std::string& fullname);
-
-    /**
-     * @brief Constructor.
-     *
-     * @param ds DataStore to which this DataSet belongs.
-     * @param level Level of nesting.
-     * @param container Full name of the parent DataSet ("" if no parent).
-     * @param name Name of the DataSet.
-     */
-    DataSet(DataStore* ds, uint8_t level, const std::shared_ptr<std::string>& container, const std::string& name);
-
-
-    /**
      * @brief Implementation class (used for the Pimpl idiom).
      */
     class Impl;
 
-    std::unique_ptr<Impl> m_impl; /*!< Pointer to implementation. */
+    std::shared_ptr<Impl> m_impl; /*!< Pointer to implementation. */
+
+    /**
+     * @brief Constructor.
+     */
+    DataSet(const std::shared_ptr<Impl>& impl);
+    DataSet(std::shared_ptr<Impl>&& impl);
 
     public:
 
@@ -72,14 +58,14 @@ class DataSet : public KeyValueContainer {
      *
      * @param other DataSet to copy.
      */
-    DataSet(const DataSet& other);
+    DataSet(const DataSet& other) = default;
 
     /**
      * @brief Move-constructor.
      *
      * @param other DataSet to move.
      */
-    DataSet(DataSet&& other);
+    DataSet(DataSet&& other) = default;
 
     /**
      * @brief Copy-assignment operator.
@@ -88,7 +74,7 @@ class DataSet : public KeyValueContainer {
      *
      * @return this.
      */
-    DataSet& operator=(const DataSet& other);
+    DataSet& operator=(const DataSet& other) = default;
 
     /**
      * @brief Move-assignment operator.
@@ -97,17 +83,17 @@ class DataSet : public KeyValueContainer {
      *
      * @return this.
      */
-    DataSet& operator=(DataSet&& other);
+    DataSet& operator=(DataSet&& other) = default;
 
     /**
      * @brief Destructor.
      */
-    ~DataSet();
+    ~DataSet() = default;
 
     /**
-     * @brief Overrides getDataStore from KeyValueContainer class.
+     * @brief Overrides datastore from KeyValueContainer class.
      */
-    DataStore* getDataStore() const override;
+    DataStore datastore() const override;
 
     /**
      * @brief Name of the DataSet.
@@ -369,18 +355,11 @@ class DataSet : public KeyValueContainer {
     const_iterator upper_bound(const std::string& ub) const;
 
     /**
-     * @brief Returns a reference to the RunSet associated with this DataSet.
+     * @brief Returns the RunSet associated with this DataSet.
      *
      * @return a reference to the RunSet associated with this DataSet.
      */
-    RunSet& runs();
-
-    /**
-     * @brief Returns a reference to the RunSet associated with this DataSet.
-     *
-     * @return a reference to the RunSet associated with this DataSet.
-     */
-    const RunSet& runs() const;
+    RunSet runs() const;
 
     /**
      * @brief Accesses an existing run using the []
