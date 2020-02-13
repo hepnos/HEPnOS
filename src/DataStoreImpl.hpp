@@ -22,10 +22,10 @@
 namespace hepnos {
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-// DataStore::Impl implementation
+// DataStoreImpl implementation
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-class DataStore::Impl {
+class DataStoreImpl {
     public:
 
     margo_instance_id                         m_mid;          // Margo instance
@@ -35,7 +35,7 @@ class DataStore::Impl {
     struct ch_placement_instance*             m_chi_sdskv;    // ch-placement instance for SDSKV
     const DataStore::iterator                 m_end;          // iterator for the end() of the DataStore
 
-    Impl()
+    DataStoreImpl()
     : m_mid(MARGO_INSTANCE_NULL)
     , m_chi_sdskv(nullptr)
     , m_end() {}

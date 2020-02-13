@@ -11,13 +11,13 @@
 namespace hepnos {
 
 Event::Event()
-: m_impl(std::make_shared<Impl>(nullptr, 0, std::make_shared<std::string>(""), 
+: m_impl(std::make_shared<EventImpl>(nullptr, 0, std::make_shared<std::string>(""), 
             InvalidRunNumber, InvalidSubRunNumber, InvalidEventNumber)) {} 
 
-Event::Event(std::shared_ptr<Impl>&& impl)
+Event::Event(std::shared_ptr<EventImpl>&& impl)
 : m_impl(std::move(impl)) { }
 
-Event::Event(const std::shared_ptr<Impl>& impl)
+Event::Event(const std::shared_ptr<EventImpl>& impl)
 : m_impl(impl) { }
 
 DataStore Event::datastore() const {
@@ -40,7 +40,7 @@ Event Event::next() const {
     if(keys[0].size() <= i) return Event();
     EventNumber n = parseNumberFromKeyString<EventNumber>(&keys[0][i]);
     if(n == InvalidEventNumber) return Event();
-    return Event(std::make_shared<Impl>(m_impl->m_datastore,
+    return Event(std::make_shared<EventImpl>(m_impl->m_datastore,
                 m_impl->m_level, m_impl->m_dataset_name,
                 m_impl->m_run_number, m_impl->m_subrun_number, n));
 }

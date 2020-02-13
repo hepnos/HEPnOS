@@ -21,14 +21,13 @@ class Event : public KeyValueContainer {
 
     friend class SubRun;
 
-    class Impl;
-    std::shared_ptr<Impl> m_impl;
+    std::shared_ptr<EventImpl> m_impl;
 
     /**
      * @brief Constructor.
      */
-    Event(std::shared_ptr<Impl>&& impl);
-    Event(const std::shared_ptr<Impl>& impl);
+    Event(std::shared_ptr<EventImpl>&& impl);
+    Event(const std::shared_ptr<EventImpl>& impl);
 
     public:
 

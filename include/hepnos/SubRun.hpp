@@ -22,14 +22,13 @@ class SubRun : public KeyValueContainer {
 
     friend class Run;
 
-    class Impl;
-    std::shared_ptr<Impl> m_impl;
+    std::shared_ptr<SubRunImpl> m_impl;
 
     /**
      * @brief Constructor.
      */
-    SubRun(std::shared_ptr<Impl>&& impl);
-    SubRun(const std::shared_ptr<Impl>& impl);
+    SubRun(std::shared_ptr<SubRunImpl>&& impl);
+    SubRun(const std::shared_ptr<SubRunImpl>& impl);
 
     public:
 

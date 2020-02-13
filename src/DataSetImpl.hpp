@@ -12,16 +12,16 @@
 
 namespace hepnos {
 
-class DataSet::Impl {
+class DataSetImpl {
 
     public:
 
-        std::shared_ptr<DataStore::Impl> m_datastore;
-        uint8_t                          m_level;
-        std::shared_ptr<std::string>     m_container;
-        std::string                      m_name;
+        std::shared_ptr<DataStoreImpl>  m_datastore;
+        uint8_t                         m_level;
+        std::shared_ptr<std::string>    m_container;
+        std::string                     m_name;
 
-        Impl(const std::shared_ptr<DataStore::Impl>& ds,
+        DataSetImpl(const std::shared_ptr<DataStoreImpl>& ds,
              uint8_t level, 
              const std::shared_ptr<std::string>& container,
              const std::string& name)
@@ -30,7 +30,7 @@ class DataSet::Impl {
         , m_container(container)
         , m_name(name) {}
 
-        Impl(const std::shared_ptr<DataStore::Impl>& ds,
+        DataSetImpl(const std::shared_ptr<DataStoreImpl>& ds,
              uint8_t level,
              const std::string& fullname)
         : m_datastore(ds)

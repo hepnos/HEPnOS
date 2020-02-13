@@ -28,15 +28,14 @@ class RunSet {
     /**
      * @brief Implementation class (used for the Pimpl idiom).
      */
-    using Impl = DataSet::Impl;
-
-    std::shared_ptr<Impl> m_impl; /*!< Pointer to implementation. */
+    using RunSetImpl = DataSetImpl;
+    std::shared_ptr<RunSetImpl> m_impl; /*!< Pointer to implementation. */
 
     /**
      * @brief Constructor.
      */
-    RunSet(const std::shared_ptr<Impl>& impl);
-    RunSet(std::shared_ptr<Impl>&& impl);
+    RunSet(const std::shared_ptr<RunSetImpl>& impl);
+    RunSet(std::shared_ptr<RunSetImpl>&& impl);
 
     public:
 

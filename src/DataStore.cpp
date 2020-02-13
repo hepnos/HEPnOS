@@ -20,10 +20,10 @@ namespace hepnos {
 // DataStore implementation
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-DataStore::DataStore(std::shared_ptr<Impl>&& impl)
+DataStore::DataStore(std::shared_ptr<DataStoreImpl>&& impl)
 : m_impl(std::move(impl)) {}
 
-DataStore::DataStore(const std::shared_ptr<Impl>& impl)
+DataStore::DataStore(const std::shared_ptr<DataStoreImpl>& impl)
 : m_impl(impl) {}
 
 bool DataStore::valid() const {
@@ -35,13 +35,13 @@ DataStore DataStore::connect() {
     if(file == nullptr) 
         throw Exception("HEPNOS_CONFIG_FILE environment variable not set");
     std::string configFile(file);
-    auto impl = std::make_shared<Impl>();
+    auto impl = std::make_shared<DataStoreImpl>();
     impl->init(configFile);
     return DataStore(std::move(impl));
 }
 
 DataStore DataStore::connect(const std::string& configFile) {
-    auto impl = std::make_shared<Impl>();
+    auto impl = std::make_shared<DataStoreImpl>();
     impl->init(configFile);
     return DataStore(std::move(impl));
 }
@@ -78,7 +78,7 @@ DataStore::iterator DataStore::find(const std::string& datasetPath) {
     }
     return iterator(
             DataSet(
-                std::make_shared<DataSet::Impl>(
+                std::make_shared<DataSetImpl>(
                     m_impl, level, std::make_shared<std::string>(containerName), datasetName)));
 }
 
@@ -99,7 +99,7 @@ DataStore::iterator DataStore::begin() {
         throw Exception("Calling DataStore member function on an invalid DataStore object");
     }
     DataSet ds(
-            std::make_shared<DataSet::Impl>(
+            std::make_shared<DataSetImpl>(
                 m_impl, 1, std::make_shared<std::string>(""), ""));
     ds = ds.next();
     if(ds.valid()) return iterator(std::move(ds));
@@ -144,7 +144,7 @@ DataStore::iterator DataStore::lower_bound(const std::string& lb) {
         return it;
     }
     DataSet ds(
-            std::make_shared<DataSet::Impl>(
+            std::make_shared<DataSetImpl>(
                 m_impl, 1, std::make_shared<std::string>(""), lb2));
     ds = ds.next();
     if(!ds.valid()) return end();
@@ -161,7 +161,7 @@ DataStore::iterator DataStore::upper_bound(const std::string& ub) {
         throw Exception("Calling DataStore member function on an invalid DataStore object");
     }
     DataSet ds(
-            std::make_shared<DataSet::Impl>(
+            std::make_shared<DataSetImpl>(
                 m_impl, 1, std::make_shared<std::string>(""), ub));
     ds = ds.next();
     if(!ds.valid()) return end();
@@ -183,7 +183,7 @@ DataSet DataStore::createDataSet(const std::string& name) {
     }
     m_impl->store(1, "", name);
     return DataSet(
-            std::make_shared<DataSet::Impl>(
+            std::make_shared<DataSetImpl>(
                 m_impl, 1, std::make_shared<std::string>(""), name));
 }
 
@@ -197,7 +197,7 @@ DataSet DataStore::createDataSet(WriteBatch& batch, const std::string& name) {
     }
     batch.m_impl->store(1, "", name);
     return DataSet(
-            std::make_shared<DataSet::Impl>(
+            std::make_shared<DataSetImpl>(
                 m_impl, 1, std::make_shared<std::string>(""), name));
 }
 

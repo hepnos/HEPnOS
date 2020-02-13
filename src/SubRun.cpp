@@ -13,15 +13,15 @@
 
 namespace hepnos {
 
-SubRun::iterator SubRun::Impl::m_end;
+SubRun::iterator SubRunImpl::m_end;
 
 SubRun::SubRun()
-: m_impl(std::make_shared<Impl>(nullptr, 0, std::make_shared<std::string>(""), InvalidRunNumber, InvalidSubRunNumber)) {} 
+: m_impl(std::make_shared<SubRunImpl>(nullptr, 0, std::make_shared<std::string>(""), InvalidRunNumber, InvalidSubRunNumber)) {} 
 
-SubRun::SubRun(std::shared_ptr<Impl>&& impl)
+SubRun::SubRun(std::shared_ptr<SubRunImpl>&& impl)
 : m_impl(std::move(impl)) { }
 
-SubRun::SubRun(const std::shared_ptr<Impl>& impl)
+SubRun::SubRun(const std::shared_ptr<SubRunImpl>& impl)
 : m_impl(impl) { }
 
 DataStore SubRun::datastore() const {
@@ -44,7 +44,7 @@ SubRun SubRun::next() const {
     if(keys[0].size() <= i) return SubRun();
     SubRunNumber srn = parseNumberFromKeyString<SubRunNumber>(&keys[0][i]);
     if(srn == InvalidSubRunNumber) return SubRun();
-    auto new_subrun_impl = std::make_shared<Impl>(m_impl->m_datastore, m_impl->m_level,
+    auto new_subrun_impl = std::make_shared<SubRunImpl>(m_impl->m_datastore, m_impl->m_level,
             m_impl->m_dataset_name, m_impl->m_run_number, srn);
     return SubRun(std::move(new_subrun_impl));
 }
@@ -114,7 +114,7 @@ Event SubRun::createEvent(const EventNumber& eventNumber) {
     std::string parent = m_impl->fullpath();
     std::string eventStr = makeKeyStringFromNumber(eventNumber);
     m_impl->m_datastore->store(m_impl->m_level+1, parent, eventStr);
-    return Event(std::make_shared<Event::Impl>(m_impl->m_datastore, m_impl->m_level+1,
+    return Event(std::make_shared<EventImpl>(m_impl->m_datastore, m_impl->m_level+1,
             m_impl->m_dataset_name, m_impl->m_run_number, m_impl->m_subrun_number, eventNumber));
 }
 
@@ -125,7 +125,7 @@ Event SubRun::createEvent(WriteBatch& batch, const EventNumber& eventNumber) {
     std::string parent = m_impl->fullpath();
     std::string eventStr = makeKeyStringFromNumber(eventNumber);
     batch.m_impl->store(m_impl->m_level+1, parent, eventStr);
-    return Event(std::make_shared<Event::Impl>(m_impl->m_datastore, m_impl->m_level+1,
+    return Event(std::make_shared<EventImpl>(m_impl->m_datastore, m_impl->m_level+1,
             m_impl->m_dataset_name, m_impl->m_run_number, m_impl->m_subrun_number, eventNumber));
 }
 
@@ -147,7 +147,7 @@ SubRun::iterator SubRun::find(const EventNumber& eventNumber) {
     if(!b) {
         return m_impl->m_end;
     }
-    return iterator(Event(std::make_shared<Event::Impl>(
+    return iterator(Event(std::make_shared<EventImpl>(
                     m_impl->m_datastore, m_impl->m_level+1,
                     m_impl->m_dataset_name, m_impl->m_run_number, m_impl->m_subrun_number, eventNumber)));
 }
@@ -164,7 +164,7 @@ SubRun::iterator SubRun::begin() {
     auto level = m_impl->m_level;
     auto datastore = m_impl->m_datastore;
     std::string container = m_impl->fullpath();
-    Event event(std::make_shared<Event::Impl>(datastore, 
+    Event event(std::make_shared<EventImpl>(datastore, 
                 level+1, m_impl->m_dataset_name, m_impl->m_run_number, m_impl->m_subrun_number, 0));
     event = event.next();
 
@@ -207,7 +207,7 @@ SubRun::iterator SubRun::lower_bound(const EventNumber& lb) {
         if(it != end()) {
             return it;
         } else {
-            Event event(std::make_shared<Event::Impl>(m_impl->m_datastore, 
+            Event event(std::make_shared<EventImpl>(m_impl->m_datastore, 
                     m_impl->m_level+1, m_impl->m_dataset_name,
                     m_impl->m_run_number, m_impl->m_subrun_number, 0));
             event = event.next();
@@ -220,7 +220,7 @@ SubRun::iterator SubRun::lower_bound(const EventNumber& lb) {
             ++it;
             return it;
         }
-        Event event(std::make_shared<Event::Impl>(m_impl->m_datastore, 
+        Event event(std::make_shared<EventImpl>(m_impl->m_datastore, 
                     m_impl->m_level+1, m_impl->m_dataset_name,
                     m_impl->m_run_number, m_impl->m_subrun_number, lb-1));
         event = event.next();
@@ -238,7 +238,7 @@ SubRun::iterator SubRun::upper_bound(const EventNumber& ub) {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
-    Event event(std::make_shared<Event::Impl>(m_impl->m_datastore, 
+    Event event(std::make_shared<EventImpl>(m_impl->m_datastore, 
                 m_impl->m_level+1, m_impl->m_dataset_name,
                 m_impl->m_run_number, m_impl->m_subrun_number, ub));
     event = event.next();

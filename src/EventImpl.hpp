@@ -18,18 +18,18 @@
 
 namespace hepnos {
 
-class Event::Impl {
+class EventImpl {
 
     public:
 
-        std::shared_ptr<DataStore::Impl> m_datastore;
-        uint8_t                          m_level;
-        std::shared_ptr<std::string>     m_dataset_name;
-        RunNumber                        m_run_number;
-        SubRunNumber                     m_subrun_number;
-        EventNumber                      m_event_number;
+        std::shared_ptr<DataStoreImpl> m_datastore;
+        uint8_t                        m_level;
+        std::shared_ptr<std::string>   m_dataset_name;
+        RunNumber                      m_run_number;
+        SubRunNumber                   m_subrun_number;
+        EventNumber                    m_event_number;
 
-        Impl(const std::shared_ptr<DataStore::Impl>& ds,
+        EventImpl(const std::shared_ptr<DataStoreImpl>& ds,
              uint8_t level,
              const std::shared_ptr<std::string>& dataset,
              const RunNumber& rn,

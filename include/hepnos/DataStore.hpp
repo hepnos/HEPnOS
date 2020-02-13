@@ -18,6 +18,12 @@ class RunSet;
 class Run;
 class SubRun;
 class Event;
+class DataStoreImpl;
+class DataSetImpl;
+class RunSetImpl;
+class RunImpl;
+class SubRunImpl;
+class EventImpl;
 template<typename T, typename C = std::vector<T>> class Ptr;
 class WriteBatch;
 
@@ -34,6 +40,7 @@ class DataStore {
     friend class SubRun;
     friend class Event;
     friend class WriteBatch;
+    friend class DataStoreImpl;
 
     public:
 
@@ -334,16 +341,15 @@ class DataStore {
     /**
      * @brief Implementation of the class (using Pimpl idiom)
      */
-    class Impl;
-    std::shared_ptr<Impl> m_impl; /*!< Pointer to implementation */
+    std::shared_ptr<DataStoreImpl> m_impl; /*!< Pointer to implementation */
 
     /**
      * @brief Constructor from a pointer to implementation.
      *
      * @param impl
      */
-    DataStore(std::shared_ptr<Impl>&& impl);
-    DataStore(const std::shared_ptr<Impl>& impl);
+    DataStore(std::shared_ptr<DataStoreImpl>&& impl);
+    DataStore(const std::shared_ptr<DataStoreImpl>& impl);
 
     /**
      * @brief Loads the raw data corresponding to a product.

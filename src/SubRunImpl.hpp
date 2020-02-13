@@ -16,19 +16,19 @@
 
 namespace hepnos {
 
-class SubRun::Impl {
+class SubRunImpl {
 
     public:
 
-        std::shared_ptr<DataStore::Impl> m_datastore;
-        uint8_t                          m_level;
-        std::shared_ptr<std::string>     m_dataset_name;
-        RunNumber                        m_run_number;
-        SubRunNumber                     m_subrun_number;
+        std::shared_ptr<DataStoreImpl> m_datastore;
+        uint8_t                        m_level;
+        std::shared_ptr<std::string>   m_dataset_name;
+        RunNumber                      m_run_number;
+        SubRunNumber                   m_subrun_number;
         
-        static iterator m_end;
+        static SubRun::iterator m_end;
 
-        Impl(const std::shared_ptr<DataStore::Impl>& ds,
+        SubRunImpl(const std::shared_ptr<DataStoreImpl>& ds,
              uint8_t level, 
              const std::shared_ptr<std::string>& dataset,
              const RunNumber& rn, const SubRunNumber& srn)

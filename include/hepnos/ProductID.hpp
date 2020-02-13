@@ -20,6 +20,7 @@ class DataStore;
 class ProductID {
 
     friend class DataStore;
+    friend class DataStoreImpl;
     friend class WriteBatch;
     friend class boost::serialization::access;
 

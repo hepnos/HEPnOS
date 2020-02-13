@@ -51,7 +51,7 @@ class WriteBatch::Impl {
         : m_datastore(ds) {}
 
         ProductID store(uint8_t level, const std::string& containerName, const std::string& objectName, const char* content=nullptr, size_t size=0) {
-            std::string key = DataStore::Impl::buildKey(level, containerName, objectName);
+            std::string key = DataStoreImpl::buildKey(level, containerName, objectName);
             auto db_idx = m_datastore->m_impl->computeDbIndex(level, containerName, key);
             auto& e = m_entries[db_idx];
             e.first.push_back(std::move(key));

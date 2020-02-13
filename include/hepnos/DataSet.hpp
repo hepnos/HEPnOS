@@ -28,21 +28,20 @@ class DataSet : public KeyValueContainer {
 
     friend class DataStore;
     friend class RunSet;
+    friend class DataSetImpl;
 
     private:
 
     /**
      * @brief Implementation class (used for the Pimpl idiom).
      */
-    class Impl;
-
-    std::shared_ptr<Impl> m_impl; /*!< Pointer to implementation. */
+    std::shared_ptr<DataSetImpl> m_impl; /*!< Pointer to implementation. */
 
     /**
      * @brief Constructor.
      */
-    DataSet(const std::shared_ptr<Impl>& impl);
-    DataSet(std::shared_ptr<Impl>&& impl);
+    DataSet(const std::shared_ptr<DataSetImpl>& impl);
+    DataSet(std::shared_ptr<DataSetImpl>&& impl);
 
     public:
 

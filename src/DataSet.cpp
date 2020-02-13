@@ -14,12 +14,12 @@
 namespace hepnos {
 
 DataSet::DataSet()
-: m_impl(std::make_shared<DataSet::Impl>(nullptr, 0, std::make_shared<std::string>(""), "")) {}
+: m_impl(std::make_shared<DataSetImpl>(nullptr, 0, std::make_shared<std::string>(""), "")) {}
 
-DataSet::DataSet(const std::shared_ptr<DataSet::Impl>& impl)
+DataSet::DataSet(const std::shared_ptr<DataSetImpl>& impl)
 : m_impl(impl) {}
 
-DataSet::DataSet(std::shared_ptr<DataSet::Impl>&& impl)
+DataSet::DataSet(std::shared_ptr<DataSetImpl>&& impl)
 : m_impl(std::move(impl)) {}
 
 DataStore DataSet::datastore() const {
@@ -36,7 +36,7 @@ DataSet DataSet::next() const {
     size_t s = m_impl->m_datastore->nextKeys(
             m_impl->m_level, *m_impl->m_container, m_impl->m_name, keys, 1);
     if(s == 0) return DataSet();
-    return DataSet(std::make_shared<Impl>(m_impl->m_datastore, m_impl->m_level, keys[0]));
+    return DataSet(std::make_shared<DataSetImpl>(m_impl->m_datastore, m_impl->m_level, keys[0]));
 }
 
 bool DataSet::valid() const {
@@ -120,7 +120,7 @@ DataSet DataSet::createDataSet(const std::string& name) {
     }
     std::string parent = fullname();
     m_impl->m_datastore->store(m_impl->m_level+1, parent, name);
-    return DataSet(std::make_shared<Impl>(
+    return DataSet(std::make_shared<DataSetImpl>(
                 m_impl->m_datastore, m_impl->m_level+1,
                 std::make_shared<std::string>(parent), name));
 }
@@ -133,7 +133,7 @@ Run DataSet::createRun(const RunNumber& runNumber) {
     std::string runStr = makeKeyStringFromNumber(runNumber);
     m_impl->m_datastore->store(m_impl->m_level+1, parent, runStr);
     return Run(
-            std::make_shared<Run::Impl>(
+            std::make_shared<RunImpl>(
                 m_impl->m_datastore, m_impl->m_level+1,
                 std::make_shared<std::string>(parent), runNumber));
 }
@@ -146,7 +146,7 @@ Run DataSet::createRun(WriteBatch& batch, const RunNumber& runNumber) {
     std::string runStr = makeKeyStringFromNumber(runNumber);
     batch.m_impl->store(m_impl->m_level+1, parent, runStr);
     return Run(
-            std::make_shared<Run::Impl>(
+            std::make_shared<RunImpl>(
                 m_impl->m_datastore, m_impl->m_level+1,
                 std::make_shared<std::string>(parent), runNumber));
 }
@@ -196,7 +196,7 @@ DataSet::iterator DataSet::find(const std::string& datasetPath) {
     }
     return iterator(
                 DataSet(
-                    std::make_shared<Impl>(
+                    std::make_shared<DataSetImpl>(
                         m_impl->m_datastore,
                         level,
                         std::make_shared<std::string>(containerName),
@@ -215,7 +215,7 @@ DataSet::iterator DataSet::begin() {
     // we use the prefix "&" because we need something that comes after "%"
     // (which represents runs) and is not going to be in a dataset name
     DataSet ds(
-            std::make_shared<Impl>(
+            std::make_shared<DataSetImpl>(
                 m_impl->m_datastore, 
                 m_impl->m_level+1,
                 std::make_shared<std::string>(fullname()),
@@ -269,7 +269,7 @@ DataSet::iterator DataSet::lower_bound(const std::string& lb) {
         return it;
     }
     DataSet ds(
-            std::make_shared<Impl>(
+            std::make_shared<DataSetImpl>(
                 m_impl->m_datastore, 
                 m_impl->m_level+1,
                 std::make_shared<std::string>(fullname()),
@@ -290,7 +290,7 @@ DataSet::iterator DataSet::upper_bound(const std::string& ub) {
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
     DataSet ds(
-            std::make_shared<Impl>(
+            std::make_shared<DataSetImpl>(
                 m_impl->m_datastore,
                 m_impl->m_level+1,
                 std::make_shared<std::string>(fullname()), ub));
