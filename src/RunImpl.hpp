@@ -35,6 +35,12 @@ class RunImpl {
         , m_dataset_name(dataset)
         , m_run_number(rn) {}
 
+        bool operator==(const RunImpl& other) const {
+            if(m_run_number != other.m_run_number) return false;
+            if(m_dataset_name == other.m_dataset_name) return true;
+            return *m_dataset_name == *other.m_dataset_name;
+        }
+
         std::string makeKeyStringFromRunNumber() const {
             return makeKeyStringFromNumber(m_run_number);
         }

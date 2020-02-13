@@ -11,8 +11,7 @@
 namespace hepnos {
 
 Event::Event()
-: m_impl(std::make_shared<EventImpl>(nullptr, 0, std::make_shared<std::string>(""), 
-            InvalidRunNumber, InvalidSubRunNumber, InvalidEventNumber)) {} 
+: m_impl(std::make_shared<EventImpl>(0, nullptr, InvalidEventNumber)) {} 
 
 Event::Event(std::shared_ptr<EventImpl>&& impl)
 : m_impl(std::move(impl)) { }
@@ -40,9 +39,7 @@ Event Event::next() const {
     if(keys[0].size() <= i) return Event();
     EventNumber n = parseNumberFromKeyString<EventNumber>(&keys[0][i]);
     if(n == InvalidEventNumber) return Event();
-    return Event(std::make_shared<EventImpl>(m_impl->m_datastore,
-                m_impl->m_level, m_impl->m_dataset_name,
-                m_impl->m_run_number, m_impl->m_subrun_number, n));
+    return Event(std::make_shared<EventImpl>(m_impl->m_level, m_impl->m_subrun, n));
 }
 
 bool Event::valid() const {
@@ -88,13 +85,7 @@ bool Event::operator==(const Event& other) const {
     if(!v1 && !v2) return true;
     if(!v1 &&  v2) return false;
     if(v1  && !v2) return false;
-    return m_impl->m_datastore  == other.m_impl->m_datastore
-        && m_impl->m_level      == other.m_impl->m_level
-        && (m_impl->m_dataset_name == other.m_impl->m_dataset_name
-            || *m_impl->m_dataset_name == *other.m_impl->m_dataset_name)
-        && m_impl->m_run_number == other.m_impl->m_run_number
-        && m_impl->m_subrun_number == other.m_impl->m_subrun_number
-        && m_impl->m_event_number   == other.m_impl->m_event_number;
+    return (m_impl == other.m_impl) || (*m_impl == *other.m_impl);
 }
 
 bool Event::operator!=(const Event& other) const {

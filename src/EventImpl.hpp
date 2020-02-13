@@ -15,6 +15,7 @@
 #include "hepnos/SubRun.hpp"
 #include "hepnos/Event.hpp"
 #include "NumberUtil.hpp"
+#include "SubRunImpl.hpp"
 
 namespace hepnos {
 
@@ -23,33 +24,31 @@ class EventImpl {
     public:
 
         std::shared_ptr<DataStoreImpl> m_datastore;
-        uint8_t                        m_level;
-        std::shared_ptr<std::string>   m_dataset_name;
-        RunNumber                      m_run_number;
-        SubRunNumber                   m_subrun_number;
+        std::shared_ptr<SubRunImpl>    m_subrun;
         EventNumber                    m_event_number;
+        uint8_t                        m_level;
 
-        EventImpl(const std::shared_ptr<DataStoreImpl>& ds,
-             uint8_t level,
-             const std::shared_ptr<std::string>& dataset,
-             const RunNumber& rn,
-             const SubRunNumber& srn,
-             const EventNumber& evn)
-        : m_datastore(ds)
-        , m_level(level)
-        , m_dataset_name(dataset)
-        , m_run_number(rn)
-        , m_subrun_number(srn)
-        , m_event_number(evn) {}
+        EventImpl(uint8_t level,
+                  const std::shared_ptr<SubRunImpl>& subrun,
+                  const EventNumber& evn)
+        : m_subrun(subrun)
+        , m_event_number(evn)
+        , m_level(level) {
+            if(subrun) m_datastore = subrun->m_datastore;
+        }
+
+        bool operator==(const EventImpl& other) const {
+            if(m_event_number != other.m_event_number) return false;
+            if(m_subrun == other.m_subrun) return true;
+            return *m_subrun == *other.m_subrun;
+        }
 
         std::string makeKeyStringFromEventNumber() const {
             return makeKeyStringFromNumber(m_event_number);
         }
 
         std::string container() const {
-            return *m_dataset_name + "/" 
-                + makeKeyStringFromNumber(m_run_number) + "/"
-                + makeKeyStringFromNumber(m_subrun_number);
+            return m_subrun->fullpath();
         }
 
         std::string fullpath() const {
