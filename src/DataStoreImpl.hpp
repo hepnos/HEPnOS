@@ -25,19 +25,22 @@ namespace hepnos {
 // DataStoreImpl implementation
 ////////////////////////////////////////////////////////////////////////////////////////////
 
+struct DistributedDBInfo {
+    std::vector<sdskv::database>  dbs;
+    struct ch_placement_instance* chi = nullptr;
+};
+
 class DataStoreImpl {
     public:
 
     margo_instance_id                         m_mid;          // Margo instance
     std::unordered_map<std::string,hg_addr_t> m_addrs;        // Addresses used by the service
     sdskv::client                             m_sdskv_client; // SDSKV client
-    std::vector<sdskv::database>              m_databases;    // list of SDSKV databases
-    struct ch_placement_instance*             m_chi_sdskv;    // ch-placement instance for SDSKV
+    DistributedDBInfo                         m_databases;    // list of SDSKV databases
     const DataStore::iterator                 m_end;          // iterator for the end() of the DataStore
 
     DataStoreImpl()
     : m_mid(MARGO_INSTANCE_NULL)
-    , m_chi_sdskv(nullptr)
     , m_end() {}
 
     void init(const std::string& configFile) {
@@ -61,9 +64,12 @@ class DataStoreImpl {
             throw Exception("Could not create SDSKV client (SDSKV error="+std::to_string(ex.error())+")");
         }
         // create list of sdskv provider handles
-        YAML::Node sdskv = config["hepnos"]["providers"]["sdskv"];
-        for(YAML::const_iterator it = sdskv.begin(); it != sdskv.end(); it++) {
-            std::string str_addr = it->first.as<std::string>();
+        YAML::Node databases = config["hepnos"]["databases"];
+        YAML::Node dataset_db = databases["datasets"];
+        for(YAML::const_iterator address_it = dataset_db.begin(); address_it != dataset_db.end(); address_it++) {
+            std::string str_addr = address_it->first.as<std::string>();
+            YAML::Node providers = address_it->second;
+            // lookup the address
             hg_addr_t addr;
             if(m_addrs.count(str_addr) != 0) {
                 addr = m_addrs[str_addr];
@@ -76,33 +82,29 @@ class DataStoreImpl {
                 }
                 m_addrs[str_addr] = addr;
             }
-            // get the number of providers
-            uint16_t num_providers = it->second.as<uint16_t>();
-            for(uint16_t provider_id = 0 ; provider_id < num_providers; provider_id++) {
-                std::vector<sdskv::database> dbs;
-                try {
-                    sdskv::provider_handle ph(m_sdskv_client, addr, provider_id);
-                    dbs = m_sdskv_client.open(ph);
-                } catch(sdskv::exception& ex) {
-                    cleanup();
-                    throw Exception("Could not open databases (SDSKV error="+std::to_string(ex.error())+")");
+            // iterate over providers for this address
+            for(YAML::const_iterator provider_it = providers.begin(); provider_it != providers.end(); provider_it++) {
+                // get the provider id
+                uint16_t provider_id = provider_it->first.as<uint16_t>();
+                // create provider handle
+                sdskv::provider_handle ph(m_sdskv_client, addr, provider_id);
+                // get the database ids
+                YAML::Node databases = provider_it->second;
+                // iterate over databases for this provider
+                for(unsigned i=0; i < databases.size(); i++) {
+                    m_databases.dbs.push_back(sdskv::database(ph, databases[i].as<uint64_t>()));
                 }
-                if(dbs.size() == 0) {
-                    continue;
-                }
-                for(auto& db : dbs)
-                    m_databases.push_back(db);
-            }
-        }
+            } // for each provider
+        } // for each address
         // initialize ch-placement for the SDSKV providers
-        m_chi_sdskv = ch_placement_initialize("hash_lookup3", m_databases.size(), 4, 0);
+        m_databases.chi = ch_placement_initialize("hash_lookup3", m_databases.dbs.size(), 4, 0);
     }
 
     void cleanup() {
-        m_databases.clear();
+        m_databases.dbs.clear();
         m_sdskv_client = sdskv::client();
-        if(m_chi_sdskv)
-            ch_placement_finalize(m_chi_sdskv);
+        if(m_databases.chi)
+            ch_placement_finalize(m_databases.chi);
         for(auto& addr : m_addrs) {
             margo_addr_free(m_mid, addr.second);
         }
@@ -127,27 +129,26 @@ class DataStoreImpl {
         if(!protoNode) {
             throw Exception("\"protocol\" entry not found in \"client\" section");
         }
-        // hepnos entry has providers entry
-        auto providersNode = hepnosNode["providers"];
-        if(!providersNode) {
-            throw Exception("\"providers\" entry not found in \"hepnos\" section");
+        // hepnos entry has databases entry
+        auto databasesNode = hepnosNode["databases"];
+        if(!databasesNode) {
+            throw Exception("\"databasess\" entry not found in \"hepnos\" section");
         }
-        // provider entry has sdskv entry
-        auto sdskvNode = providersNode["sdskv"];
-        if(!sdskvNode) {
-            throw Exception("\"sdskv\" entry not found in \"providers\" section");
-        }
-        // sdskv entry is not empty
-        if(sdskvNode.size() == 0) {
-            throw Exception("No provider found in \"sdskv\" section");
-        }
-        // for each sdskv entry
-        for(auto it = sdskvNode.begin(); it != sdskvNode.end(); it++) {
-            if(it->second.IsScalar()) continue; // one provider id given
-            else {
-                throw Exception("Invalid value type for provider in \"sdskv\" section");
+        if(!databasesNode.IsMap()) {
+            throw Exception("\"databases\" entry should be a map");
+        } /*
+        for(auto provider_it = databasesNode.begin(); provider_it != databasesNode.end(); provider_it++) {
+            // provider entry should be a sequence
+            if(!provider.IsSequence()) {
+                throw Exception("provider entry should be a sequence");
+            }
+            for(auto db : provider) {
+                if(!db.IsScalar()) {
+                    throw Exception("database id should be a scalar");
+                }
             }
         }
+        */
     }
 
     public:
@@ -181,7 +182,7 @@ class DataStoreImpl {
             // use the complete name for final objects (level 0)
             name_hash = hashString(key);
         }
-        ch_placement_find_closest(m_chi_sdskv, name_hash, 1, &sdskv_db_idx);
+        ch_placement_find_closest(m_databases.chi, name_hash, 1, &sdskv_db_idx);
         return sdskv_db_idx;
     }
 
@@ -193,7 +194,7 @@ class DataStoreImpl {
         // find out which DB to access
         long unsigned sdskv_db_idx = computeDbIndex(level, containerName, key);
         // make corresponding datastore entry
-        auto& db = m_databases[sdskv_db_idx];
+        auto& db = m_databases.dbs[sdskv_db_idx];
         // read the value
         if(data.size() == 0)
             data.resize(2048); // eagerly allocate 2KB
@@ -216,7 +217,7 @@ class DataStoreImpl {
         // find out which DB to access
         long unsigned sdskv_db_idx = computeDbIndex(level, containerName, key);
         // make corresponding datastore entry
-        auto& db = m_databases[sdskv_db_idx];
+        auto& db = m_databases.dbs[sdskv_db_idx];
         // read the value
         try {
             db.get(key.data(), key.size(), value, vsize);
@@ -239,7 +240,7 @@ class DataStoreImpl {
         // find out which DB to access
         long unsigned sdskv_db_idx = computeDbIndex(level, containerName, key);
         // make corresponding datastore entry
-        auto& db = m_databases[sdskv_db_idx];
+        auto& db = m_databases.dbs[sdskv_db_idx];
         try {
             return db.exists(key);
         } catch(sdskv::exception& ex) {
@@ -255,7 +256,7 @@ class DataStoreImpl {
         // find out which DB to access
         long unsigned sdskv_db_idx = computeDbIndex(level, containerName, key);
         // Create the product id
-        const auto& db = m_databases[sdskv_db_idx];
+        const auto& db = m_databases.dbs[sdskv_db_idx];
         try {
             db.put(key.data(), key.size(), data, data_size);
         } catch(sdskv::exception& ex) {
@@ -272,7 +273,7 @@ class DataStoreImpl {
             const std::vector<std::string>& keys,
             const std::vector<std::string>& values) {
         // Create the product id
-        const auto& db = m_databases[db_index];
+        const auto& db = m_databases.dbs[db_index];
         try {
             db.put_multi(keys, values);
         } catch(sdskv::exception& ex) {
@@ -288,11 +289,11 @@ class DataStoreImpl {
         // hash the name to get the provider id
         long unsigned db_idx = 0;
         uint64_t h = hashString(containerName);
-        ch_placement_find_closest(m_chi_sdskv, h, 1, &db_idx);
+        ch_placement_find_closest(m_databases.chi, h, 1, &db_idx);
         // make an entry for the lower bound
         auto lb_entry = buildKey(level, containerName, lower);
         // get provider and database
-        const auto& db = m_databases[db_idx];
+        const auto& db = m_databases.dbs[db_idx];
         // ignore keys that don't have the same level or the same prefix
         std::string prefix(2+containerName.size(), '\0');
         prefix[0] = level;

@@ -3,17 +3,35 @@
 
 #include <string>
 #include <memory>
+#include <sdskv-common.h>
 #include <yaml-cpp/yaml.h>
 
 namespace hepnos {
 
+struct DataBaseConfig {
+    std::string name;
+    std::string path;
+    sdskv_db_type_t type;
+    sdskv_database_id_t id = 0;
+};
+
+struct ProviderConfig {
+    uint16_t                    provider_id;
+    std::vector<DataBaseConfig> databases;
+};
+
 class ServiceConfig {
 
-private:
-    class Impl;
-    std::unique_ptr<Impl> m_impl;
-
 public:
+
+    std::string address;
+    uint32_t    numRanks = 1;
+    uint32_t    numThreads = 1;
+    std::vector<ProviderConfig> datasetProviders;
+    std::vector<ProviderConfig> runProviders;
+    std::vector<ProviderConfig> subrunProviders;
+    std::vector<ProviderConfig> eventProviders;
+    std::vector<ProviderConfig> productProviders;
 
     ServiceConfig(const std::string& filename, int rank=0, int numRanks=1);
     
@@ -23,22 +41,6 @@ public:
     ServiceConfig& operator=(ServiceConfig&&) = delete;
     ~ServiceConfig();
 
-    const std::string& getAddress() const;
-    bool hasDatabase() const;
-    std::string getDatabasePath(int rank=0, int provider=0, int target=0) const;
-    const std::string& getDatabasePathTemplate() const;
-    std::string getDatabaseName(int rank=0, int provider=0, int target=0) const;
-    const std::string& getDatabaseNameTemplate() const;
-    const std::string& getDatabaseType() const;
-    uint32_t getNumDatabaseProviders() const;
-    uint32_t getNumDatabaseTargets() const;
-    bool hasStorage() const;
-    std::string getStoragePath(int rank=0, int provider=0, int target=0) const;
-    const std::string& getStoragePathTemplate() const;
-    size_t getStorageSize() const;
-    uint32_t getNumStorageProviders() const;
-    uint32_t getNumStorageTargets() const;
-    uint32_t getNumThreads() const;
 };
 
 }

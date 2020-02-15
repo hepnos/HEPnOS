@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 #include <mpi.h>
+#include "ServiceConfig.hpp"
 
 namespace hepnos {
 
@@ -11,13 +12,14 @@ class ConnectionInfoGenerator {
 
 private:
 
-    class Impl;
-    std::unique_ptr<Impl> m_impl;
+    const std::string& address;
+    const ServiceConfig& serviceConfig;
 
 public:
 
     ConnectionInfoGenerator(const std::string& address,
-            uint16_t num_sdskv_providers, uint16_t num_bake_providers);
+                            const ServiceConfig& config);
+
     ConnectionInfoGenerator(const ConnectionInfoGenerator&) = delete;
     ConnectionInfoGenerator(ConnectionInfoGenerator&&) = delete;
     ConnectionInfoGenerator& operator=(const ConnectionInfoGenerator&) = delete;

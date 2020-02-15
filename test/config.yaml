@@ -1,9 +1,34 @@
 ---
 address: na+sm://
 threads: 4
-database:
-  name: hepnosdb.$RANK.$PROVIDER.$TARGET
-  path: XXX/$RANK_$PROVIDER_$TARGET
-  type: bdb
-  providers: 2
-  targets: 2
+databases:
+  datasets:
+    name: hepnos-datasets.$RANK.$PROVIDER.$TARGET
+    path: XXX/$RANK
+    type: bdb
+    targets: 2
+    providers: 2
+  runs:
+    name: hepnos-runs.$RANK.$PROVIDER.$TARGET
+    path: XXX/$RANK
+    type: bdb
+    targets: 2
+    providers: 2
+  subruns:
+    name: hepnos-subruns.$RANK.$PROVIDER.$TARGET
+    path: XXX/$RANK
+    type: bdb
+    targets: 2
+    providers: 2
+  events:
+    name: hepnos-events.$RANK.$PROVIDER.$TARGET
+    path: XXX/$RANK
+    type: bdb
+    targets: 2
+    providers: 2
+  products: 
+    name: hepnos-products.$RANK.$PROVIDER.$TARGET
+    path: XXX/$RANK
+    type: bdb
+    targets: 2
+    providers: 2
