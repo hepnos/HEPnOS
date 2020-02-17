@@ -136,19 +136,33 @@ class DataStoreImpl {
         }
         if(!databasesNode.IsMap()) {
             throw Exception("\"databases\" entry should be a map");
-        } /*
-        for(auto provider_it = databasesNode.begin(); provider_it != databasesNode.end(); provider_it++) {
-            // provider entry should be a sequence
-            if(!provider.IsSequence()) {
-                throw Exception("provider entry should be a sequence");
+        }
+        // database entry has keys datasets, runs, subruns, events, and products.
+        std::vector<std::string> fields = { "datasets", "runs", "subruns", "events", "products" };
+        for(auto& f : fields) {
+            auto fieldNode = databasesNode[f];
+            if(!fieldNode) {
+                throw Exception("\""+f+"\" entry not found in databases section");
             }
-            for(auto db : provider) {
-                if(!db.IsScalar()) {
-                    throw Exception("database id should be a scalar");
+            if(!fieldNode.IsMap()) {
+                throw Exception("\""+f+"\" entry should be a mapping from addresses to providers");
+            }
+            for(auto addresses_it = fieldNode.begin(); addresses_it != fieldNode.end(); addresses_it++) {
+                auto providers = addresses_it->second;
+                for(auto provider_it = providers.begin(); provider_it != providers.end(); provider_it++) {
+                    // provider entry should be a sequence
+                    if(!provider_it->second.IsSequence()) {
+                        std::cerr << "Error,  provider_it->second is " << provider_it->second << std::endl;
+                        throw Exception("provider entry should be a sequence");
+                    }
+                    for(auto db : provider_it->second) {
+                        if(!db.IsScalar()) {
+                            throw Exception("database id should be a scalar");
+                        }
+                    }
                 }
             }
         }
-        */
     }
 
     public:
@@ -304,7 +318,7 @@ class DataStoreImpl {
             prefix.resize(1);
         }
         // issue an sdskv_list_keys
-        std::vector<std::string> entries(maxKeys);
+        std::vector<std::string> entries(maxKeys, std::string(1024,'\0'));
         try {
             db.list_keys(lb_entry, prefix, entries);
         } catch(sdskv::exception& ex) {

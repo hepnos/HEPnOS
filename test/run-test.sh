@@ -15,7 +15,7 @@ cp config.yaml $TEST_DIR/config.yaml
 CFG_FILE=$TEST_DIR/config.yaml
 sed -i -e "s|XXX|${TEST_DIR}/database|g" $CFG_FILE
 
-hepnos_test_start_servers 2 1 20 $CFG_FILE $CON_FILE
+hepnos_test_start_servers 2 2 20 $CFG_FILE $CON_FILE
 
 export HEPNOS_CONFIG_FILE=$CON_FILE
 
