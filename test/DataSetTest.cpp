@@ -11,10 +11,11 @@ void DataSetTest::tearDown() {}
 
 void DataSetTest::testFillDataStore() {
 
-    auto mds = datastore->createDataSet("matthieu");
-    datastore->createDataSet("shane");
-    datastore->createDataSet("phil");
-    datastore->createDataSet("rob");
+    auto root = datastore->root();
+    auto mds = root.createDataSet("matthieu");
+    root.createDataSet("shane");
+    root.createDataSet("phil");
+    root.createDataSet("rob");
 
     // erroneous dataset creations
     // "/" is forbidden in the name, will throw an exception
@@ -27,22 +28,29 @@ void DataSetTest::testFillDataStore() {
             hepnos::Exception);
     // correct dataset creation
     DataSet ds1 = mds.createDataSet("ds1");
+    std::cerr << "AAAA" << std::endl;
     // assert the characteristics of the created dataset
     CPPUNIT_ASSERT(ds1.valid());
     CPPUNIT_ASSERT_EQUAL_STR("ds1", ds1.name());
     CPPUNIT_ASSERT_EQUAL_STR("matthieu", ds1.container());
     CPPUNIT_ASSERT_EQUAL_STR("matthieu/ds1", ds1.fullname());
     // assert access from DataStore using full path
-    DataSet matthieu_ds1 = (*datastore)["matthieu/ds1"];
+    DataSet matthieu_ds1 = root["matthieu/ds1"];
+    std::cerr << "BBBB" << std::endl;
     CPPUNIT_ASSERT(matthieu_ds1.valid());
     CPPUNIT_ASSERT(matthieu_ds1 == ds1);
+    std::cerr << "CCCC" << std::endl;
     // create a dataset inside ds1
     DataSet ds11 = ds1.createDataSet("ds11");
+    std::cerr << "DDDD" << std::endl;
     CPPUNIT_ASSERT(ds11.valid());
+    std::cerr << "EEEE" << std::endl;
     // access ds11 using path from "matthieu"
     DataSet ds1_ds11 = mds["ds1/ds11"];
+    std::cerr << "FFFF" << std::endl;
     CPPUNIT_ASSERT(ds1_ds11.valid());
     CPPUNIT_ASSERT(ds1_ds11 == ds11);
+    std::cerr << "GGGG" << std::endl;
     // assert comparison with a default-constructed dataset
     DataSet ds0;
     CPPUNIT_ASSERT(ds0 != ds1);
@@ -51,8 +59,11 @@ void DataSetTest::testFillDataStore() {
     DataSet ds2 = ds1.next();
     CPPUNIT_ASSERT(!ds2.valid());
     // create more datasets
+    std::cerr << "HHHH" << std::endl;
     DataSet ds3 = mds.createDataSet("ds3");
+    std::cerr << "IIII" << std::endl;
     ds2 = mds.createDataSet("ds2");
+    std::cerr << "JJJJ" << std::endl;
     // assert that these are valid
     CPPUNIT_ASSERT(ds2.valid());
     CPPUNIT_ASSERT(ds3.valid());
@@ -61,13 +72,16 @@ void DataSetTest::testFillDataStore() {
     CPPUNIT_ASSERT(ds3 == ds2.next());
     // create more datasets for future tests
     DataSet ds4 = mds.createDataSet("dsB");
+    std::cerr << "KKKK" << std::endl;
     DataSet ds5 = mds.createDataSet("dsD");
+    std::cerr << "LLLL" << std::endl;
     CPPUNIT_ASSERT(ds4.valid());
     CPPUNIT_ASSERT(ds5.valid());
 }
 
 void DataSetTest::testBraketOperator() {
-    DataSet mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    DataSet mds = root["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
     // check that accessing a dataset that does not exist
     // yields a non-valid DataSet
@@ -83,7 +97,8 @@ void DataSetTest::testBraketOperator() {
 }
 
 void DataSetTest::testFind() {
-    DataSet mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    DataSet mds = root["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
     // test calling find for a DataSet that does not exist
     {
@@ -105,7 +120,8 @@ void DataSetTest::testFind() {
 }
 
 void DataSetTest::testBeginEnd() {
-    DataSet mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    DataSet mds = root["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
 
     std::vector<std::string> names = {
@@ -118,7 +134,8 @@ void DataSetTest::testBeginEnd() {
 }
 
 void DataSetTest::testLowerUpperBounds() {
-    DataSet mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    DataSet mds = root["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
 
     {
@@ -164,7 +181,8 @@ void DataSetTest::testLowerUpperBounds() {
 }
 
 void DataSetTest::testCreateRuns() {
-    DataSet mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    DataSet mds = root["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
 
     {

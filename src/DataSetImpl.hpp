@@ -22,6 +22,8 @@ class DataSetImpl {
         std::shared_ptr<std::string>    m_container;
         std::string                     m_name;
 
+        static DataSet::iterator m_end;
+
         DataSetImpl(const std::shared_ptr<DataStoreImpl>& ds,
              uint8_t level, 
              const std::shared_ptr<std::string>& container,

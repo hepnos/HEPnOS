@@ -10,44 +10,6 @@ void WriteBatchTest::setUp() {}
 
 void WriteBatchTest::tearDown() {}
 
-void WriteBatchTest::testFillDataStore() {
-}
-
-void WriteBatchTest::testWriteBatchDataSet() {
-
-    TestObjectA out_obj_a;
-    out_obj_a.x() = 44;
-    out_obj_a.y() = 1.2;
-    TestObjectB out_obj_b;
-    out_obj_b.a() = 33;
-    out_obj_b.b() = "you";
-    std::string key1 = "mykey";
-
-    {
-        hepnos::WriteBatch batch(*datastore);
-
-        for(auto i = 10; i < 30; i++) {
-            std::string dsname = "testWriteBatchDataSet"+std::to_string(i);
-            auto ds = datastore->createDataSet(batch, dsname);
-            CPPUNIT_ASSERT(ds.store(batch, key1, out_obj_a));
-            CPPUNIT_ASSERT(ds.store(batch, key1, out_obj_b));
-        }
-    }
-
-    TestObjectA in_obj_a;
-    TestObjectB in_obj_b;
-
-    for(auto i = 10; i < 30; i++) {
-        std::string dsname = "testWriteBatchDataSet"+std::to_string(i);
-        auto ds = (*datastore)[dsname];
-        CPPUNIT_ASSERT(ds.valid());
-        CPPUNIT_ASSERT(ds.load(key1, in_obj_a));
-        CPPUNIT_ASSERT(ds.load(key1, in_obj_b));
-        CPPUNIT_ASSERT(out_obj_a == in_obj_a);
-        CPPUNIT_ASSERT(out_obj_b == in_obj_b);
-    }
-}
-
 void WriteBatchTest::testWriteBatchRun() {
     TestObjectA out_obj_a;
     out_obj_a.x() = 44;
@@ -57,7 +19,7 @@ void WriteBatchTest::testWriteBatchRun() {
     out_obj_b.b() = "you";
     std::string key1 = "mykey";
 
-    auto dataset = datastore->createDataSet("testWriteBatchRun");
+    auto dataset = datastore->root().createDataSet("testWriteBatchRun");
 
     {
         hepnos::WriteBatch batch(*datastore);
@@ -91,7 +53,7 @@ void WriteBatchTest::testWriteBatchSubRun() {
     out_obj_b.b() = "you";
     std::string key1 = "mykey";
 
-    auto dataset = datastore->createDataSet("testWriteBatchSubRun");
+    auto dataset = datastore->root().createDataSet("testWriteBatchSubRun");
     auto run = dataset.createRun(42);
 
     {
@@ -126,7 +88,7 @@ void WriteBatchTest::testWriteBatchEvent() {
     out_obj_b.b() = "you";
     std::string key1 = "mykey";
 
-    auto dataset = datastore->createDataSet("testWriteBatchEvent");
+    auto dataset = datastore->root().createDataSet("testWriteBatchEvent");
     auto run = dataset.createRun(42);
     auto subrun = run.createSubRun(2);
 

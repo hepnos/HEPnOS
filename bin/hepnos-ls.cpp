@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
     }
 
     hepnos::DataStore datastore = hepnos::DataStore::connect(argv[1]);
-    for(auto& ds : datastore) {
+    for(auto& ds : datastore.root()) {
         navigate_dataset(0, ds);
     }
 

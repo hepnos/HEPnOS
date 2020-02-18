@@ -10,8 +10,8 @@ void RunSetTest::setUp() {}
 void RunSetTest::tearDown() {}
 
 void RunSetTest::testFillDataStore() {
-
-    auto mds = datastore->createDataSet("matthieu");
+    auto root = datastore->root();
+    auto mds = root.createDataSet("matthieu");
     CPPUNIT_ASSERT(mds.valid());
     // erroneous run creation
     CPPUNIT_ASSERT_THROW(
@@ -50,7 +50,8 @@ void RunSetTest::testFillDataStore() {
 }
 
 void RunSetTest::testBraketOperator() {
-    DataSet mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    DataSet mds = root["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
     // check that accessing a Run that does not exist
     // yields a non-valid Run instance
@@ -70,7 +71,8 @@ void RunSetTest::testBraketOperator() {
 }
 
 void RunSetTest::testFind() {
-    DataSet mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    DataSet mds = root["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
     // test calling find for a Run that does not exist
     {
@@ -92,7 +94,8 @@ void RunSetTest::testFind() {
 }
 
 void RunSetTest::testBeginEnd() {
-    DataSet mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    DataSet mds = root["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
 
     std::vector<RunNumber> numbers = {42, 45, 47, 53, 59};
@@ -104,7 +107,8 @@ void RunSetTest::testBeginEnd() {
 }
 
 void RunSetTest::testLowerUpperBounds() {
-    DataSet mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    DataSet mds = root["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
 
     {
@@ -150,7 +154,8 @@ void RunSetTest::testLowerUpperBounds() {
 }
 
 void RunSetTest::testCreateSubRuns() {
-    DataSet mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    DataSet mds = root["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
     Run r2 = mds[45];
 

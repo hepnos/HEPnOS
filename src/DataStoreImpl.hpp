@@ -39,11 +39,10 @@ class DataStoreImpl {
     sdskv::client                             m_sdskv_client; // SDSKV client
     DistributedDBInfo                         m_databases;    // list of SDSKV databases
     DistributedDBInfo                         m_dataset_dbs;  // list of SDSKV databases for DataSets
-    const DataStore::iterator                 m_end;          // iterator for the end() of the DataStore
 
     DataStoreImpl()
     : m_mid(MARGO_INSTANCE_NULL)
-    , m_end() {}
+    {}
 
     void populateDatabases(DistributedDBInfo& db_info, const YAML::Node& db_config) {
         int ret;
@@ -118,6 +117,8 @@ class DataStoreImpl {
         m_sdskv_client = sdskv::client();
         if(m_databases.chi)
             ch_placement_finalize(m_databases.chi);
+        if(m_dataset_dbs.chi)
+            ch_placement_finalize(m_dataset_dbs.chi);
         for(auto& addr : m_addrs) {
             margo_addr_free(m_mid, addr.second);
         }
@@ -433,13 +434,17 @@ class DataStoreImpl {
      * @brief Checks if a particular dataset exists.
      */
     bool dataSetExists(uint8_t level, const std::string& containerName, const std::string& objectName) const {
+        std::cerr << "Checking if dataset [" << (int)level
+            << ", " << containerName << ", " << objectName << "] exists ... ";
         int ret;
         // build key
         auto key = buildKey(level, containerName, objectName);
         // find out which DB to access
         auto& db = _locateDataSetDb(containerName);
         try {
-            return db.exists(key);
+            bool b = db.exists(key);
+            std::cerr << b << std::endl;
+            return b;
         } catch(sdskv::exception& ex) {
             throw Exception("Error occured when calling sdskv::database::exists (SDSKV error="+std::to_string(ex.error())+")");
         }
@@ -450,6 +455,8 @@ class DataStoreImpl {
      * Creates a DataSet
      */
     bool createDataSet(uint8_t level, const std::string& containerName, const std::string& objectName) {
+        std::cerr << "Creating dataset [" << (int)level
+            << ", " << containerName << ", " << objectName << "]" << std::endl;
         // build full name
         auto key = _buildDataSetKey(level, containerName, objectName);
         // find out which DB to access

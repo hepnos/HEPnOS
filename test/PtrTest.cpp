@@ -15,7 +15,7 @@ void PtrTest::tearDown() {}
 
 void PtrTest::testFillDataStore() {
 
-    auto mds = datastore->createDataSet("matthieu");
+    auto mds = datastore->root().createDataSet("matthieu");
     CPPUNIT_ASSERT(mds.valid());
     Run r1 = mds.createRun(42);
     CPPUNIT_ASSERT(r1.valid());
@@ -26,8 +26,8 @@ void PtrTest::testFillDataStore() {
 }
 
 void PtrTest::testMakePtr() {
-
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];
@@ -70,7 +70,8 @@ void PtrTest::testMakePtr() {
 }
 
 void PtrTest::testPtrLoad() {
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];
@@ -99,8 +100,8 @@ void PtrTest::testPtrLoad() {
 }
 
 void PtrTest::testPtrLoadFromArray() {
-
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];

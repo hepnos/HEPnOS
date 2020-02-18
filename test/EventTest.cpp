@@ -10,8 +10,8 @@ void EventTest::setUp() {}
 void EventTest::tearDown() {}
 
 void EventTest::testFillDataStore() {
-
-    auto mds = datastore->createDataSet("matthieu");
+    auto root = datastore->root();
+    auto mds = root.createDataSet("matthieu");
     CPPUNIT_ASSERT(mds.valid());
     Run r1 = mds.createRun(42);
     CPPUNIT_ASSERT(r1.valid());

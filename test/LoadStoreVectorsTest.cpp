@@ -11,8 +11,8 @@ void LoadStoreVectorsTest::setUp() {}
 void LoadStoreVectorsTest::tearDown() {}
 
 void LoadStoreVectorsTest::testFillDataStore() {
-
-    auto mds = datastore->createDataSet("matthieu");
+    auto root = datastore->root();
+    auto mds = root.createDataSet("matthieu");
     CPPUNIT_ASSERT(mds.valid());
     Run r1 = mds.createRun(42);
     CPPUNIT_ASSERT(r1.valid());
@@ -23,8 +23,8 @@ void LoadStoreVectorsTest::testFillDataStore() {
 }
 
 void LoadStoreVectorsTest::testLoadStoreDataSet() {
-
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];
@@ -77,7 +77,8 @@ void LoadStoreVectorsTest::testLoadStoreDataSet() {
 
 void LoadStoreVectorsTest::testLoadStoreRun() {
 
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];
@@ -130,7 +131,8 @@ void LoadStoreVectorsTest::testLoadStoreRun() {
 
 void LoadStoreVectorsTest::testLoadStoreSubRun() {
 
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];
@@ -183,7 +185,8 @@ void LoadStoreVectorsTest::testLoadStoreSubRun() {
 
 void LoadStoreVectorsTest::testLoadStoreEvent() {
 
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];
@@ -236,7 +239,8 @@ void LoadStoreVectorsTest::testLoadStoreEvent() {
 
 void LoadStoreVectorsTest::testLoadStoreDataSetSubVector() {
 
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];
@@ -283,7 +287,8 @@ void LoadStoreVectorsTest::testLoadStoreDataSetSubVector() {
 
 void LoadStoreVectorsTest::testLoadStoreRunSubVector() {
 
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];
@@ -329,7 +334,8 @@ void LoadStoreVectorsTest::testLoadStoreRunSubVector() {
 }
 void LoadStoreVectorsTest::testLoadStoreSubRunSubVector() {
 
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];
@@ -375,7 +381,8 @@ void LoadStoreVectorsTest::testLoadStoreSubRunSubVector() {
 }
 void LoadStoreVectorsTest::testLoadStoreEventSubVector() {
 
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];

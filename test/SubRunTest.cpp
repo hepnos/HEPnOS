@@ -10,8 +10,8 @@ void SubRunTest::setUp() {}
 void SubRunTest::tearDown() {}
 
 void SubRunTest::testFillDataStore() {
-
-    auto mds = datastore->createDataSet("matthieu");
+    auto root = datastore->root();
+    auto mds = root.createDataSet("matthieu");
     CPPUNIT_ASSERT(mds.valid());
     Run r1 = mds.createRun(42);
     CPPUNIT_ASSERT(r1.valid());
@@ -19,7 +19,8 @@ void SubRunTest::testFillDataStore() {
 }
 
 void SubRunTest::testCreateEvents() {
-    DataSet mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
     Run r1 = mds[42];
     CPPUNIT_ASSERT(r1.valid());
@@ -44,7 +45,8 @@ void SubRunTest::testCreateEvents() {
 }
 
 void SubRunTest::testBraketOperator() {
-    DataSet mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
     Run r1 = mds[42];
     CPPUNIT_ASSERT(r1.valid());
@@ -61,7 +63,8 @@ void SubRunTest::testBraketOperator() {
 }
 
 void SubRunTest::testFind() {
-    DataSet mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
     Run r1 = mds[42];
     CPPUNIT_ASSERT(r1.valid());
@@ -87,7 +90,8 @@ void SubRunTest::testFind() {
 }
 
 void SubRunTest::testBeginEnd() {
-    DataSet mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
     Run r1 = mds[42];
     CPPUNIT_ASSERT(r1.valid());
@@ -103,7 +107,8 @@ void SubRunTest::testBeginEnd() {
 }
 
 void SubRunTest::testLowerUpperBounds() {
-    DataSet mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     CPPUNIT_ASSERT(mds.valid());
     Run r1 = mds[42];
     CPPUNIT_ASSERT(r1.valid());

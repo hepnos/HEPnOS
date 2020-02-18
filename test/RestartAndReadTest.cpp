@@ -12,7 +12,8 @@ void RestartAndReadTest::tearDown() {}
 
 void RestartAndReadTest::testLoadDataSet() {
 
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];
@@ -45,7 +46,8 @@ void RestartAndReadTest::testLoadDataSet() {
 
 void RestartAndReadTest::testLoadRun() {
 
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];
@@ -78,7 +80,8 @@ void RestartAndReadTest::testLoadRun() {
 
 void RestartAndReadTest::testLoadSubRun() {
 
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];
@@ -111,7 +114,8 @@ void RestartAndReadTest::testLoadSubRun() {
 
 void RestartAndReadTest::testLoadEvent() {
 
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];

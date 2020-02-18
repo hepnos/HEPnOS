@@ -212,9 +212,6 @@ class DataSet : public KeyValueContainer {
     Run createRun(const RunNumber& runNumber);
     Run createRun(WriteBatch& batch, const RunNumber& runNumber);
 
-    typedef DataStore::const_iterator const_iterator;
-    typedef DataStore::iterator iterator;
-
     /**
      * @brief Accesses an existing DataSet using the []
      * operator. If no DataSet correspond to the provided name,
@@ -226,6 +223,20 @@ class DataSet : public KeyValueContainer {
      * @return a DataSet corresponding to the provided name.
      */
     DataSet operator[](const std::string& datasetName) const;
+
+    /**
+     * @brief iterator class to navigate DataSets.
+     * This iterator is a forward iterator. DataSets are sorted
+     * alphabetically inside the DataStore.
+     */
+    class iterator;
+
+    /**
+     * @brief const_iterator class to navigate DataSets.
+     * This iterator is a forward iterator. DataSets are sorted
+     * alphabetically inside the DataStore.
+     */
+    class const_iterator;
 
     /**
      * @brief Searches this DataSet for a DataSet with 
@@ -371,6 +382,229 @@ class DataSet : public KeyValueContainer {
      * @return a Run corresponding to the provided run number.
      */
     Run operator[](const RunNumber& runNumber) const;
+};
+
+class DataSet::const_iterator {
+
+    protected:
+
+    /**
+     * @brief Implementation of the class (using Pimpl idiom)
+     */
+    class Impl;
+    std::unique_ptr<Impl> m_impl; /*!< Pointer to implementation */
+
+    public:
+    /**
+     * @brief Constructor. Creates a const_iterator pointing
+     * to an invalid DataSet.
+     */
+    const_iterator();
+
+    /**
+     * @brief Constructor. Creates a const_iterator pointing
+     * to a given DataSet. The DataSet may or may not be valid. 
+     *
+     * @param current DataSet to make the const_iterator point to.
+     */
+    const_iterator(const DataSet& current);
+
+    /**
+     * @brief Constructor. Creates a const_iterator pointing
+     * to a given DataSet. The DataSet may or may not be valid.
+     *
+     * @param current DataSet to make the const_iterator point to.
+     */
+    const_iterator(DataSet&& current);
+
+    typedef const_iterator self_type;
+    typedef DataSet value_type;
+    typedef DataSet& reference;
+    typedef DataSet* pointer;
+    typedef int difference_type;
+    typedef std::forward_iterator_tag iterator_category;
+
+    /**
+     * @brief Destructor. This destructor is virtual because
+     * the iterator class inherits from const_iterator.
+     */
+    virtual ~const_iterator();
+
+    /**
+     * @brief Copy-constructor.
+     *
+     * @param other const_iterator to copy.
+     */
+    const_iterator(const const_iterator& other);
+
+    /**
+     * @brief Move-constructor.
+     *
+     * @param other const_iterator to move.
+     */
+    const_iterator(const_iterator&& other);
+
+    /**
+     * @brief Copy-assignment operator.
+     *
+     * @param other const_iterator to copy.
+     *
+     * @return this.
+     */
+    const_iterator& operator=(const const_iterator&);
+
+    /**
+     * @brief Move-assignment operator.
+     *
+     * @param other const_iterator to move.
+     *
+     * @return this.
+     */
+    const_iterator& operator=(const_iterator&&);
+
+    /**
+     * @brief Increments the const_iterator, returning
+     * a copy of the iterator after incrementation.
+     *
+     * @return a copy of the iterator after incrementation.
+     */
+    self_type operator++();
+
+    /**
+     * @brief Increments the const_iterator, returning
+     * a copy of the iterator before incrementation.
+     *
+     * @return a copy of the iterator after incrementation.
+     */
+    self_type operator++(int);
+
+    /**
+     * @brief Dereference operator. Returns a const reference
+     * to the DataSet this const_iterator points to.
+     *
+     * @return a const reference to the DataSet this
+     *      const_iterator points to.
+     */
+    const reference operator*();
+
+    /**
+     * @brief Returns a const pointer to the DataSet this
+     * const_iterator points to.
+     *
+     * @return a const pointer to the DataSet this
+     *      const_iterator points to.
+     */
+    const pointer operator->();
+
+    /**
+     * @brief Compares two const_iterators. The two const_iterators
+     * are equal if they point to the same DataSet or if both
+     * correspond to DataStore::cend().
+     *
+     * @param rhs const_iterator to compare with.
+     *
+     * @return true if the two const_iterators are equal, false otherwise.
+     */
+    bool operator==(const self_type& rhs) const;
+
+    /**
+     * @brief Compares two const_iterators.
+     *
+     * @param rhs const_iterator to compare with.
+     *
+     * @return true if the two const_iterators are different, false otherwise.
+     */
+    bool operator!=(const self_type& rhs) const;
+};
+
+class DataSet::iterator : public DataSet::const_iterator {
+
+    public:
+
+    /**
+     * @brief Constructor. Builds an iterator pointing to an
+     * invalid DataSet.
+     */
+    iterator();
+
+    /**
+     * @brief Constructor. Builds an iterator pointing to
+     * an existing DataSet. The DataSet may or may not be
+     * valid.
+     *
+     * @param current DataSet to point to.
+     */
+    iterator(const DataSet& current);
+
+    /**
+     * @brief Constructor. Builds an iterator pointing to
+     * an existing DataSet. The DataSet may or may not be
+     * valid.
+     *
+     * @param current DataSet to point to.
+     */
+    iterator(DataSet&& current);
+
+    typedef iterator self_type;
+    typedef DataSet value_type;
+    typedef DataSet& reference;
+    typedef DataSet* pointer;
+    typedef int difference_type;
+    typedef std::forward_iterator_tag iterator_category;
+
+    /**
+     * @brief Destructor.
+     */
+    ~iterator();
+
+    /**
+     * @brief Copy constructor.
+     *
+     * @param other iterator to copy.
+     */
+    iterator(const iterator& other);
+
+    /**
+     * @brief Move constructor.
+     *
+     * @param other iterator to move.
+     */
+    iterator(iterator&& other);
+
+    /**
+     * @brief Copy-assignment operator.
+     *
+     * @param other iterator to copy.
+     *
+     * @return this.
+     */
+    iterator& operator=(const iterator& other);
+
+    /**
+     * @brief Move-assignment operator.
+     *
+     * @param other iterator to move.
+     *
+     * @return this.
+     */
+    iterator& operator=(iterator&& other);
+
+    /**
+     * @brief Dereference operator. Returns a reference
+     * to the DataSet this iterator points to.
+     *
+     * @return A reference to the DataSet this iterator
+     *      points to.
+     */
+    reference operator*();
+
+    /**
+     * @brief Returns a pointer to the DataSet this iterator
+     * points to.
+     *
+     * @return A pointer to the DataSet this iterator points to.
+     */
+    pointer operator->();
 };
 
 }

@@ -9,8 +9,6 @@ extern hepnos::DataStore* datastore;
 class WriteBatchTest : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE( WriteBatchTest );
-    CPPUNIT_TEST( testFillDataStore );
-    CPPUNIT_TEST( testWriteBatchDataSet );
     CPPUNIT_TEST( testWriteBatchRun );
     CPPUNIT_TEST( testWriteBatchSubRun );
     CPPUNIT_TEST( testWriteBatchEvent );
@@ -21,8 +19,6 @@ class WriteBatchTest : public CppUnit::TestFixture
     void setUp();
     void tearDown();
 
-    void testFillDataStore();
-    void testWriteBatchDataSet();
     void testWriteBatchRun();
     void testWriteBatchSubRun();
     void testWriteBatchEvent();

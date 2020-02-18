@@ -12,7 +12,8 @@ void WriteAndRestartTest::tearDown() {}
 
 void WriteAndRestartTest::testFillDataStore() {
 
-    auto mds = datastore->createDataSet("matthieu");
+    auto root = datastore->root();
+    auto mds = root.createDataSet("matthieu");
     CPPUNIT_ASSERT(mds.valid());
     Run r1 = mds.createRun(42);
     CPPUNIT_ASSERT(r1.valid());
@@ -24,7 +25,8 @@ void WriteAndRestartTest::testFillDataStore() {
 
 void WriteAndRestartTest::testStoreDataSet() {
 
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];
@@ -49,7 +51,8 @@ void WriteAndRestartTest::testStoreDataSet() {
 
 void WriteAndRestartTest::testStoreRun() {
 
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];
@@ -74,7 +77,8 @@ void WriteAndRestartTest::testStoreRun() {
 
 void WriteAndRestartTest::testStoreSubRun() {
 
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];
@@ -99,7 +103,8 @@ void WriteAndRestartTest::testStoreSubRun() {
 
 void WriteAndRestartTest::testStoreEvent() {
 
-    auto mds = (*datastore)["matthieu"];
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
     auto run = mds[42];
     auto subrun = run[3];
     auto event = subrun[22];

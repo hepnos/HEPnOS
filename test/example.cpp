@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
 
     DataStore datastore = DataStore::connect(argv[1]);
 
-    DataSet ds = datastore.createDataSet("fermilab");
+    DataSet ds = datastore.root().createDataSet("fermilab");
 
     InputTag tag("AAA","BBB");
     Particle p_in(3.4, 5.6, 7.8, 42);

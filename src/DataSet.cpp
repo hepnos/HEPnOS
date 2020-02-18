@@ -13,6 +13,8 @@
 
 namespace hepnos {
 
+DataSet::iterator DataSetImpl::m_end;
+
 DataSet::DataSet()
 : m_impl(std::make_shared<DataSetImpl>(nullptr, 0, std::make_shared<std::string>(""), "")) {}
 
@@ -171,7 +173,7 @@ DataSet::iterator DataSet::find(const std::string& datasetPath) {
     if(datasetPath.find('%') != std::string::npos) {
         throw Exception("Invalid character '%' in dataset name");
     }
-
+    
     size_t slash_count = std::count(datasetPath.begin(), datasetPath.end(), '/');
     size_t level = m_impl->m_level + 1 + slash_count;
     std::string containerName;
@@ -184,13 +186,16 @@ DataSet::iterator DataSet::find(const std::string& datasetPath) {
         containerName = parent;
     } else {
         size_t c = datasetPath.find_last_of('/');
-        containerName = parent + "/" + datasetPath.substr(0,c);
+        if(parent.size() > 0)
+            containerName = parent + "/" + datasetPath.substr(0,c);
+        else
+            containerName = datasetPath.substr(0,c);
         datasetName   = datasetPath.substr(c+1);
     }
 
     bool b = m_impl->m_datastore->dataSetExists(level, containerName, datasetName);
     if(!b) {
-        return m_impl->m_datastore->m_end;
+        return DataSetImpl::m_end;
     }
     return iterator(
                 DataSet(
@@ -228,7 +233,7 @@ DataSet::iterator DataSet::end() {
     if(!valid()) {
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
-    return m_impl->m_datastore->m_end;
+    return DataSetImpl::m_end;
 }
 
 DataSet::const_iterator DataSet::begin() const {
@@ -239,7 +244,7 @@ DataSet::const_iterator DataSet::end() const {
     if(!valid()) {
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
-    return m_impl->m_datastore->m_end;
+    return DataSetImpl::m_end;
 }
 
 DataSet::const_iterator DataSet::cbegin() const {
@@ -250,7 +255,7 @@ DataSet::const_iterator DataSet::cend() const {
     if(!valid()) {
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
-    return m_impl->m_datastore->m_end;
+    return DataSetImpl::m_end;
 }
 
 DataSet::iterator DataSet::lower_bound(const std::string& lb) {
@@ -308,6 +313,152 @@ RunSet DataSet::runs() const {
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
     return RunSet(m_impl);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// DataSet::const_iterator::Impl implementation
+////////////////////////////////////////////////////////////////////////////////////////////
+
+class DataSet::const_iterator::Impl {
+    public:
+        DataSet    m_current_dataset;
+
+        Impl()
+        : m_current_dataset()
+        {}
+
+        Impl(const DataSet& dataset)
+        : m_current_dataset(dataset)
+        {}
+
+        Impl(DataSet&& dataset)
+        : m_current_dataset(std::move(dataset))
+        {}
+
+        Impl(const Impl& other)
+        : m_current_dataset(other.m_current_dataset)
+        {}
+
+        bool operator==(const Impl& other) const {
+            return m_current_dataset == other.m_current_dataset;
+        }
+};
+
+DataSet::const_iterator::const_iterator()
+: m_impl(std::make_unique<Impl>()) {}
+
+DataSet::const_iterator::const_iterator(const DataSet& dataset)
+: m_impl(std::make_unique<Impl>(dataset)) {}
+
+DataSet::const_iterator::const_iterator(DataSet&& dataset)
+: m_impl(std::make_unique<Impl>(std::move(dataset))) {}
+
+DataSet::const_iterator::~const_iterator() {}
+
+DataSet::const_iterator::const_iterator(const DataSet::const_iterator& other) {
+    if(other.m_impl) {
+        m_impl = std::make_unique<Impl>(*other.m_impl);
+    }
+}
+
+DataSet::const_iterator::const_iterator(DataSet::const_iterator&& other)
+: m_impl(std::move(other.m_impl)) {}
+
+DataSet::const_iterator& DataSet::const_iterator::operator=(const DataSet::const_iterator& other) {
+    if(&other == this) return *this;
+    if(other.m_impl)
+        m_impl = std::make_unique<Impl>(*other.m_impl);
+    else
+        m_impl.reset();
+    return *this;
+}
+
+DataSet::const_iterator& DataSet::const_iterator::operator=(DataSet::const_iterator&& other) {
+    if(&other == this) return *this;
+    m_impl = std::move(other.m_impl);
+    return *this;
+}
+
+DataSet::const_iterator::self_type DataSet::const_iterator::operator++() {
+    if(!m_impl) {
+        throw Exception("Trying to increment an invalid iterator");
+    }
+    m_impl->m_current_dataset = m_impl->m_current_dataset.next();
+    return *this;
+}
+
+DataSet::const_iterator::self_type DataSet::const_iterator::operator++(int) {
+    const_iterator copy = *this;
+    ++(*this);
+    return copy;
+}
+
+const DataSet::const_iterator::reference DataSet::const_iterator::operator*() {
+    if(!m_impl) {
+        throw Exception("Trying to dereference an invalid iterator");
+    }
+    return m_impl->m_current_dataset;
+}
+const DataSet::const_iterator::pointer DataSet::const_iterator::operator->() {
+    if(!m_impl) {
+        throw Exception("Trying to dereference an invalid iterator");
+    }
+    return &(m_impl->m_current_dataset);
+}
+
+bool DataSet::const_iterator::operator==(const self_type& rhs) const {
+    if(!m_impl && !rhs.m_impl)  return true;
+    if(m_impl  && !rhs.m_impl)  return false;
+    if(!m_impl && rhs.m_impl)   return false;
+    return *m_impl == *(rhs.m_impl);
+}
+
+bool DataSet::const_iterator::operator!=(const self_type& rhs) const {
+    return !(*this == rhs);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// DataStore::iterator implementation
+////////////////////////////////////////////////////////////////////////////////////////////
+
+DataSet::iterator::iterator(const DataSet& current)
+: const_iterator(current) {}
+
+DataSet::iterator::iterator(DataSet&& current)
+: const_iterator(std::move(current)) {}
+
+DataSet::iterator::iterator()
+: const_iterator() {}
+
+DataSet::iterator::~iterator() {}
+
+DataSet::iterator::iterator(const DataSet::iterator& other)
+: const_iterator(other) {}
+
+DataSet::iterator::iterator(DataSet::iterator&& other)
+: const_iterator(std::move(other)) {}
+
+DataSet::iterator& DataSet::iterator::operator=(const DataSet::iterator& other) {
+    if(this == &other) return *this;
+    if(other.m_impl)
+        m_impl = std::make_unique<Impl>(*other.m_impl);
+    else
+        m_impl.reset();
+    return *this;
+}
+
+DataSet::iterator& DataSet::iterator::operator=(DataSet::iterator&& other) {
+    if(this == &other) return *this;
+    m_impl = std::move(other.m_impl);
+    return *this;
+}
+
+DataSet::iterator::reference DataSet::iterator::operator*() {
+    return const_cast<reference>(const_iterator::operator*());
+}
+
+DataSet::iterator::pointer DataSet::iterator::operator->() {
+    return const_cast<pointer>(const_iterator::operator->());
 }
 
 }
