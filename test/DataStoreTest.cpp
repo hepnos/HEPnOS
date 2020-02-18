@@ -25,7 +25,7 @@ void DataStoreTest::testFillDataStore() {
     CPPUNIT_ASSERT(ds1.valid());
     CPPUNIT_ASSERT_EQUAL_STR("ds1", ds1.name());
     CPPUNIT_ASSERT_EQUAL_STR("", ds1.container());
-    CPPUNIT_ASSERT_EQUAL_STR("ds1", ds1.fullname());
+    CPPUNIT_ASSERT_EQUAL_STR("/ds1", ds1.fullname());
     // assert invalid dataset when it does not exist
     CPPUNIT_ASSERT_THROW(datastore->root()["invalid"], hepnos::Exception);
     // assert comparison with a default-constructed dataset

@@ -26,7 +26,7 @@ void RunSetTest::testFillDataStore() {
     // assert the characteristics of the created dataset
     CPPUNIT_ASSERT(r1.valid());
     CPPUNIT_ASSERT(42 == r1.number());
-    CPPUNIT_ASSERT_EQUAL_STR("matthieu", r1.container());
+    CPPUNIT_ASSERT_EQUAL_STR("/matthieu", r1.container());
     // assert comparison with a default-constructed run
     CPPUNIT_ASSERT(r0 != r1);
     CPPUNIT_ASSERT(!(r0 == r1));
@@ -62,7 +62,7 @@ void RunSetTest::testBraketOperator() {
     Run r2 = mds[45];
     CPPUNIT_ASSERT(r2.valid());
     CPPUNIT_ASSERT(45 == r2.number());
-    CPPUNIT_ASSERT_EQUAL_STR("matthieu", r2.container());
+    CPPUNIT_ASSERT_EQUAL_STR("/matthieu", r2.container());
 
     // check that we access the same Run using the runs() function
     // to go through the RunSet

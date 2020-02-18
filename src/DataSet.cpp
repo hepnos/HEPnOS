@@ -186,10 +186,7 @@ DataSet::iterator DataSet::find(const std::string& datasetPath) {
         containerName = parent;
     } else {
         size_t c = datasetPath.find_last_of('/');
-        if(parent.size() > 0)
-            containerName = parent + "/" + datasetPath.substr(0,c);
-        else
-            containerName = datasetPath.substr(0,c);
+        containerName = parent + "/" + datasetPath.substr(0,c);
         datasetName   = datasetPath.substr(c+1);
     }
 

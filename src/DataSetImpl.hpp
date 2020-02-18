@@ -39,20 +39,15 @@ class DataSetImpl {
         : m_datastore(ds)
         , m_level(level) {
             size_t p = fullname.find_last_of('/');
-            if(p == std::string::npos) {
-                m_name = fullname;
-                m_container = std::make_shared<std::string>("");
-            } else {
-                m_name = fullname.substr(p+1);
-                m_container = std::make_shared<std::string>(fullname.substr(0, p));
-            }
+            m_name = fullname.substr(p+1);
+            m_container = std::make_shared<std::string>(fullname.substr(0, p));
         }
 
         std::string fullname() const {
-            if(m_container->size() > 0)
-                return *m_container + "/" + m_name;
-            else
-                return m_name;
+            auto result = *m_container;
+            if(m_name.size() > 0)
+                result += "/" + m_name; // we do this because the root dataset has m_name == ""
+            return result;
         }
 };
 

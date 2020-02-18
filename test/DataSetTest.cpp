@@ -32,8 +32,8 @@ void DataSetTest::testFillDataStore() {
     // assert the characteristics of the created dataset
     CPPUNIT_ASSERT(ds1.valid());
     CPPUNIT_ASSERT_EQUAL_STR("ds1", ds1.name());
-    CPPUNIT_ASSERT_EQUAL_STR("matthieu", ds1.container());
-    CPPUNIT_ASSERT_EQUAL_STR("matthieu/ds1", ds1.fullname());
+    CPPUNIT_ASSERT_EQUAL_STR("/matthieu", ds1.container());
+    CPPUNIT_ASSERT_EQUAL_STR("/matthieu/ds1", ds1.fullname());
     // assert access from DataStore using full path
     DataSet matthieu_ds1 = root["matthieu/ds1"];
     std::cerr << "BBBB" << std::endl;
@@ -92,8 +92,8 @@ void DataSetTest::testBraketOperator() {
     DataSet ds2 = mds["ds2"];
     CPPUNIT_ASSERT(ds2.valid());
     CPPUNIT_ASSERT_EQUAL_STR("ds2", ds2.name());
-    CPPUNIT_ASSERT_EQUAL_STR("matthieu", ds2.container());
-    CPPUNIT_ASSERT_EQUAL_STR("matthieu/ds2", ds2.fullname());
+    CPPUNIT_ASSERT_EQUAL_STR("/matthieu", ds2.container());
+    CPPUNIT_ASSERT_EQUAL_STR("/matthieu/ds2", ds2.fullname());
 }
 
 void DataSetTest::testFind() {
@@ -193,7 +193,7 @@ void DataSetTest::testCreateRuns() {
         Run r = mds.createRun(45);
         CPPUNIT_ASSERT(r.valid());
         CPPUNIT_ASSERT(45 == r.number());
-        CPPUNIT_ASSERT_EQUAL_STR("matthieu", r.container());
+        CPPUNIT_ASSERT_EQUAL_STR("/matthieu", r.container());
     }
     
 }
