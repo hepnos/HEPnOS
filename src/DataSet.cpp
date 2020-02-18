@@ -119,10 +119,11 @@ DataSet DataSet::createDataSet(const std::string& name) {
         throw Exception("Invalid character '/' or '%' in dataset name");
     }
     std::string parent = fullname();
-    m_impl->m_datastore->createDataSet(m_impl->m_level+1, parent, name);
-    return DataSet(std::make_shared<DataSetImpl>(
-                m_impl->m_datastore, m_impl->m_level+1,
-                std::make_shared<std::string>(parent), name));
+    auto new_dataset_impl = std::make_shared<DataSetImpl>(
+            m_impl->m_datastore, m_impl->m_level+1,
+            std::make_shared<std::string>(parent), name);
+    m_impl->m_datastore->createDataSet(m_impl->m_level+1, parent, name, new_dataset_impl->m_uuid);
+    return DataSet(new_dataset_impl);
 }
 
 Run DataSet::createRun(const RunNumber& runNumber) {
@@ -190,7 +191,8 @@ DataSet::iterator DataSet::find(const std::string& datasetPath) {
         datasetName   = datasetPath.substr(c+1);
     }
 
-    bool b = m_impl->m_datastore->dataSetExists(level, containerName, datasetName);
+    UUID uuid;
+    bool b = m_impl->m_datastore->loadDataSet(level, containerName, datasetName, uuid);
     if(!b) {
         return DataSetImpl::m_end;
     }
@@ -200,7 +202,8 @@ DataSet::iterator DataSet::find(const std::string& datasetPath) {
                         m_impl->m_datastore,
                         level,
                         std::make_shared<std::string>(containerName),
-                        datasetName)));
+                        datasetName,
+                        uuid)));
 }
 
 DataSet::const_iterator DataSet::find(const std::string& datasetName) const {

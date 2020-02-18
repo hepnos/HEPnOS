@@ -19,8 +19,26 @@
 #include "hepnos/DataSet.hpp"
 #include "StringHash.hpp"
 #include "DataSetImpl.hpp"
+#include "hepnos/UUID.hpp"
 
 namespace hepnos {
+
+inline void object_resize(hepnos::UUID& uuid, size_t new_size) {
+    (void)uuid;
+    (void)new_size;
+}
+
+inline void* object_data(hepnos::UUID& uuid) {
+    return uuid.data;
+}
+
+inline const void* object_data(const hepnos::UUID& uuid) {
+    return uuid.data;
+}
+
+inline size_t object_size(const hepnos::UUID& uuid) {
+    return sizeof(uuid);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // DataStoreImpl implementation
@@ -166,7 +184,6 @@ class DataStoreImpl {
                 for(auto provider_it = providers.begin(); provider_it != providers.end(); provider_it++) {
                     // provider entry should be a sequence
                     if(!provider_it->second.IsSequence()) {
-                        std::cerr << "Error,  provider_it->second is " << provider_it->second << std::endl;
                         throw Exception("provider entry should be a sequence");
                     }
                     for(auto db : provider_it->second) {
@@ -408,8 +425,9 @@ class DataStoreImpl {
         }
         // issue an sdskv_list_keys
         std::vector<std::string> entries(maxDataSets, std::string(1024,'\0'));
+        std::vector<UUID> uuids(maxDataSets);
         try {
-            db.list_keys(lb_entry, prefix, entries);
+            db.list_keyvals(lb_entry, prefix, entries, uuids);
         } catch(sdskv::exception& ex) {
             throw Exception("Error occured when calling sdskv::database::list_keys (SDSKV error="+std::string(ex.what()) + ")");
         }
@@ -423,7 +441,8 @@ class DataStoreImpl {
                         current->m_datastore,
                         level,
                         current->m_container,
-                        entry.substr(i)
+                        entry.substr(i),
+                        uuids[i]
                     )
                 );
         }
@@ -434,8 +453,6 @@ class DataStoreImpl {
      * @brief Checks if a particular dataset exists.
      */
     bool dataSetExists(uint8_t level, const std::string& containerName, const std::string& objectName) const {
-        std::cerr << "Checking if dataset [" << (int)level
-            << ", " << containerName << ", " << objectName << "] exists ... ";
         int ret;
         // build key
         auto key = buildKey(level, containerName, objectName);
@@ -443,10 +460,34 @@ class DataStoreImpl {
         auto& db = _locateDataSetDb(containerName);
         try {
             bool b = db.exists(key);
-            std::cerr << b << std::endl;
             return b;
         } catch(sdskv::exception& ex) {
             throw Exception("Error occured when calling sdskv::database::exists (SDSKV error="+std::to_string(ex.error())+")");
+        }
+        return false;
+    }
+    
+    /*
+     * @brief Loads a dataset.
+     */
+    bool loadDataSet(uint8_t level, const std::string& containerName, const std::string& objectName, UUID& uuid) const {
+        int ret;
+        // build key
+        auto key = buildKey(level, containerName, objectName);
+        // find out which DB to access
+        auto& db = _locateDataSetDb(containerName);
+        try {
+            size_t s = sizeof(uuid);
+            db.get(static_cast<const void*>(key.data()), 
+                   key.size(),
+                   static_cast<void*>(uuid.data),
+                   &s);
+            return s == sizeof(uuid);
+        } catch(sdskv::exception& ex) {
+            if(ex.error() == SDSKV_ERR_UNKNOWN_KEY) {
+                return false;
+            }
+            throw Exception("Error occured when calling sdskv::database::get (SDSKV error="+std::to_string(ex.error())+")");
         }
         return false;
     }
@@ -454,15 +495,14 @@ class DataStoreImpl {
     /**
      * Creates a DataSet
      */
-    bool createDataSet(uint8_t level, const std::string& containerName, const std::string& objectName) {
-        std::cerr << "Creating dataset [" << (int)level
-            << ", " << containerName << ", " << objectName << "]" << std::endl;
+    bool createDataSet(uint8_t level, const std::string& containerName, const std::string& objectName, UUID& uuid) {
         // build full name
         auto key = _buildDataSetKey(level, containerName, objectName);
         // find out which DB to access
         auto& db = _locateDataSetDb(containerName);
+        uuid.randomize();
         try {
-            db.put(key.data(), key.size(), nullptr, 0);
+            db.put(key.data(), key.size(), uuid.data, sizeof(uuid));
         } catch(sdskv::exception& ex) {
             if(!ex.error() == SDSKV_ERR_KEYEXISTS) {
                 return false;

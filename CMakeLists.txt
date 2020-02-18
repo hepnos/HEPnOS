@@ -43,6 +43,7 @@ xpkg_import_module (margo REQUIRED margo)
 xpkg_import_module (sdskv-client REQUIRED sdskv-client)
 xpkg_import_module (sdskv-server REQUIRED sdskv-server)
 xpkg_import_module (ch-placement REQUIRED ch-placement)
+xpkg_import_module (uuid REQUIRED uuid)
 find_package (yaml-cpp REQUIRED)
 
 find_package (CppUnit)

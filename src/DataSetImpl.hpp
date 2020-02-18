@@ -8,6 +8,7 @@
 
 #include "hepnos/DataSet.hpp"
 #include "hepnos/RunSet.hpp"
+#include "hepnos/UUID.hpp"
 
 namespace hepnos {
 
@@ -21,23 +22,28 @@ class DataSetImpl {
         uint8_t                         m_level;
         std::shared_ptr<std::string>    m_container;
         std::string                     m_name;
+        UUID                            m_uuid;
 
         static DataSet::iterator m_end;
 
         DataSetImpl(const std::shared_ptr<DataStoreImpl>& ds,
              uint8_t level, 
              const std::shared_ptr<std::string>& container,
-             const std::string& name)
+             const std::string& name,
+             const UUID& uuid = UUID())
         : m_datastore(ds)
         , m_level(level)
         , m_container(container)
-        , m_name(name) {}
+        , m_name(name)
+        , m_uuid(uuid) {}
 
         DataSetImpl(const std::shared_ptr<DataStoreImpl>& ds,
              uint8_t level,
-             const std::string& fullname)
+             const std::string& fullname,
+             const UUID& uuid = UUID())
         : m_datastore(ds)
-        , m_level(level) {
+        , m_level(level)
+        , m_uuid(uuid) {
             size_t p = fullname.find_last_of('/');
             m_name = fullname.substr(p+1);
             m_container = std::make_shared<std::string>(fullname.substr(0, p));
