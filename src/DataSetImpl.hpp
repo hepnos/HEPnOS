@@ -6,11 +6,12 @@
 #ifndef __HEPNOS_PRIVATE_DATASET_IMPL_H
 #define __HEPNOS_PRIVATE_DATASET_IMPL_H
 
-#include "DataStoreImpl.hpp"
 #include "hepnos/DataSet.hpp"
 #include "hepnos/RunSet.hpp"
 
 namespace hepnos {
+
+class DataStoreImpl;
 
 class DataSetImpl {
 

@@ -18,6 +18,7 @@
 #include "hepnos/DataStore.hpp"
 #include "hepnos/DataSet.hpp"
 #include "StringHash.hpp"
+#include "DataSetImpl.hpp"
 
 namespace hepnos {
 
@@ -37,36 +38,17 @@ class DataStoreImpl {
     std::unordered_map<std::string,hg_addr_t> m_addrs;        // Addresses used by the service
     sdskv::client                             m_sdskv_client; // SDSKV client
     DistributedDBInfo                         m_databases;    // list of SDSKV databases
+    DistributedDBInfo                         m_dataset_dbs;  // list of SDSKV databases for DataSets
     const DataStore::iterator                 m_end;          // iterator for the end() of the DataStore
 
     DataStoreImpl()
     : m_mid(MARGO_INSTANCE_NULL)
     , m_end() {}
 
-    void init(const std::string& configFile) {
+    void populateDatabases(DistributedDBInfo& db_info, const YAML::Node& db_config) {
         int ret;
         hg_return_t hret;
-        YAML::Node config = YAML::LoadFile(configFile);
-        checkConfig(config);
-        // get protocol
-        std::string proto = config["hepnos"]["client"]["protocol"].as<std::string>();
-        // initialize Margo
-        m_mid = margo_init(proto.c_str(), MARGO_CLIENT_MODE, 0, 0);
-        if(!m_mid) {
-            cleanup();
-            throw Exception("Could not initialized Margo");
-        }
-        // initialize SDSKV client
-        try {
-            m_sdskv_client = sdskv::client(m_mid);
-        } catch(sdskv::exception& ex) {
-            cleanup();
-            throw Exception("Could not create SDSKV client (SDSKV error="+std::to_string(ex.error())+")");
-        }
-        // create list of sdskv provider handles
-        YAML::Node databases = config["hepnos"]["databases"];
-        YAML::Node dataset_db = databases["datasets"];
-        for(YAML::const_iterator address_it = dataset_db.begin(); address_it != dataset_db.end(); address_it++) {
+        for(YAML::const_iterator address_it = db_config.begin(); address_it != db_config.end(); address_it++) {
             std::string str_addr = address_it->first.as<std::string>();
             YAML::Node providers = address_it->second;
             // lookup the address
@@ -92,12 +74,43 @@ class DataStoreImpl {
                 YAML::Node databases = provider_it->second;
                 // iterate over databases for this provider
                 for(unsigned i=0; i < databases.size(); i++) {
-                    m_databases.dbs.push_back(sdskv::database(ph, databases[i].as<uint64_t>()));
+                    db_info.dbs.push_back(sdskv::database(ph, databases[i].as<uint64_t>()));
                 }
             } // for each provider
         } // for each address
-        // initialize ch-placement for the SDSKV providers
-        m_databases.chi = ch_placement_initialize("hash_lookup3", m_databases.dbs.size(), 4, 0);
+        // initialize ch-placement
+        db_info.chi = ch_placement_initialize("hash_lookup3", db_info.dbs.size(), 4, 0);
+    }
+
+    void init(const std::string& configFile) {
+        int ret;
+        hg_return_t hret;
+        YAML::Node config = YAML::LoadFile(configFile);
+        checkConfig(config);
+        // get protocol
+        std::string proto = config["hepnos"]["client"]["protocol"].as<std::string>();
+        // initialize Margo
+        m_mid = margo_init(proto.c_str(), MARGO_CLIENT_MODE, 0, 0);
+        if(!m_mid) {
+            cleanup();
+            throw Exception("Could not initialized Margo");
+        }
+        // initialize SDSKV client
+        try {
+            m_sdskv_client = sdskv::client(m_mid);
+        } catch(sdskv::exception& ex) {
+            cleanup();
+            throw Exception("Could not create SDSKV client (SDSKV error="+std::to_string(ex.error())+")");
+        }
+        // populate database info structures for each type of database
+        YAML::Node databases = config["hepnos"]["databases"];
+        YAML::Node dataset_db = databases["datasets"];
+        YAML::Node run_db     = databases["runs"];
+        YAML::Node subrun_db  = databases["subruns"];
+        YAML::Node event_db   = databases["events"];
+        YAML::Node product_db = databases["products"];
+        populateDatabases(m_dataset_dbs, dataset_db);
+        populateDatabases(m_databases, product_db); // TODO change this
     }
 
     void cleanup() {
@@ -329,6 +342,128 @@ class DataStoreImpl {
             keys.emplace_back(&entry[1], entry.size()-1);
         }
         return keys.size();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // DataSet access functions
+    ///////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Builds the database key of a particular DataSet.
+     */
+    static inline std::string _buildDataSetKey(uint8_t level, const std::string& containerName, const std::string& objectName) {
+        size_t c = 1 + objectName.size();
+        if(!containerName.empty()) c += containerName.size() + 1;
+        std::string result(c,'\0');
+        result[0] = level;
+        if(!containerName.empty()) {
+            std::memcpy(&result[1], containerName.data(), containerName.size());
+            size_t x = 1+containerName.size();
+            result[x] = '/';
+            std::memcpy(&result[x+1], objectName.data(), objectName.size());
+        } else {
+            std::memcpy(&result[1], objectName.data(), objectName.size());
+        }
+        return result;
+    }
+
+    /**
+     * Locates and return the database in charge of the provided DataSet info.
+     */
+    const sdskv::database& _locateDataSetDb(const std::string& containerName) const {
+        // hash the name to get the provider id
+        long unsigned db_idx = 0;
+        uint64_t hash;
+        hash = hashString(containerName);
+        ch_placement_find_closest(m_dataset_dbs.chi, hash, 1, &db_idx);
+        return m_dataset_dbs.dbs[db_idx];
+    }
+
+    /**
+     * @brief Fills the result vector with a sequence of up to
+     * maxDataSets shared_ptr to DataSetImpl coming after the
+     * current dataset. Returns the number of DataSets read.
+     */
+    size_t nextDataSets(const std::shared_ptr<DataSetImpl>& current, 
+            std::vector<std::shared_ptr<DataSetImpl>>& result,
+            size_t maxDataSets) const {
+        int ret;
+        result.resize(0);
+        auto& level = current->m_level;
+        auto& containerName = *current->m_container;
+        auto& currentName = current->m_name;
+        if(current->m_level == 0) return 0; // cannot iterate at object level
+        auto& db = _locateDataSetDb(containerName);
+        // make an entry for the lower bound
+        auto lb_entry = _buildDataSetKey(level, containerName, currentName);
+        // ignore keys that don't have the same level or the same prefix
+        std::string prefix(2+containerName.size(), '\0');
+        prefix[0] = level;
+        if(containerName.size() != 0) {
+            std::memcpy(&prefix[1], containerName.data(), containerName.size());
+            prefix[prefix.size()-1] = '/';
+        } else {
+            prefix.resize(1);
+        }
+        // issue an sdskv_list_keys
+        std::vector<std::string> entries(maxDataSets, std::string(1024,'\0'));
+        try {
+            db.list_keys(lb_entry, prefix, entries);
+        } catch(sdskv::exception& ex) {
+            throw Exception("Error occured when calling sdskv::database::list_keys (SDSKV error="+std::string(ex.what()) + ")");
+        }
+        result.resize(0);
+        for(const auto& entry : entries) {
+            size_t i = entry.find_last_of('/');
+            if(i == std::string::npos) i = 1;
+            else i += 1;
+            result.push_back(
+                    std::make_shared<DataSetImpl>(
+                        current->m_datastore,
+                        level,
+                        current->m_container,
+                        entry.substr(i)
+                    )
+                );
+        }
+        return result.size();
+    }
+
+    /**
+     * @brief Checks if a particular dataset exists.
+     */
+    bool dataSetExists(uint8_t level, const std::string& containerName, const std::string& objectName) const {
+        int ret;
+        // build key
+        auto key = buildKey(level, containerName, objectName);
+        // find out which DB to access
+        auto& db = _locateDataSetDb(containerName);
+        try {
+            return db.exists(key);
+        } catch(sdskv::exception& ex) {
+            throw Exception("Error occured when calling sdskv::database::exists (SDSKV error="+std::to_string(ex.error())+")");
+        }
+        return false;
+    }
+
+    /**
+     * Creates a DataSet
+     */
+    bool createDataSet(uint8_t level, const std::string& containerName, const std::string& objectName) {
+        // build full name
+        auto key = _buildDataSetKey(level, containerName, objectName);
+        // find out which DB to access
+        auto& db = _locateDataSetDb(containerName);
+        try {
+            db.put(key.data(), key.size(), nullptr, 0);
+        } catch(sdskv::exception& ex) {
+            if(!ex.error() == SDSKV_ERR_KEYEXISTS) {
+                return false;
+            } else {
+                throw Exception("Error occured when calling sdskv::database::put (SDSKV error=" +std::to_string(ex.error()) + ")");
+            }
+        }
+        return true;
     }
 };
 

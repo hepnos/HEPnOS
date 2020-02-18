@@ -71,8 +71,7 @@ DataStore::iterator DataStore::find(const std::string& datasetPath) {
         datasetName   = datasetPath.substr(c+1);
     }
 
-    std::string data;
-    bool b = m_impl->load(level, containerName, datasetName, data);
+    bool b = m_impl->dataSetExists(level, containerName, datasetName);
     if(!b) {
         return m_impl->m_end;
     }
@@ -181,7 +180,7 @@ DataSet DataStore::createDataSet(const std::string& name) {
     || name.find('%') != std::string::npos) {
         throw Exception("Invalid character ('/' or '%') in dataset name");
     }
-    m_impl->store(1, "", name);
+    m_impl->createDataSet(1, "", name);
     return DataSet(
             std::make_shared<DataSetImpl>(
                 m_impl, 1, std::make_shared<std::string>(""), name));

@@ -31,12 +31,10 @@ DataStore DataSet::datastore() const {
 
 DataSet DataSet::next() const {
     if(!valid()) return DataSet();
-   
-    std::vector<std::string> keys; 
-    size_t s = m_impl->m_datastore->nextKeys(
-            m_impl->m_level, *m_impl->m_container, m_impl->m_name, keys, 1);
+    std::vector<std::shared_ptr<DataSetImpl>> result;
+    size_t s = m_impl->m_datastore->nextDataSets(m_impl, result, 1);
     if(s == 0) return DataSet();
-    return DataSet(std::make_shared<DataSetImpl>(m_impl->m_datastore, m_impl->m_level, keys[0]));
+    else return DataSet(std::move(result[0]));
 }
 
 bool DataSet::valid() const {
@@ -80,10 +78,11 @@ bool DataSet::operator==(const DataSet& other) const {
     bool v2 = other.valid();
     if(!v1 && !v2) return true;
     if(v1  && !v2) return false;
-    if(!v2 &&  v2) return false;
+    if(!v1 &&  v2) return false;
     return m_impl->m_datastore  == other.m_impl->m_datastore
         && m_impl->m_level      == other.m_impl->m_level
-        && *m_impl->m_container == *other.m_impl->m_container
+        && (m_impl->m_container == other.m_impl->m_container
+            || *m_impl->m_container == *other.m_impl->m_container )
         && m_impl->m_name       == other.m_impl->m_name;
 }
 
@@ -106,11 +105,10 @@ const std::string& DataSet::container() const {
 }
 
 std::string DataSet::fullname() const {
-    std::stringstream ss;
-    if(container().size() != 0)
-        ss << container() << "/";
-    ss << name();
-    return ss.str();
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
+    return m_impl->fullname();
 }
 
 DataSet DataSet::createDataSet(const std::string& name) {
@@ -119,7 +117,7 @@ DataSet DataSet::createDataSet(const std::string& name) {
         throw Exception("Invalid character '/' or '%' in dataset name");
     }
     std::string parent = fullname();
-    m_impl->m_datastore->store(m_impl->m_level+1, parent, name);
+    m_impl->m_datastore->createDataSet(m_impl->m_level+1, parent, name);
     return DataSet(std::make_shared<DataSetImpl>(
                 m_impl->m_datastore, m_impl->m_level+1,
                 std::make_shared<std::string>(parent), name));
@@ -190,7 +188,7 @@ DataSet::iterator DataSet::find(const std::string& datasetPath) {
         datasetName   = datasetPath.substr(c+1);
     }
 
-    bool b = m_impl->m_datastore->exists(level, containerName, datasetName);
+    bool b = m_impl->m_datastore->dataSetExists(level, containerName, datasetName);
     if(!b) {
         return m_impl->m_datastore->m_end;
     }
