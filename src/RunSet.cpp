@@ -39,17 +39,17 @@ DataStore RunSet::datastore() const {
 
 RunSet::iterator RunSet::find(const RunNumber& runNumber) {
     int ret;
-    std::string parent = m_impl->fullname();
+    std::string parent_uuid = m_impl->m_uuid.to_string();
     std::string strNum = makeKeyStringFromNumber(runNumber);
     auto datastore = m_impl->m_datastore;
     auto level = m_impl->m_level;
-    bool b = datastore->exists(level+1, parent, strNum);
+    bool b = datastore->exists(level+1, parent_uuid, strNum);
     if(!b) return end();
     return iterator(
             std::make_shared<RunImpl>(
                 datastore,
                 level+1,
-                std::make_shared<std::string>(parent),
+                m_impl->m_uuid,
                 runNumber));
 }
 
@@ -64,9 +64,8 @@ RunSet::iterator RunSet::begin() {
 
     auto ds_level = m_impl->m_level;
     auto datastore = m_impl->m_datastore;
-    std::string container = m_impl->fullname();
     auto new_run_impl = std::make_shared<RunImpl>(datastore,
-            ds_level+1, std::make_shared<std::string>(container), 0);
+            ds_level+1, m_impl->m_uuid, 0);
     Run run(std::move(new_run_impl));
     run = run.next();
 
@@ -103,7 +102,7 @@ RunSet::iterator RunSet::lower_bound(const RunNumber& lb) {
             Run run(std::make_shared<RunImpl>(
                     m_impl->m_datastore, 
                     m_impl->m_level+1,
-                    std::make_shared<std::string>(m_impl->fullname()), 0));
+                    m_impl->m_uuid, 0));
             run = run.next();
             if(!run.valid()) return end();
             else return iterator(run);
@@ -117,7 +116,7 @@ RunSet::iterator RunSet::lower_bound(const RunNumber& lb) {
         Run run(std::make_shared<RunImpl>(
                 m_impl->m_datastore, 
                 m_impl->m_level+1,
-                std::make_shared<std::string>(m_impl->fullname()), lb-1));
+                m_impl->m_uuid, lb-1));
         run = run.next();
         if(!run.valid()) return end();
         else return iterator(run);
@@ -131,8 +130,8 @@ RunSet::const_iterator RunSet::lower_bound(const RunNumber& lb) const {
 
 RunSet::iterator RunSet::upper_bound(const RunNumber& ub) {
     Run run(std::make_shared<RunImpl>(m_impl->m_datastore, 
-            m_impl->m_level+1, 
-            std::make_shared<std::string>(m_impl->fullname()), ub));
+                                      m_impl->m_level+1, 
+                                      m_impl->m_uuid, ub));
     run = run.next();
     if(!run.valid()) return end();
     else return iterator(run);

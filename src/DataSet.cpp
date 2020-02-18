@@ -130,26 +130,27 @@ Run DataSet::createRun(const RunNumber& runNumber) {
     if(InvalidRunNumber == runNumber) {
         throw Exception("Trying to create a Run with InvalidRunNumber");
     }
-    std::string parent = fullname();
+    std::string parent_uuid = m_impl->m_uuid.to_string();
     std::string runStr = makeKeyStringFromNumber(runNumber);
-    m_impl->m_datastore->store(m_impl->m_level+1, parent, runStr);
-    return Run(
-            std::make_shared<RunImpl>(
-                m_impl->m_datastore, m_impl->m_level+1,
-                std::make_shared<std::string>(parent), runNumber));
+    m_impl->m_datastore->store(m_impl->m_level+1, parent_uuid, runStr);
+    return Run(std::make_shared<RunImpl>(
+                    m_impl->m_datastore,
+                    m_impl->m_level+1,
+                    m_impl->m_uuid,
+                    runNumber));
 }
 
 Run DataSet::createRun(WriteBatch& batch, const RunNumber& runNumber) {
     if(InvalidRunNumber == runNumber) {
         throw Exception("Trying to create a Run with InvalidRunNumber");
     }
-    std::string parent = fullname();
+    std::string parent_uuid = m_impl->m_uuid.to_string();
     std::string runStr = makeKeyStringFromNumber(runNumber);
-    batch.m_impl->store(m_impl->m_level+1, parent, runStr);
+    batch.m_impl->store(m_impl->m_level+1, parent_uuid, runStr);
     return Run(
             std::make_shared<RunImpl>(
                 m_impl->m_datastore, m_impl->m_level+1,
-                std::make_shared<std::string>(parent), runNumber));
+                m_impl->m_uuid, runNumber));
 }
 
 DataSet DataSet::operator[](const std::string& datasetName) const {

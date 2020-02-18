@@ -14,7 +14,7 @@ namespace hepnos {
 Run::iterator RunImpl::m_end;
 
 Run::Run()
-: m_impl(std::make_shared<RunImpl>(nullptr, 0, std::make_shared<std::string>(""), InvalidRunNumber)) {} 
+: m_impl(std::make_shared<RunImpl>(nullptr, 0, UUID(), InvalidRunNumber)) {} 
 
 Run::Run(std::shared_ptr<RunImpl>&& impl)
 : m_impl(std::move(impl)) { }
@@ -34,17 +34,17 @@ Run Run::next() const {
    
     std::vector<std::string> keys;
     size_t s = m_impl->m_datastore->nextKeys(
-            m_impl->m_level, *m_impl->m_dataset_name, 
+            m_impl->m_level, m_impl->m_dataset_uuid.to_string(), 
             m_impl->makeKeyStringFromRunNumber(), keys, 1);
     if(s == 0) return Run();
-    size_t i = m_impl->m_dataset_name->size()+1;
+    size_t i = 33;
     if(keys[0].size() <= i) return Run();
     RunNumber rn = parseNumberFromKeyString<RunNumber>(&keys[0][i]);
     if(rn == InvalidRunNumber) return Run();
     return Run(std::make_shared<RunImpl>(
                m_impl->m_datastore,
                m_impl->m_level,
-               m_impl->m_dataset_name, 
+               m_impl->m_dataset_uuid, 
                rn));
 }
 
@@ -103,13 +103,6 @@ const RunNumber& Run::number() const {
         throw Exception("Calling Run member function on an invalid Run object");
     }
     return m_impl->m_run_number;
-}
-
-const std::string& Run::container() const {
-    if(!valid()) {
-        throw Exception("Calling Run member function on an invalid Run object");
-    }
-    return *m_impl->m_dataset_name;
 }
 
 SubRun Run::createSubRun(const SubRunNumber& subRunNumber) {

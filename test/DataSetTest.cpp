@@ -28,7 +28,6 @@ void DataSetTest::testFillDataStore() {
             hepnos::Exception);
     // correct dataset creation
     DataSet ds1 = mds.createDataSet("ds1");
-    std::cerr << "AAAA" << std::endl;
     // assert the characteristics of the created dataset
     CPPUNIT_ASSERT(ds1.valid());
     CPPUNIT_ASSERT_EQUAL_STR("ds1", ds1.name());
@@ -36,21 +35,15 @@ void DataSetTest::testFillDataStore() {
     CPPUNIT_ASSERT_EQUAL_STR("/matthieu/ds1", ds1.fullname());
     // assert access from DataStore using full path
     DataSet matthieu_ds1 = root["matthieu/ds1"];
-    std::cerr << "BBBB" << std::endl;
     CPPUNIT_ASSERT(matthieu_ds1.valid());
     CPPUNIT_ASSERT(matthieu_ds1 == ds1);
-    std::cerr << "CCCC" << std::endl;
     // create a dataset inside ds1
     DataSet ds11 = ds1.createDataSet("ds11");
-    std::cerr << "DDDD" << std::endl;
     CPPUNIT_ASSERT(ds11.valid());
-    std::cerr << "EEEE" << std::endl;
     // access ds11 using path from "matthieu"
     DataSet ds1_ds11 = mds["ds1/ds11"];
-    std::cerr << "FFFF" << std::endl;
     CPPUNIT_ASSERT(ds1_ds11.valid());
     CPPUNIT_ASSERT(ds1_ds11 == ds11);
-    std::cerr << "GGGG" << std::endl;
     // assert comparison with a default-constructed dataset
     DataSet ds0;
     CPPUNIT_ASSERT(ds0 != ds1);
@@ -59,11 +52,8 @@ void DataSetTest::testFillDataStore() {
     DataSet ds2 = ds1.next();
     CPPUNIT_ASSERT(!ds2.valid());
     // create more datasets
-    std::cerr << "HHHH" << std::endl;
     DataSet ds3 = mds.createDataSet("ds3");
-    std::cerr << "IIII" << std::endl;
     ds2 = mds.createDataSet("ds2");
-    std::cerr << "JJJJ" << std::endl;
     // assert that these are valid
     CPPUNIT_ASSERT(ds2.valid());
     CPPUNIT_ASSERT(ds3.valid());
@@ -72,9 +62,7 @@ void DataSetTest::testFillDataStore() {
     CPPUNIT_ASSERT(ds3 == ds2.next());
     // create more datasets for future tests
     DataSet ds4 = mds.createDataSet("dsB");
-    std::cerr << "KKKK" << std::endl;
     DataSet ds5 = mds.createDataSet("dsD");
-    std::cerr << "LLLL" << std::endl;
     CPPUNIT_ASSERT(ds4.valid());
     CPPUNIT_ASSERT(ds5.valid());
 }
@@ -193,7 +181,6 @@ void DataSetTest::testCreateRuns() {
         Run r = mds.createRun(45);
         CPPUNIT_ASSERT(r.valid());
         CPPUNIT_ASSERT(45 == r.number());
-        CPPUNIT_ASSERT_EQUAL_STR("/matthieu", r.container());
     }
     
 }

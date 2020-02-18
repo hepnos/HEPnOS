@@ -22,4 +22,9 @@ UUID UUID::generate() {
     return result;
 }
 
+bool UUID::operator==(const UUID& other) const {
+    int c = memcmp(data, other.data, sizeof(data));
+    return c == 0;
+}
+
 }

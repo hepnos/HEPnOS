@@ -21,24 +21,23 @@ class RunImpl {
 
         std::shared_ptr<DataStoreImpl> m_datastore;
         uint8_t                        m_level;
-        std::shared_ptr<std::string>   m_dataset_name;
+        UUID                           m_dataset_uuid;
         RunNumber                      m_run_number;
 
         static Run::iterator m_end;
 
         RunImpl(const std::shared_ptr<DataStoreImpl>& ds,
              uint8_t level,
-             const std::shared_ptr<std::string>& dataset,
+             const UUID& uuid,
              const RunNumber& rn)
         : m_datastore(ds)
         , m_level(level)
-        , m_dataset_name(dataset)
+        , m_dataset_uuid(uuid)
         , m_run_number(rn) {}
 
         bool operator==(const RunImpl& other) const {
-            if(m_run_number != other.m_run_number) return false;
-            if(m_dataset_name == other.m_dataset_name) return true;
-            return *m_dataset_name == *other.m_dataset_name;
+            return (m_run_number == other.m_run_number)
+                && (m_dataset_uuid == other.m_dataset_uuid);
         }
 
         std::string makeKeyStringFromRunNumber() const {
@@ -46,11 +45,11 @@ class RunImpl {
         }
 
         std::string container() const {
-            return *m_dataset_name;
+            return m_dataset_uuid.to_string();
         }
 
         std::string fullpath() const {
-            return *m_dataset_name + "/" + makeKeyStringFromRunNumber();
+            return container() + "/" + makeKeyStringFromRunNumber();
         }
 };
 

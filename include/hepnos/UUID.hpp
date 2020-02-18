@@ -44,6 +44,8 @@ struct UUID {
     static UUID generate();
 
     void randomize();
+
+    bool operator==(const UUID& other) const;
 };
 
 template<typename T>
