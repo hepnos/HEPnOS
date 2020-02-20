@@ -21,6 +21,7 @@
 namespace hepnos {
 
 class WriteBatch;
+class AsyncEngine;
 
 class KeyValueContainer {
 
@@ -88,6 +89,8 @@ class KeyValueContainer {
      */
     virtual ProductID storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) = 0;
 
+    virtual ProductID storeRawData(AsyncEngine& async, const std::string& key, const char* value, size_t vsize) = 0;
+
     /**
      * @brief Loads raw key/value data from this KeyValueContainer.
      * This function is virtual and must be overloaded in the child class.
@@ -141,6 +144,11 @@ class KeyValueContainer {
         return storeImpl(batch, key, value, std::is_pod<V>());
     }
 
+    template<typename K, typename V>
+    ProductID store(AsyncEngine& async, const K& key, const V& value) {
+        return storeImpl(async, key, value, std::is_pod<V>());
+    }
+
     /**
      * @brief Version of store when the value is an std::vector.
      */
@@ -159,6 +167,16 @@ class KeyValueContainer {
         std::string key_str, val_str;
         serializeKeyValueVector(std::is_pod<V>(), key, value, key_str, val_str, start, end);
         return storeRawData(batch, key_str, val_str.data(), val_str.size());
+    }
+
+    /**
+     * @brief Version of store when the value is an std::vector.
+     */
+    template<typename K, typename V>
+    ProductID store(AsyncEngine& async, const K& key, const std::vector<V>& value, int start=0, int end=-1) {
+        std::string key_str, val_str;
+        serializeKeyValueVector(std::is_pod<V>(), key, value, key_str, val_str, start, end);
+        return storeRawData(async, key_str, val_str.data(), val_str.size());
     }
 
     /**
@@ -216,6 +234,18 @@ class KeyValueContainer {
     }
 
     /**
+     * @brief Implementation of the store function with AsyncEngine
+     * and the value type is not am std::vector and not a POD.
+     */
+    template<typename K, typename V>
+    ProductID storeImpl(AsyncEngine& async, const K& key, const V& value,
+            const std::integral_constant<bool, false>&) {
+        std::string key_str, val_str;
+        serializeKeyValue(key, value, key_str, val_str);
+        return storeRawData(async, key_str, val_str.data(), val_str.size());
+    }
+
+    /**
      * @brief Implementation of the store function when the value
      * type is a POD.
      */
@@ -237,6 +267,18 @@ class KeyValueContainer {
         std::string key_str;
         serializeKeyValue(key, value, key_str);
         return storeRawData(batch, key_str, reinterpret_cast<const char*>(&value), sizeof(value));
+    }
+
+    /**
+     * @brief Implementation of the store function with AsyncEngine
+     * when the value type is a POD.
+     */
+    template<typename K, typename V>
+    ProductID storeImpl(AsyncEngine& async, const K& key, const V& value,
+            const std::integral_constant<bool, true>&) {
+        std::string key_str;
+        serializeKeyValue(key, value, key_str);
+        return storeRawData(async, key_str, reinterpret_cast<const char*>(&value), sizeof(value));
     }
 
     /**

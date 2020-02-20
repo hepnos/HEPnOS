@@ -109,6 +109,7 @@ class SubRun : public KeyValueContainer {
      */
     ProductID storeRawData(const std::string& key, const char* value, size_t vsize) override;
     ProductID storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) override;
+    ProductID storeRawData(AsyncEngine& async, const std::string& key, const char* value, size_t vsize) override;
 
     /**
      * @brief Loads raw key/value data from this SubRun.
@@ -298,6 +299,7 @@ class SubRun : public KeyValueContainer {
      */
     Event createEvent(const EventNumber& eventNumber);
     Event createEvent(WriteBatch& batch, const EventNumber& eventNumber);
+    Event createEvent(AsyncEngine& batch, const EventNumber& eventNumber);
 };
 
 class SubRun::const_iterator {

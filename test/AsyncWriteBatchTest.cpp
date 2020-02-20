@@ -25,7 +25,17 @@ void AsyncWriteBatchTest::testAsyncWriteBatchRun() {
     {
         hepnos::WriteBatch batch(*datastore, async_engine);
 
-        for(auto i = 0; i < 10; i++) {
+        for(auto i = 0; i < 5; i++) {
+            auto run = dataset.createRun(batch, i);
+            CPPUNIT_ASSERT(run.store(batch, key1, out_obj_a));
+            CPPUNIT_ASSERT(run.store(batch, key1, out_obj_b));
+        }
+    }
+    async_engine.wait(); // useless, but just to test
+    {
+        hepnos::WriteBatch batch(*datastore, async_engine);
+
+        for(auto i = 5; i < 10; i++) {
             auto run = dataset.createRun(batch, i);
             CPPUNIT_ASSERT(run.store(batch, key1, out_obj_a));
             CPPUNIT_ASSERT(run.store(batch, key1, out_obj_b));

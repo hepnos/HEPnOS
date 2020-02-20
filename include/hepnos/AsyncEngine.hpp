@@ -11,11 +11,22 @@
 namespace hepnos {
 
 class DataStore;
-class AsyncEngineImpl;
+class DataSet;
+class Run;
+class SubRun;
+class Event;
 class WriteBatch;
+class WriteBatchImpl;
+class AsyncEngineImpl;
 
 class AsyncEngine {
 
+    friend class DataStore;
+    friend class DataSet;
+    friend class Run;
+    friend class SubRun;
+    friend class Event;
+    friend class KeyValueContainer;
     friend class WriteBatch;
 
     private:
@@ -31,6 +42,7 @@ class AsyncEngine {
     AsyncEngine(AsyncEngine&&) = default;
     AsyncEngine& operator=(AsyncEngine&&) = default;
 
+    void wait();
 };
 
 }

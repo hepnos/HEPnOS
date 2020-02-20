@@ -6,9 +6,11 @@
 
 #include <memory>
 #include "hepnos/SubRun.hpp"
+#include "hepnos/AsyncEngine.hpp"
 #include "ItemImpl.hpp"
 #include "DataStoreImpl.hpp"
 #include "WriteBatchImpl.hpp"
+#include "AsyncEngineImpl.hpp"
 
 namespace hepnos {
 
@@ -56,9 +58,18 @@ ProductID SubRun::storeRawData(WriteBatch& batch, const std::string& key, const 
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
-    // forward the call to the datastore's store function
+    // forward the call to the batch's store function
     auto& id = m_impl->m_descriptor;
     return batch.m_impl->storeRawProduct(id, key, value, vsize);
+}
+
+ProductID SubRun::storeRawData(AsyncEngine& async, const std::string& key, const char* value, size_t vsize) {
+    if(!valid()) {
+        throw Exception("Calling SubRun member function on invalid SubRun object");
+    }
+    // forward the call to async engine's store function
+    auto& id = m_impl->m_descriptor;
+    return async.m_impl->storeRawProduct(id, key, value, vsize);
 }
 
 bool SubRun::loadRawData(const std::string& key, std::string& buffer) const {
@@ -111,6 +122,15 @@ Event SubRun::createEvent(WriteBatch& batch, const EventNumber& eventNumber) {
     }
     auto& id = m_impl->m_descriptor;
     batch.m_impl->createItem(id.dataset, id.run, id.subrun, eventNumber);
+    return Event(std::make_shared<ItemImpl>(m_impl->m_datastore, id.dataset, id.run, id.subrun, eventNumber));
+}
+
+Event SubRun::createEvent(AsyncEngine& async, const EventNumber& eventNumber) {
+    if(!valid()) {
+        throw Exception("Calling SubRun member function on invalid SubRun object");
+    }
+    auto& id = m_impl->m_descriptor;
+    async.m_impl->createItem(id.dataset, id.run, id.subrun, eventNumber);
     return Event(std::make_shared<ItemImpl>(m_impl->m_datastore, id.dataset, id.run, id.subrun, eventNumber));
 }
 

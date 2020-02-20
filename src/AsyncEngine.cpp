@@ -7,4 +7,8 @@ namespace hepnos {
 AsyncEngine::AsyncEngine(DataStore& ds, size_t num_threads)
 : m_impl(std::make_shared<AsyncEngineImpl>(ds.m_impl, num_threads)) {}
 
+void AsyncEngine::wait() {
+    m_impl->wait();
+}
+
 }

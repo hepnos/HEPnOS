@@ -106,6 +106,7 @@ class Event : public KeyValueContainer {
      */
     ProductID storeRawData(const std::string& key, const char* value, size_t vsize) override;
     ProductID storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) override;
+    ProductID storeRawData(AsyncEngine& async, const std::string& key, const char* value, size_t vsize) override;
 
     /**
      * @brief Loads raw key/value data from this Event.

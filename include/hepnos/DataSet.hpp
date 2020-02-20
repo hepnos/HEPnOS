@@ -149,6 +149,7 @@ class DataSet : public KeyValueContainer {
      */
     ProductID storeRawData(const std::string& key, const char* value, size_t vsize) override;
     ProductID storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) override;
+    ProductID storeRawData(AsyncEngine& engine, const std::string& key, const char* value, size_t vsize) override;
 
     /**
      * @brief Loads binary data associated with a particular key from the DataSet.
@@ -210,6 +211,7 @@ class DataSet : public KeyValueContainer {
      * @return A Run instance pointing to the created run.
      */
     Run createRun(const RunNumber& runNumber);
+    Run createRun(AsyncEngine& async, const RunNumber& runNumber);
     Run createRun(WriteBatch& batch, const RunNumber& runNumber);
 
     /**

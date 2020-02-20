@@ -111,6 +111,7 @@ class Run : public KeyValueContainer {
      * @return a valid ProductID if the key did not already exist, an invalid one otherwise.
      */
     ProductID storeRawData(const std::string& key, const char* value, size_t vsize) override;
+    ProductID storeRawData(AsyncEngine& async, const std::string& key, const char* value, size_t vsize) override;
     ProductID storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) override;
 
     /**
@@ -300,6 +301,7 @@ class Run : public KeyValueContainer {
      * @return a handle to the created or existing SubRun.
      */
     SubRun createSubRun(const SubRunNumber& subRunNumber);
+    SubRun createSubRun(AsyncEngine& async, const SubRunNumber& subRunNumber);
     SubRun createSubRun(WriteBatch& batch, const SubRunNumber& subRunNumber);
 };
 

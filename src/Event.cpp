@@ -4,9 +4,11 @@
  * See COPYRIGHT in top-level directory.
  */
 #include "hepnos/Event.hpp"
+#include "hepnos/AsyncEngine.hpp"
 #include "ItemImpl.hpp"
 #include "DataStoreImpl.hpp"
 #include "WriteBatchImpl.hpp"
+#include "AsyncEngineImpl.hpp"
 
 namespace hepnos {
 
@@ -53,9 +55,18 @@ ProductID Event::storeRawData(WriteBatch& batch, const std::string& key, const c
     if(!valid()) {
         throw Exception("Calling Event member function on an invalid Event object");
     }
-    // forward the call to the datastore's store function
+    // forward the call to the batch's store function
     auto& id = m_impl->m_descriptor;
     return batch.m_impl->storeRawProduct(id, key, value, vsize);
+}
+
+ProductID Event::storeRawData(AsyncEngine& async, const std::string& key, const char* value, size_t vsize) {
+    if(!valid()) {
+        throw Exception("Calling Event member function on an invalid Event object");
+    }
+    // forward the call to the async engine's store function
+    auto& id = m_impl->m_descriptor;
+    return async.m_impl->storeRawProduct(id, key, value, vsize);
 }
 
 bool Event::loadRawData(const std::string& key, std::string& buffer) const {

@@ -51,6 +51,68 @@ class AsyncEngineImpl {
         }
     }
 
+    ProductID storeRawProduct(const ItemDescriptor& id,
+                              const std::string& productName,
+                              const char* value, size_t vsize)
+    {
+        // build the key
+        auto product_id = m_datastore->buildProductID(id, productName);
+        // make a thread that will store the data
+        m_pool.make_thread([product_id, // passed by copy 
+                            ds=m_datastore, // shared pointer
+                            data=std::string(value,vsize)]() { // create new string
+            auto& db = ds->locateProductDb(product_id);
+            try {
+                db.put(product_id.m_key, data);
+            } catch(sdskv::exception& ex) {
+                // TODO handle exception
+            }
+        });
+        return product_id;
+    }
+
+    bool createItem(const UUID& containerUUID,
+                    const RunNumber& run_number,
+                    const SubRunNumber& subrun_number = InvalidSubRunNumber,
+                    const EventNumber& event_number = InvalidEventNumber)
+    {
+        // build the key
+        ItemDescriptor id;
+        id.dataset = containerUUID;
+        id.run     = run_number;
+        id.subrun  = subrun_number;
+        id.event   = event_number;
+        // make a thread that will store the data
+        m_pool.make_thread([id, ds=m_datastore]() {
+            // locate db
+            auto& db = ds->locateItemDb(id);
+            try {
+                db.put(&id, sizeof(id), nullptr, 0);
+            } catch(sdskv::exception& ex) {
+                if(!ex.error() == SDSKV_ERR_KEYEXISTS) {
+                    // TODO handle exception
+                }
+            }
+        });
+
+        return true;
+    }
+
+    void wait() {
+        // join the current set of ES
+        for(auto& es : m_xstreams) {
+            es->join();
+        }
+        // create a new set of ES
+        std::vector<tl::managed<tl::xstream>> new_es;
+        for(unsigned i=0; i < m_xstreams.size(); i++) {
+            new_es.push_back(tl::xstream::create(tl::scheduler::predef::deflt, m_pool));
+        }
+        // replace old es
+        m_xstreams = std::move(new_es);
+        // starting new ES
+        for(auto& es : m_xstreams) es->start();
+    }
 };
 
 }

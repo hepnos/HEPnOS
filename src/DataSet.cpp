@@ -6,9 +6,11 @@
 #include "hepnos/DataSet.hpp"
 #include "hepnos/Run.hpp"
 #include "hepnos/RunSet.hpp"
+#include "hepnos/AsyncEngine.hpp"
 #include "ItemImpl.hpp"
 #include "DataSetImpl.hpp"
 #include "DataStoreImpl.hpp"
+#include "AsyncEngineImpl.hpp"
 #include "WriteBatchImpl.hpp"
 
 namespace hepnos {
@@ -59,6 +61,15 @@ ProductID DataSet::storeRawData(WriteBatch& batch, const std::string& key, const
     // forward the call to the datastore's store function
     ItemDescriptor id(m_impl->m_uuid);
     return batch.m_impl->storeRawProduct(id, key, value, vsize);
+}
+
+ProductID DataSet::storeRawData(AsyncEngine& async, const std::string& key, const char* value, size_t vsize) {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
+    // forward the call to the async engine's store function
+    ItemDescriptor id(m_impl->m_uuid);
+    return async.m_impl->storeRawProduct(id, key, value, vsize);
 }
 
 bool DataSet::loadRawData(const std::string& key, std::string& buffer) const {
@@ -146,6 +157,17 @@ Run DataSet::createRun(WriteBatch& batch, const RunNumber& runNumber) {
         throw Exception("Trying to create a Run with InvalidRunNumber");
     }
     batch.m_impl->createItem(m_impl->m_uuid, runNumber);
+    return Run(std::make_shared<ItemImpl>(
+                    m_impl->m_datastore,
+                    m_impl->m_uuid,
+                    runNumber));
+}
+
+Run DataSet::createRun(AsyncEngine& async, const RunNumber& runNumber) {
+    if(InvalidRunNumber == runNumber) {
+        throw Exception("Trying to create a Run with InvalidRunNumber");
+    }
+    async.m_impl->createItem(m_impl->m_uuid, runNumber);
     return Run(std::make_shared<ItemImpl>(
                     m_impl->m_datastore,
                     m_impl->m_uuid,
