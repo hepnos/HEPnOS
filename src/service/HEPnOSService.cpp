@@ -13,6 +13,7 @@
 #include <thallium.hpp>
 #include <sdskv-server.hpp>
 #include "ServiceConfig.hpp"
+#include "../ItemDescriptor.hpp"
 #include "ConnectionInfoGenerator.hpp"
 #include "hepnos-service.h"
 
@@ -20,7 +21,8 @@ namespace tl = thallium;
 
 #define ASSERT(__cond, __msg, ...) { if(!(__cond)) { fprintf(stderr, "[%s:%d] " __msg, __FILE__, __LINE__, __VA_ARGS__); exit(-1); } }
 
-static void createProviderAndDatabases(tl::engine& engine, hepnos::ProviderConfig& provider_config);
+static void createProviderAndDatabases(tl::engine& engine, hepnos::ProviderConfig& provider_config, sdskv_compare_fn comp = nullptr);
+static int hepnosItemDescriptorCompare(const void* id1, hg_size_t size1, const void* id2, hg_size_t size2);
 
 void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* connection_file)
 {
@@ -64,11 +66,11 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
     for(auto& provider_config : config->datasetProviders)
         createProviderAndDatabases(*engine, provider_config);
     for(auto& provider_config : config->runProviders)
-        createProviderAndDatabases(*engine, provider_config);
+        createProviderAndDatabases(*engine, provider_config, hepnosItemDescriptorCompare);
     for(auto& provider_config : config->subrunProviders)
-        createProviderAndDatabases(*engine, provider_config);
+        createProviderAndDatabases(*engine, provider_config, hepnosItemDescriptorCompare);
     for(auto& provider_config : config->eventProviders)
-        createProviderAndDatabases(*engine, provider_config);
+        createProviderAndDatabases(*engine, provider_config, hepnosItemDescriptorCompare);
     for(auto& provider_config : config->productProviders)
         createProviderAndDatabases(*engine, provider_config);
 
@@ -78,12 +80,13 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
     engine->wait_for_finalize();
 }
 
-static void createProviderAndDatabases(tl::engine& engine, hepnos::ProviderConfig& provider_config) {
+static void createProviderAndDatabases(tl::engine& engine, hepnos::ProviderConfig& provider_config, sdskv_compare_fn comp) {
 
     sdskv::provider* provider = sdskv::provider::create(
             engine.get_margo_instance(), 
             provider_config.provider_id,
             SDSKV_ABT_POOL_DEFAULT);
+    if(comp) provider->add_comparison_function("hepnos-item-descriptor", comp);
     for(auto& db_config : provider_config.databases) {
         sdskv_config_t config;
         std::memset(&config, 0, sizeof(config));
@@ -91,6 +94,15 @@ static void createProviderAndDatabases(tl::engine& engine, hepnos::ProviderConfi
         config.db_path = db_config.path.c_str();
         config.db_type = db_config.type;
         config.db_no_overwrite = 1;
+        if(comp) config.db_comp_fn_name = "hepnos-item-descriptor";
         db_config.id = provider->attach_database(config);
     }
+}
+
+static int hepnosItemDescriptorCompare(const void* id1_ptr, hg_size_t size1, const void* id2_ptr, hg_size_t size2) {
+    const hepnos::ItemDescriptor* id1 = reinterpret_cast<const hepnos::ItemDescriptor*>(id1_ptr);
+    const hepnos::ItemDescriptor* id2 = reinterpret_cast<const hepnos::ItemDescriptor*>(id2_ptr);
+    if(*id1 == *id2) return 0;
+    if(*id1 < *id2) return -1;
+    return 1;
 }

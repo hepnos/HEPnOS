@@ -21,9 +21,7 @@ class Event;
 class DataStoreImpl;
 class DataSetImpl;
 class RunSetImpl;
-class RunImpl;
-class SubRunImpl;
-class EventImpl;
+class ItemImpl;
 template<typename T, typename C = std::vector<T>> class Ptr;
 class WriteBatch;
 

@@ -6,7 +6,7 @@
 #include "hepnos/DataSet.hpp"
 #include "hepnos/Run.hpp"
 #include "hepnos/RunSet.hpp"
-#include "RunImpl.hpp"
+#include "ItemImpl.hpp"
 #include "DataSetImpl.hpp"
 #include "DataStoreImpl.hpp"
 #include "WriteBatchImpl.hpp"
@@ -48,7 +48,8 @@ ProductID DataSet::storeRawData(const std::string& key, const char* value, size_
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
     // forward the call to the datastore's store function
-    return m_impl->m_datastore->store(0, fullname(), key, value, vsize);
+    ItemDescriptor id(m_impl->m_uuid);
+    return m_impl->m_datastore->storeRawProduct(id, key, value, vsize);
 }
 
 ProductID DataSet::storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) {
@@ -56,7 +57,8 @@ ProductID DataSet::storeRawData(WriteBatch& batch, const std::string& key, const
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
     // forward the call to the datastore's store function
-    return batch.m_impl->store(0, fullname(), key, value, vsize);
+    ItemDescriptor id(m_impl->m_uuid);
+    return batch.m_impl->storeRawProduct(id, key, value, vsize);
 }
 
 bool DataSet::loadRawData(const std::string& key, std::string& buffer) const {
@@ -64,7 +66,8 @@ bool DataSet::loadRawData(const std::string& key, std::string& buffer) const {
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
     // forward the call to the datastore's load function
-    return m_impl->m_datastore->load(0, fullname(), key, buffer);
+    ItemDescriptor id(m_impl->m_uuid);
+    return m_impl->m_datastore->loadRawProduct(id, key, buffer);
 }
 
 bool DataSet::loadRawData(const std::string& key, char* value, size_t* vsize) const {
@@ -72,7 +75,8 @@ bool DataSet::loadRawData(const std::string& key, char* value, size_t* vsize) co
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
     // forward the call to the datastore's load function
-    return m_impl->m_datastore->load(0, fullname(), key, value, vsize);
+    ItemDescriptor id(m_impl->m_uuid);
+    return m_impl->m_datastore->loadRawProduct(id, key, value, vsize);
 }
 
 bool DataSet::operator==(const DataSet& other) const {
@@ -130,12 +134,9 @@ Run DataSet::createRun(const RunNumber& runNumber) {
     if(InvalidRunNumber == runNumber) {
         throw Exception("Trying to create a Run with InvalidRunNumber");
     }
-    std::string parent_uuid = m_impl->m_uuid.to_string();
-    std::string runStr = makeKeyStringFromNumber(runNumber);
-    m_impl->m_datastore->store(m_impl->m_level+1, parent_uuid, runStr);
-    return Run(std::make_shared<RunImpl>(
+    m_impl->m_datastore->createItem(m_impl->m_uuid, runNumber);
+    return Run(std::make_shared<ItemImpl>(
                     m_impl->m_datastore,
-                    m_impl->m_level+1,
                     m_impl->m_uuid,
                     runNumber));
 }
@@ -144,13 +145,11 @@ Run DataSet::createRun(WriteBatch& batch, const RunNumber& runNumber) {
     if(InvalidRunNumber == runNumber) {
         throw Exception("Trying to create a Run with InvalidRunNumber");
     }
-    std::string parent_uuid = m_impl->m_uuid.to_string();
-    std::string runStr = makeKeyStringFromNumber(runNumber);
-    batch.m_impl->store(m_impl->m_level+1, parent_uuid, runStr);
-    return Run(
-            std::make_shared<RunImpl>(
-                m_impl->m_datastore, m_impl->m_level+1,
-                m_impl->m_uuid, runNumber));
+    batch.m_impl->createItem(m_impl->m_uuid, runNumber);
+    return Run(std::make_shared<ItemImpl>(
+                    m_impl->m_datastore,
+                    m_impl->m_uuid,
+                    runNumber));
 }
 
 DataSet DataSet::operator[](const std::string& datasetName) const {

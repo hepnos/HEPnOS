@@ -46,6 +46,8 @@ struct UUID {
     void randomize();
 
     bool operator==(const UUID& other) const;
+
+    uint64_t hash() const;
 };
 
 template<typename T>

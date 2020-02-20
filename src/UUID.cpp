@@ -27,4 +27,13 @@ bool UUID::operator==(const UUID& other) const {
     return c == 0;
 }
 
+struct UUID_as_pair {
+    uint64_t a, b;
+};
+
+uint64_t UUID::hash() const {
+    auto p = reinterpret_cast<const UUID_as_pair*>(data);
+    return p->a ^ p->b;
+}
+
 }

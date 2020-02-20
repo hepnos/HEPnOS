@@ -6,22 +6,21 @@
 
 #include <memory>
 #include "hepnos/SubRun.hpp"
-#include "SubRunImpl.hpp"
-#include "EventImpl.hpp"
+#include "ItemImpl.hpp"
 #include "DataStoreImpl.hpp"
 #include "WriteBatchImpl.hpp"
 
 namespace hepnos {
 
-SubRun::iterator SubRunImpl::m_end;
+static SubRun::iterator SubRun_end;
 
 SubRun::SubRun()
-: m_impl(std::make_shared<SubRunImpl>(0, nullptr, InvalidSubRunNumber)) {} 
+: m_impl(std::make_shared<ItemImpl>(nullptr, UUID(), InvalidRunNumber)) {} 
 
-SubRun::SubRun(std::shared_ptr<SubRunImpl>&& impl)
+SubRun::SubRun(std::shared_ptr<ItemImpl>&& impl)
 : m_impl(std::move(impl)) { }
 
-SubRun::SubRun(const std::shared_ptr<SubRunImpl>& impl)
+SubRun::SubRun(const std::shared_ptr<ItemImpl>& impl)
 : m_impl(impl) { }
 
 DataStore SubRun::datastore() const {
@@ -33,19 +32,11 @@ DataStore SubRun::datastore() const {
 
 SubRun SubRun::next() const {
     if(!valid()) return SubRun();
-   
-    std::vector<std::string> keys;
-    std::string container = m_impl->container();
-    size_t s = m_impl->m_datastore->nextKeys(
-            m_impl->m_level, container,
-            m_impl->makeKeyStringFromSubRunNumber(), keys, 1);
+  
+    std::vector<std::shared_ptr<ItemImpl>> next_subruns; 
+    size_t s = m_impl->m_datastore->nextItems(m_impl, next_subruns, 1);
     if(s == 0) return SubRun();
-    size_t i = container.size()+1;
-    if(keys[0].size() <= i) return SubRun();
-    SubRunNumber srn = parseNumberFromKeyString<SubRunNumber>(&keys[0][i]);
-    if(srn == InvalidSubRunNumber) return SubRun();
-    auto new_subrun_impl = std::make_shared<SubRunImpl>(m_impl->m_level, m_impl->m_run, srn);
-    return SubRun(std::move(new_subrun_impl));
+    return SubRun(std::move(next_subruns[0]));
 }
 
 bool SubRun::valid() const {
@@ -57,7 +48,8 @@ ProductID SubRun::storeRawData(const std::string& key, const char* value, size_t
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
     // forward the call to the datastore's store function
-    return m_impl->m_datastore->store(0, m_impl->fullpath(), key, value, vsize);
+    auto& id = m_impl->m_descriptor;
+    return m_impl->m_datastore->storeRawProduct(id, key, value, vsize);
 }
 
 ProductID SubRun::storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) {
@@ -65,15 +57,17 @@ ProductID SubRun::storeRawData(WriteBatch& batch, const std::string& key, const 
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
     // forward the call to the datastore's store function
-    return batch.m_impl->store(0, m_impl->fullpath(), key, value, vsize);
+    auto& id = m_impl->m_descriptor;
+    return batch.m_impl->storeRawProduct(id, key, value, vsize);
 }
 
 bool SubRun::loadRawData(const std::string& key, std::string& buffer) const {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
+    auto& id = m_impl->m_descriptor;
     // forward the call to the datastore's load function
-    return m_impl->m_datastore->load(0, m_impl->fullpath(), key, buffer);
+    return m_impl->m_datastore->loadRawProduct(id, key, buffer);
 }
 
 bool SubRun::loadRawData(const std::string& key, char* value, size_t* vsize) const {
@@ -81,7 +75,8 @@ bool SubRun::loadRawData(const std::string& key, char* value, size_t* vsize) con
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
     // forward the call to the datastore's load function
-    return m_impl->m_datastore->load(0, m_impl->fullpath(), key, value, vsize);
+    auto& id = m_impl->m_descriptor;
+    return m_impl->m_datastore->loadRawProduct(id, key, value, vsize);
 }
 
 bool SubRun::operator==(const SubRun& other) const {
@@ -98,27 +93,25 @@ bool SubRun::operator!=(const SubRun& other) const {
 }
 
 const SubRunNumber& SubRun::number() const {
-    return m_impl->m_subrun_number;
+    return m_impl->m_descriptor.subrun;
 }
 
 Event SubRun::createEvent(const EventNumber& eventNumber) {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
-    std::string parent = m_impl->fullpath();
-    std::string eventStr = makeKeyStringFromNumber(eventNumber);
-    m_impl->m_datastore->store(m_impl->m_level+1, parent, eventStr);
-    return Event(std::make_shared<EventImpl>(m_impl->m_level+1, m_impl, eventNumber));
+    auto& id = m_impl->m_descriptor;
+    m_impl->m_datastore->createItem(id.dataset, id.run, id.subrun, eventNumber);
+    return Event(std::make_shared<ItemImpl>(m_impl->m_datastore, id.dataset, id.run, id.subrun, eventNumber));
 }
 
 Event SubRun::createEvent(WriteBatch& batch, const EventNumber& eventNumber) {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
-    std::string parent = m_impl->fullpath();
-    std::string eventStr = makeKeyStringFromNumber(eventNumber);
-    batch.m_impl->store(m_impl->m_level+1, parent, eventStr);
-    return Event(std::make_shared<EventImpl>(m_impl->m_level+1, m_impl, eventNumber));
+    auto& id = m_impl->m_descriptor;
+    batch.m_impl->createItem(id.dataset, id.run, id.subrun, eventNumber);
+    return Event(std::make_shared<ItemImpl>(m_impl->m_datastore, id.dataset, id.run, id.subrun, eventNumber));
 }
 
 Event SubRun::operator[](const EventNumber& eventNumber) const {
@@ -132,14 +125,12 @@ SubRun::iterator SubRun::find(const EventNumber& eventNumber) {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
-    int ret;
-    std::string parent = m_impl->fullpath();
-    std::string eventStr = makeKeyStringFromNumber(eventNumber);
-    bool b = m_impl->m_datastore->exists(m_impl->m_level+1, parent, eventStr);
+    auto& id = m_impl->m_descriptor;
+    bool b = m_impl->m_datastore->itemExists(id.dataset, id.run, id.subrun, eventNumber);
     if(!b) {
-        return m_impl->m_end;
+        return SubRun_end;
     }
-    return iterator(Event(std::make_shared<EventImpl>(m_impl->m_level+1, m_impl, eventNumber)));
+    return iterator(Event(std::make_shared<ItemImpl>(m_impl->m_datastore, id.dataset, id.run, id.subrun, eventNumber)));
 }
 
 SubRun::const_iterator SubRun::find(const EventNumber& eventNumber) const {
@@ -151,10 +142,9 @@ SubRun::iterator SubRun::begin() {
     auto it = find(0);
     if(it != end()) return it;
 
-    auto level = m_impl->m_level;
-    auto datastore = m_impl->m_datastore;
-    std::string container = m_impl->fullpath();
-    Event event(std::make_shared<EventImpl>(level+1, m_impl, 0));
+    auto& datastore = m_impl->m_datastore;
+    auto& id = m_impl->m_descriptor;
+    Event event(std::make_shared<ItemImpl>(datastore, id.dataset, id.run, id.subrun, 0));
     event = event.next();
 
     if(event.valid()) return iterator(std::move(event));
@@ -165,7 +155,7 @@ SubRun::iterator SubRun::end() {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
-    return m_impl->m_end;
+    return SubRun_end;
 }
 
 SubRun::const_iterator SubRun::begin() const {
@@ -176,7 +166,7 @@ SubRun::const_iterator SubRun::end() const {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
-    return m_impl->m_end;
+    return SubRun_end;
 }
 
 SubRun::const_iterator SubRun::cbegin() const {
@@ -187,7 +177,7 @@ SubRun::const_iterator SubRun::cend() const {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
-    return m_impl->m_end;
+    return SubRun_end;
 }
 
 SubRun::iterator SubRun::lower_bound(const EventNumber& lb) {
@@ -196,7 +186,8 @@ SubRun::iterator SubRun::lower_bound(const EventNumber& lb) {
         if(it != end()) {
             return it;
         } else {
-            Event event(std::make_shared<EventImpl>(m_impl->m_level+1, m_impl, 0));
+            auto& id = m_impl->m_descriptor;
+            Event event(std::make_shared<ItemImpl>(m_impl->m_datastore, id.dataset, id.run, id.subrun, 0));
             event = event.next();
             if(!event.valid()) return end();
             else return iterator(event);
@@ -207,7 +198,8 @@ SubRun::iterator SubRun::lower_bound(const EventNumber& lb) {
             ++it;
             return it;
         }
-        Event event(std::make_shared<EventImpl>(m_impl->m_level+1, m_impl, lb-1));
+        auto& id = m_impl->m_descriptor;
+        Event event(std::make_shared<ItemImpl>(m_impl->m_datastore, id.dataset, id.run, id.subrun, lb-1));
         event = event.next();
         if(!event.valid()) return end();
         else return iterator(event);
@@ -223,7 +215,8 @@ SubRun::iterator SubRun::upper_bound(const EventNumber& ub) {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
-    Event event(std::make_shared<EventImpl>(m_impl->m_level+1, m_impl, ub));
+    auto& id = m_impl->m_descriptor;
+    Event event(std::make_shared<ItemImpl>(m_impl->m_datastore, id.dataset, id.run, id.subrun, ub));
     event = event.next();
     if(!event.valid()) return end();
     else return iterator(event);

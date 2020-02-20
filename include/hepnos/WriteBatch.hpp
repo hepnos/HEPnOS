@@ -22,6 +22,7 @@ class DataSet;
 class Run;
 class SubRun;
 class Event;
+class WriteBatchImpl;
 
 class WriteBatch {
 
@@ -34,9 +35,7 @@ class WriteBatch {
 
     private:
 
-    class Impl;
-
-    std::unique_ptr<Impl> m_impl;
+    std::unique_ptr<WriteBatchImpl> m_impl;
 
     public:
 

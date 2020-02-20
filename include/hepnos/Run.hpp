@@ -25,13 +25,13 @@ class Run : public KeyValueContainer {
     friend class RunSet;
     friend class DataSet;
 
-    std::shared_ptr<RunImpl> m_impl;
+    std::shared_ptr<ItemImpl> m_impl;
 
     /**
      * @brief Constructor.
      */
-    Run(const std::shared_ptr<RunImpl>& impl);
-    Run(std::shared_ptr<RunImpl>&& impl);
+    Run(const std::shared_ptr<ItemImpl>& impl);
+    Run(std::shared_ptr<ItemImpl>&& impl);
 
     public:
 

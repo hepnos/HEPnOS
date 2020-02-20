@@ -14,26 +14,12 @@
 
 namespace hepnos {
 
-class WriteBatch;
-class DataStore;
-
 class ProductID {
 
     friend class DataStore;
     friend class DataStoreImpl;
-    friend class WriteBatch;
+    friend class WriteBatchImpl;
     friend class boost::serialization::access;
-
-    private:
-
-    std::uint8_t m_level;
-    std::string  m_containerName;
-    std::string  m_objectName;
-
-    ProductID(std::uint8_t level, const std::string& containerName, const std::string& objectName)
-    : m_level(level)
-    , m_containerName(containerName)
-    , m_objectName(objectName) {}
 
     public:
 
@@ -84,7 +70,7 @@ class ProductID {
      * underlying service, false otherwise.
      */
     bool valid() const {
-        return m_objectName.size() != 0;
+        return m_key.size() != 0;
     }
 
     /**
@@ -105,9 +91,7 @@ class ProductID {
      * @return true if the ProductIDs are the same, false otherwise.
      */
     bool operator==(const ProductID& other) const {
-        return m_level == other.m_level
-            && m_containerName == other.m_containerName
-            && m_objectName == other.m_objectName;
+        return m_key == other.m_key;
     }
 
     /**
@@ -123,11 +107,14 @@ class ProductID {
 
     private:
 
+    std::string m_key;
+
+    ProductID(const std::string& key)
+    : m_key(key) {}
+
     template<typename Archive>
     void serialize(Archive& ar, const unsigned int version) {
-        ar & m_level;
-        ar & m_containerName;
-        ar & m_objectName;
+        ar & m_key;
     }
 
 };
