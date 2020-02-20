@@ -1,6 +1,7 @@
 #ifndef __HEPNOS_H
 #define __HEPNOS_H
 
+#include <hepnos/AsyncEngine.hpp>
 #include <hepnos/DataStore.hpp>
 #include <hepnos/DataSet.hpp>
 #include <hepnos/Demangle.hpp>

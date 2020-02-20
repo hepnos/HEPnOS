@@ -23,6 +23,7 @@ class Run;
 class SubRun;
 class Event;
 class WriteBatchImpl;
+class AsyncEngine;
 
 class WriteBatch {
 
@@ -40,6 +41,7 @@ class WriteBatch {
     public:
 
     WriteBatch(DataStore& ds);
+    WriteBatch(DataStore& ds, AsyncEngine& async);
     ~WriteBatch();
     WriteBatch(const WriteBatch&) = delete;
     WriteBatch& operator=(const WriteBatch&) = delete;

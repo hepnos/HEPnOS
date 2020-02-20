@@ -48,6 +48,9 @@ target_link_libraries(RestartAndReadTest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DEP
 add_executable(WriteBatchTest WriteBatchTest.cpp HEPnOSTestMain.cpp)
 target_link_libraries(WriteBatchTest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DEPS})
 
+add_executable(AsyncWriteBatchTest AsyncWriteBatchTest.cpp HEPnOSTestMain.cpp)
+target_link_libraries(AsyncWriteBatchTest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DEPS})
+
 #add_executable(ParallelMPITest ParallelMPITest.cpp HEPnOSTestMain.cpp)
 #target_link_libraries(ParallelMPITest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DEPS})
 
@@ -60,6 +63,7 @@ add_test(NAME EventTest     COMMAND run-test.sh ./EventTest)
 add_test(NAME LoadStoreTest COMMAND run-test.sh ./LoadStoreTest)
 add_test(NAME LoadStoreVectorsTest COMMAND run-test.sh ./LoadStoreVectorsTest)
 add_test(NAME WriteBatchTest COMMAND run-test.sh ./WriteBatchTest)
+add_test(NAME AsyncWriteBatchTest COMMAND run-test.sh ./AsyncWriteBatchTest)
 add_test(NAME PtrTest       COMMAND run-test.sh ./PtrTest)
 add_test(NAME RestartTest   COMMAND run-two-tests.sh ./WriteAndRestartTest ./RestartAndReadTest)
 #add_test(NAME ParallelMPITest COMMAND run-test.sh "mpirun -np 4 ./ParallelMPITest" 30)

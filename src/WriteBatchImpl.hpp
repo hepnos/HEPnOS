@@ -6,12 +6,17 @@
 #ifndef __HEPNOS_PRIVATE_WRITEBATCH_IMPL_H
 #define __HEPNOS_PRIVATE_WRITEBATCH_IMPL_H
 
+#include <mutex> // for std::lock_guard and std::unique_lock
 #include <iostream>
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include <thallium.hpp>
 #include "hepnos/WriteBatch.hpp"
 #include "DataStoreImpl.hpp"
+#include "AsyncEngineImpl.hpp"
+
+namespace tl = thallium;
 
 namespace hepnos {
 
@@ -22,33 +27,82 @@ class WriteBatchImpl {
         std::vector<std::string> m_values;
     };
 
-    struct writer_thread_args {
-        const sdskv::database* db  = 0;
-        keyvals* keyval_list = nullptr;
-        Exception ex;
-        bool ok              = true;
-    };
+    typedef std::unordered_map<const sdskv::database*, keyvals> entries_type;
 
-    static void writer_thread(void* x) {
-        writer_thread_args* args = static_cast<writer_thread_args*>(x);
-        auto db  = args->db;
-        const auto& keys = args->keyval_list->m_keys;
-        const auto& vals = args->keyval_list->m_values;
+    std::shared_ptr<DataStoreImpl>       m_datastore;
+    std::shared_ptr<AsyncEngineImpl>     m_async_engine;
+    entries_type                         m_entries;
+    tl::condition_variable               m_cond;
+    tl::mutex                            m_mutex;
+    std::vector<tl::managed<tl::thread>> m_async_thread;
+    bool                                 m_async_thread_should_stop = false;
+
+    static void writer_thread(const sdskv::database* db, 
+                              const std::vector<std::string>& keys,
+                              const std::vector<std::string>& vals,
+                              Exception* exception,
+                              char* ok) {
+        *ok = 1;
         try {
             db->put_multi(keys, vals);
         } catch(Exception& ex) {
-            args->ok = false;
-            args->ex = ex;
+            *ok = 0;
+            *exception = ex;
+        }
+    }
+
+    static void spawn_writer_threads(entries_type& entries, tl::pool& pool) {
+        auto num_threads = entries.size();
+        std::vector<tl::managed<tl::thread>> threads;
+        std::vector<Exception> exceptions(num_threads);
+        std::vector<char>      oks(num_threads);
+        unsigned i=0;
+        for(auto& e : entries) {
+            char* ok = &oks[i];
+            Exception* ex = &exceptions[i];
+            threads.push_back(pool.make_thread([&e, ok, ex]() {
+                    writer_thread(e.first, e.second.m_keys, e.second.m_values, ex, ok);
+            }));
+            i += 1;
+        }
+        for(auto& t : threads) {
+            t->join();
+        }
+        for(unsigned i=0; i < num_threads; i++) {
+            if(not oks[i]) throw exceptions[i];
+        }
+        entries.clear();
+    }
+
+    static void async_writer_thread(WriteBatchImpl& batch) {
+        while(!(batch.m_async_thread_should_stop && batch.m_entries.empty())) {
+            std::unique_lock<tl::mutex> lock(batch.m_mutex);
+            while(batch.m_entries.empty()) {
+                batch.m_cond.wait(lock);
+            }
+            if(batch.m_entries.empty())
+                continue;
+            auto entries = std::move(batch.m_entries);
+            batch.m_entries.clear();
+            lock.unlock();
+            spawn_writer_threads(entries, batch.m_async_engine->m_pool);
         }
     }
 
     public:
 
-    std::shared_ptr<DataStoreImpl>                      m_datastore;
-    std::unordered_map<const sdskv::database*, keyvals> m_entries;
-
-    WriteBatchImpl(const std::shared_ptr<DataStoreImpl>& ds)
-    : m_datastore(ds) {}
+    WriteBatchImpl(const std::shared_ptr<DataStoreImpl>& ds,
+                   const std::shared_ptr<AsyncEngineImpl>& async = nullptr)
+    : m_datastore(ds)
+    , m_async_engine(async) {
+        if(m_async_engine) {
+            m_async_thread.push_back(
+                    m_async_engine->m_pool.make_thread([batch=this](){
+                        async_writer_thread(*batch);       
+                    })
+                );
+        }
+    }
 
     ProductID storeRawProduct(const ItemDescriptor& id,
                               const std::string& productName,
@@ -59,9 +113,17 @@ class WriteBatchImpl {
         // locate db
         auto& db = m_datastore->locateProductDb(product_id);
         // insert in the map of entries
-        keyvals& entry = m_entries[&db];
-        entry.m_keys.push_back(product_id.m_key);
-        entry.m_values.emplace_back(value, vsize);
+        bool was_empty;
+        { 
+            std::lock_guard<tl::mutex> g(m_mutex);
+            was_empty = m_entries.empty();
+            keyvals& entry = m_entries[&db];
+            entry.m_keys.push_back(product_id.m_key);
+            entry.m_values.emplace_back(value, vsize);
+        }
+        if(was_empty) {
+            m_cond.notify_one();
+        }
         return product_id;
     }
 
@@ -79,31 +141,32 @@ class WriteBatchImpl {
         // locate db
         auto& db = m_datastore->locateItemDb(id);
         // insert in the map of entries
-        auto& entry = m_entries[&db];
-        entry.m_keys.push_back(std::string(reinterpret_cast<char*>(&id), sizeof(id)));
-        entry.m_values.emplace_back();
+        bool was_empty;
+        {
+            std::lock_guard<tl::mutex> lock(m_mutex);
+            was_empty = m_entries.empty();
+            auto& entry = m_entries[&db];
+            entry.m_keys.push_back(std::string(reinterpret_cast<char*>(&id), sizeof(id)));
+            entry.m_values.emplace_back();
+        } 
+        if(was_empty) {
+            m_cond.notify_one();
+        }
         return true;
     }
 
     void flush() {
-        ABT_xstream es = ABT_XSTREAM_NULL;
-        ABT_xstream_self(&es);
-        auto num_threads = m_entries.size();
-        std::vector<ABT_thread> threads(num_threads);
-        std::vector<writer_thread_args> args(num_threads);
-        unsigned i=0;
-        for(auto& e : m_entries) {
-            args[i].db = e.first;
-            args[i].keyval_list = &e.second;
-            ABT_thread_create_on_xstream(es, &writer_thread, &args[i], ABT_THREAD_ATTR_NULL, &threads[i]);
-            i += 1;
+        if(!m_async_engine) { // flush everything here
+            tl::xstream es = tl::xstream::self();
+            spawn_writer_threads(m_entries, es.get_main_pools(1)[0]);
+        } else { // wait for AsyncEngine to have flushed everything
+            {
+                std::lock_guard<tl::mutex> lock(m_mutex);
+                m_async_thread_should_stop = true;
+            }
+            m_cond.notify_one();
+            m_async_thread[0]->join();
         }
-        ABT_thread_join_many(num_threads, threads.data());
-        ABT_thread_free_many(num_threads, threads.data());
-        for(auto& a : args) {
-            if(not a.ok) throw a.ex;
-        }
-        m_entries.clear();
     }
 
     ~WriteBatchImpl() {
