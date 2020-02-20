@@ -13,14 +13,22 @@ void LoadStoreTest::tearDown() {}
 void LoadStoreTest::testFillDataStore() {
 
     auto root = datastore->root();
-    auto mds = root.createDataSet("matthieu");
-    CPPUNIT_ASSERT(mds.valid());
-    Run r1 = mds.createRun(42);
+    auto ds1 = root.createDataSet("matthieu");
+    CPPUNIT_ASSERT(ds1.valid());
+    Run r1 = ds1.createRun(42);
     CPPUNIT_ASSERT(r1.valid());
     SubRun sr1 = r1.createSubRun(3);
     CPPUNIT_ASSERT(sr1.valid());
     Event ev1 = sr1.createEvent(22);
     CPPUNIT_ASSERT(ev1.valid());
+    DataSet ds2 = root.createDataSet("matthieu_async");
+    CPPUNIT_ASSERT(ds2.valid());
+    Run r2 = ds2.createRun(42);
+    CPPUNIT_ASSERT(r2.valid());
+    SubRun sr2 = r2.createSubRun(3);
+    CPPUNIT_ASSERT(sr2.valid());
+    Event ev2 = sr2.createEvent(22);
+    CPPUNIT_ASSERT(ev2.valid());
 }
 
 void LoadStoreTest::testLoadStoreDataSet() {
@@ -199,3 +207,205 @@ void LoadStoreTest::testLoadStoreEvent() {
     CPPUNIT_ASSERT(in_obj_b == out_obj_b);
 }
 
+// Async Tests
+
+void LoadStoreTest::testAsyncLoadStoreDataSet() {
+
+    auto root = datastore->root();
+    auto mds = root["matthieu_async"];
+    auto run = mds[42];
+    auto subrun = run[3];
+    auto event = subrun[22];
+    CPPUNIT_ASSERT(mds.valid());
+    CPPUNIT_ASSERT(run.valid());
+    CPPUNIT_ASSERT(subrun.valid());
+    CPPUNIT_ASSERT(event.valid());
+
+    TestObjectA out_obj_a;
+    out_obj_a.x() = 44;
+    out_obj_a.y() = 1.2;
+    TestObjectB out_obj_b;
+    out_obj_b.a() = 33;
+    out_obj_b.b() = "you";
+    std::string key1 = "mykey";
+
+    hepnos::AsyncEngine async(*datastore, 1);
+
+    // we can store obj_a
+    CPPUNIT_ASSERT(mds.store(async, key1, out_obj_a));
+    // we cannot store at that key again something of the same type,
+    // but we will know that only when checking the async engine
+    // for errors
+    TestObjectA tmpa;
+    CPPUNIT_ASSERT(mds.store(async, key1, tmpa));
+    // we can store obj_b at the same key because it's not the same type
+    CPPUNIT_ASSERT(mds.store(async, key1, out_obj_b));
+
+    async.wait();
+    // there should be one error logged
+    CPPUNIT_ASSERT(async.errors().size() == 1);
+
+    TestObjectA in_obj_a;
+    TestObjectB in_obj_b;
+
+    std::string key2 = "otherkey";
+    // we can't load something at a key that does not exist
+    CPPUNIT_ASSERT(!mds.load(key2, in_obj_a));
+    // we can reload obj_a from key1
+    CPPUNIT_ASSERT(mds.load(key1, in_obj_a));
+    // and they are the same
+    CPPUNIT_ASSERT(in_obj_a == out_obj_a);
+    // we can reload obj_b from key1
+    CPPUNIT_ASSERT(mds.load(key1, in_obj_b));
+    // and they are the same
+    CPPUNIT_ASSERT(in_obj_b == out_obj_b);
+}
+
+void LoadStoreTest::testAsyncLoadStoreRun() {
+
+    auto root = datastore->root();
+    auto mds = root["matthieu_async"];
+    auto run = mds[42];
+    auto subrun = run[3];
+    auto event = subrun[22];
+    CPPUNIT_ASSERT(mds.valid());
+    CPPUNIT_ASSERT(run.valid());
+    CPPUNIT_ASSERT(subrun.valid());
+    CPPUNIT_ASSERT(event.valid());
+
+    TestObjectA out_obj_a;
+    out_obj_a.x() = 44;
+    out_obj_a.y() = 1.2;
+    TestObjectB out_obj_b;
+    out_obj_b.a() = 33;
+    out_obj_b.b() = "you";
+    std::string key1 = "mykey";
+
+    hepnos::AsyncEngine async(*datastore, 1);
+    // we can store obj_a
+    CPPUNIT_ASSERT(run.store(async, key1, out_obj_a));
+    // we cannot store at that key again something of the same type
+    // but we will know about it only later when checking for errors
+    TestObjectA tmpa;
+    CPPUNIT_ASSERT(run.store(async, key1, tmpa));
+    // we can store obj_b at the same key because it's not the same type
+    CPPUNIT_ASSERT(run.store(async, key1, out_obj_b));
+
+    async.wait();
+    // there should be one error logged
+    CPPUNIT_ASSERT(async.errors().size() == 1);
+
+    TestObjectA in_obj_a;
+    TestObjectB in_obj_b;
+
+    std::string key2 = "otherkey";
+    // we can't load something at a key that does not exist
+    CPPUNIT_ASSERT(!run.load(key2, in_obj_a));
+    // we can reload obj_a from key1
+    CPPUNIT_ASSERT(run.load(key1, in_obj_a));
+    // and they are the same
+    CPPUNIT_ASSERT(in_obj_a == out_obj_a);
+    // we can reload obj_b from key1
+    CPPUNIT_ASSERT(run.load(key1, in_obj_b));
+    // and they are the same
+    CPPUNIT_ASSERT(in_obj_b == out_obj_b);
+}
+
+void LoadStoreTest::testAsyncLoadStoreSubRun() {
+
+    auto root = datastore->root();
+    auto mds = root["matthieu_async"];
+    auto run = mds[42];
+    auto subrun = run[3];
+    auto event = subrun[22];
+    CPPUNIT_ASSERT(mds.valid());
+    CPPUNIT_ASSERT(run.valid());
+    CPPUNIT_ASSERT(subrun.valid());
+    CPPUNIT_ASSERT(event.valid());
+
+    TestObjectA out_obj_a;
+    out_obj_a.x() = 44;
+    out_obj_a.y() = 1.2;
+    TestObjectB out_obj_b;
+    out_obj_b.a() = 33;
+    out_obj_b.b() = "you";
+    std::string key1 = "mykey";
+
+    hepnos::AsyncEngine async(*datastore, 1);
+    // we can store obj_a
+    CPPUNIT_ASSERT(subrun.store(async, key1, out_obj_a));
+    // we cannot store at that key again something of the same type
+    // but we will know about it only when checking for errors
+    TestObjectA tmpa;
+    CPPUNIT_ASSERT(subrun.store(async, key1, tmpa));
+    // we can store obj_b at the same key because it's not the same type
+    CPPUNIT_ASSERT(subrun.store(async, key1, out_obj_b));
+
+    async.wait();
+    // there should be one error logged
+    CPPUNIT_ASSERT(async.errors().size() == 1);
+
+    TestObjectA in_obj_a;
+    TestObjectB in_obj_b;
+
+    std::string key2 = "otherkey";
+    // we can't load something at a key that does not exist
+    CPPUNIT_ASSERT(!subrun.load(key2, in_obj_a));
+    // we can reload obj_a from key1
+    CPPUNIT_ASSERT(subrun.load(key1, in_obj_a));
+    // and they are the same
+    CPPUNIT_ASSERT(in_obj_a == out_obj_a);
+    // we can reload obj_b from key1
+    CPPUNIT_ASSERT(subrun.load(key1, in_obj_b));
+    // and they are the same
+    CPPUNIT_ASSERT(in_obj_b == out_obj_b);
+}
+
+void LoadStoreTest::testAsyncLoadStoreEvent() {
+
+    auto root = datastore->root();
+    auto mds = root["matthieu_async"];
+    auto run = mds[42];
+    auto subrun = run[3];
+    auto event = subrun[22];
+    CPPUNIT_ASSERT(mds.valid());
+    CPPUNIT_ASSERT(run.valid());
+    CPPUNIT_ASSERT(subrun.valid());
+    CPPUNIT_ASSERT(event.valid());
+
+    TestObjectA out_obj_a;
+    out_obj_a.x() = 44;
+    out_obj_a.y() = 1.2;
+    TestObjectB out_obj_b;
+    out_obj_b.a() = 33;
+    out_obj_b.b() = "you";
+    std::string key1 = "mykey";
+
+    hepnos::AsyncEngine async(*datastore, 1);
+    // we can store obj_a
+    CPPUNIT_ASSERT(event.store(async, key1, out_obj_a));
+    // we cannot store at that key again something of the same type
+    // but we will know about it later when checking for errors
+    TestObjectA tmpa;
+    CPPUNIT_ASSERT(event.store(async, key1, tmpa));
+    // we can store obj_b at the same key because it's not the same type
+    CPPUNIT_ASSERT(event.store(async, key1, out_obj_b));
+
+    async.wait();
+    CPPUNIT_ASSERT(async.errors().size() == 1);
+
+    TestObjectA in_obj_a;
+    TestObjectB in_obj_b;
+
+    std::string key2 = "otherkey";
+    // we can't load something at a key that does not exist
+    CPPUNIT_ASSERT(!event.load(key2, in_obj_a));
+    // we can reload obj_a from key1
+    CPPUNIT_ASSERT(event.load(key1, in_obj_a));
+    // and they are the same
+    CPPUNIT_ASSERT(in_obj_a == out_obj_a);
+    // we can reload obj_b from key1
+    CPPUNIT_ASSERT(event.load(key1, in_obj_b));
+    // and they are the same
+    CPPUNIT_ASSERT(in_obj_b == out_obj_b);
+}

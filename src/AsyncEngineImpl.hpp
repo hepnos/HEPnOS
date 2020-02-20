@@ -14,10 +14,13 @@ class WriteBatchImpl;
 class AsyncEngineImpl {
 
     friend class WriteBatchImpl;
+    friend class AsyncEngine;
 
     std::shared_ptr<DataStoreImpl>        m_datastore;
     tl::pool                              m_pool;
     std::vector<tl::managed<tl::xstream>> m_xstreams;
+    std::vector<std::string>              m_errors;
+    tl::mutex                             m_errors_mtx;
 
     public:
 
@@ -55,17 +58,28 @@ class AsyncEngineImpl {
                               const std::string& productName,
                               const char* value, size_t vsize)
     {
-        // build the key
-        auto product_id = m_datastore->buildProductID(id, productName);
         // make a thread that will store the data
-        m_pool.make_thread([product_id, // passed by copy 
+        auto product_id = m_datastore->buildProductID(id, productName);
+        m_pool.make_thread([this,
+                            product_id, id, productName,// passed by copy 
                             ds=m_datastore, // shared pointer
                             data=std::string(value,vsize)]() { // create new string
             auto& db = ds->locateProductDb(product_id);
             try {
                 db.put(product_id.m_key, data);
             } catch(sdskv::exception& ex) {
-                // TODO handle exception
+                std::lock_guard<tl::mutex> lock(m_errors_mtx);
+                if(ex.error() == SDSKV_ERR_KEYEXISTS) {
+                    m_errors.push_back(
+                            std::string("Product ")
+                            +productName
+                            +" already exists for item "
+                            +id.to_string());
+                } else {
+                    m_errors.push_back(
+                            std::string("SDSKV error: ")
+                            +ex.what());
+                }
             }
         });
         return product_id;
@@ -83,14 +97,17 @@ class AsyncEngineImpl {
         id.subrun  = subrun_number;
         id.event   = event_number;
         // make a thread that will store the data
-        m_pool.make_thread([id, ds=m_datastore]() {
+        m_pool.make_thread([this, id, ds=m_datastore]() {
             // locate db
             auto& db = ds->locateItemDb(id);
             try {
                 db.put(&id, sizeof(id), nullptr, 0);
             } catch(sdskv::exception& ex) {
                 if(!ex.error() == SDSKV_ERR_KEYEXISTS) {
-                    // TODO handle exception
+                    std::lock_guard<tl::mutex> lock(m_errors_mtx);
+                    m_errors.push_back(
+                            std::string("SDSKV error: ")
+                            +ex.what());
                 }
             }
         });

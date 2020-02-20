@@ -11,4 +11,8 @@ void AsyncEngine::wait() {
     m_impl->wait();
 }
 
+const std::vector<std::string>& AsyncEngine::errors() const {
+    return m_impl->m_errors;
+}
+
 }

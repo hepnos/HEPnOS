@@ -73,6 +73,14 @@ struct ItemDescriptor {
 
     template<typename S>
     friend S& operator<<(S& s, const ItemDescriptor& d);
+
+    std::string to_string() const {
+        return std::string("[")
+               + dataset.to_string() + ", "
+               + std::to_string(run) + ", "
+               + std::to_string(subrun) + ", "
+               + std::to_string(event) + "]";
+    }
 };
 
 template<typename S>

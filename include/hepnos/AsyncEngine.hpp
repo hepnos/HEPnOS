@@ -7,6 +7,7 @@
 #define __HEPNOS_ASYNC_ENGINE_H
 
 #include <memory>
+#include <vector>
 
 namespace hepnos {
 
@@ -43,6 +44,7 @@ class AsyncEngine {
     AsyncEngine& operator=(AsyncEngine&&) = default;
 
     void wait();
+    const std::vector<std::string>& errors() const;
 };
 
 }
