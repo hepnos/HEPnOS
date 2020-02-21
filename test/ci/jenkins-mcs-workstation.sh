@@ -45,4 +45,6 @@ mkdir build
 cd build
 cmake .. -DCMAKE_CXX_COMPILER=mpicxx -DENABLE_TESTS=ON -DBUILD_SHARED_LIBS=ON
 make
+export TIMEOUT=timeout
+export MKTEMP=mktemp
 make test
