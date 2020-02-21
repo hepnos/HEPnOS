@@ -1,0 +1,18 @@
+packages:
+  all:
+    providers:
+      mpi: [ mpich, openmpi ]
+  boost:
+    variants: ~atomic ~chrono ~date_time ~exception ~graph ~filesystem ~iostreams ~locale ~log ~math ~multithreaded ~program_options ~random ~regex +signals +singlethreaded ~system ~test ~thread ~timer ~wave
+  ch-placement:
+    version: [ develop ]
+  mercury:
+    variants: ~boostsys~verbose
+  margo:
+    version: [ develop ]
+  sdskeyval:
+    version: [ develop ]
+  yaml-cpp:
+    version: [ develop ]
+  thallium:
+    version: [ develop ]
