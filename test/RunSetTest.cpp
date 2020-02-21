@@ -167,3 +167,21 @@ void RunSetTest::testCreateSubRuns() {
         CPPUNIT_ASSERT(73 == sr.number());
     }
 }
+
+void RunSetTest::testAsync() {
+    auto root = datastore->root();
+    DataSet mds = root.createDataSet("matthieu_async");
+    CPPUNIT_ASSERT(mds.valid());
+    hepnos::AsyncEngine async(*datastore, 1);
+    
+    for(unsigned i=0; i < 10; i++) {
+        Run r = mds.createRun(async, i);
+        CPPUNIT_ASSERT(r.valid());
+    }
+
+    async.wait();
+
+    for(unsigned i=0; i < 10; i++) {
+        CPPUNIT_ASSERT(mds[i].valid());
+    }
+}

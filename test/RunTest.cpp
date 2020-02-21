@@ -160,3 +160,22 @@ void RunTest::testLowerUpperBounds() {
     }
 }
 
+void RunTest::testAsync() {
+    auto root = datastore->root();
+    DataSet mds = root.createDataSet("matthieu_async");
+    Run r = mds.createRun(1);
+    hepnos::AsyncEngine async(*datastore, 1);
+
+    for(unsigned i=0; i < 10; i++) {
+        SubRun sr = r.createSubRun(async, i);
+        CPPUNIT_ASSERT(sr.valid());
+    }
+
+    async.wait();
+
+    for(unsigned i=0; i < 10; i++) {
+        SubRun sr = r[i];
+        CPPUNIT_ASSERT(sr.valid());
+    }
+}
+

@@ -15,6 +15,7 @@ class SubRunTest : public CppUnit::TestFixture
     CPPUNIT_TEST( testFind );
     CPPUNIT_TEST( testBeginEnd );
     CPPUNIT_TEST( testLowerUpperBounds );
+    CPPUNIT_TEST( testAsync );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -28,6 +29,7 @@ class SubRunTest : public CppUnit::TestFixture
     void testFind();
     void testBeginEnd();
     void testLowerUpperBounds();
+    void testAsync();
 };
 
 #endif

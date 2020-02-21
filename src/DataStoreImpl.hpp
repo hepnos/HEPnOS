@@ -320,55 +320,7 @@ class DataStoreImpl {
         }
         return key;
     }
-#if 0
-    void storeMultiple(unsigned long db_index, 
-            const std::vector<std::string>& keys,
-            const std::vector<std::string>& values) {
-        // Create the product id
-        const auto& db = m_databases.dbs[db_index];
-        try {
-            db.put_multi(keys, values);
-        } catch(sdskv::exception& ex) {
-            throw Exception("Error occured when calling sdskv::database::put (SDSKV error=" +std::to_string(ex.error()) + ")");
-        }
-    }
 
-    size_t nextKeys(uint8_t level, const std::string& containerName,
-            const std::string& lower,
-            std::vector<std::string>& keys, size_t maxKeys) const {
-        int ret;
-        if(level == 0) return 0; // cannot iterate at object level
-        // hash the name to get the provider id
-        long unsigned db_idx = 0;
-        uint64_t h = hashString(containerName);
-        ch_placement_find_closest(m_databases.chi, h, 1, &db_idx);
-        // make an entry for the lower bound
-        auto lb_entry = buildKey(level, containerName, lower);
-        // get provider and database
-        const auto& db = m_databases.dbs[db_idx];
-        // ignore keys that don't have the same level or the same prefix
-        std::string prefix(2+containerName.size(), '\0');
-        prefix[0] = level;
-        if(containerName.size() != 0) {
-            std::memcpy(&prefix[1], containerName.data(), containerName.size());
-            prefix[prefix.size()-1] = '/';
-        } else {
-            prefix.resize(1);
-        }
-        // issue an sdskv_list_keys
-        std::vector<std::string> entries(maxKeys, std::string(1024,'\0'));
-        try {
-            db.list_keys(lb_entry, prefix, entries);
-        } catch(sdskv::exception& ex) {
-            throw Exception("Error occured when calling sdskv::database::list_keys (SDSKV error="+std::string(ex.what()) + ")");
-        }
-        keys.resize(0);
-        for(const auto& entry : entries) {
-            keys.emplace_back(&entry[1], entry.size()-1);
-        }
-        return keys.size();
-    }
-#endif
     ///////////////////////////////////////////////////////////////////////////
     // DataSet access functions
     ///////////////////////////////////////////////////////////////////////////
