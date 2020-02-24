@@ -3,6 +3,10 @@ set -e
 
 HERE=`dirname "$0"`
 
+soft add +boost-1.69
+soft add +cmake-3.14.3
+soft add +git-2.10.1
+
 echo "Setting up Spack"
 git clone https://github.com/spack/spack.git
 . spack/share/spack/setup-env.sh
