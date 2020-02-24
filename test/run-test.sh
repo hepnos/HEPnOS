@@ -20,7 +20,7 @@ hepnos_test_start_servers 2 2 20 $CFG_FILE $CON_FILE
 export HEPNOS_CONFIG_FILE=$CON_FILE
 
 # run a connect test client
-run_to ${timeout_sec} $1 $CON_FILE
+run_to ${timeout_sec} $1 $CON_FILE $1.xml
 if [ $? -ne 0 ]; then
     wait
     exit 1
