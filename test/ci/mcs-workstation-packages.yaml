@@ -42,6 +42,11 @@ packages:
     buildable: False
   cppunit:
     variants: cxxstd=14
+  findutils:
+    paths:
+      findutils@4.7.0 arch=linux-ubuntu16.04-x86_64: /usr
+      findutils@4.4.2 arch=linux-ubuntu14.04-x86_64: /usr
+    buildable: False
   flex:
     paths:
       flex@2.6.0 arch=linux-ubuntu16.04-x86_64: /usr
@@ -90,6 +95,11 @@ packages:
   tar:
     paths:
       tar@1.28: /usr
+    buildable: False
+  texinfo:
+    paths:
+      texinfo@6.1 arch=linux-ubuntu16.04-x86_64: /usr
+      texinfo@5.2 arch=linux-ubuntu14.04-x86_64: /usr
     buildable: False
   thallium:
     version: [ develop ]
