@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+export CRAYPE_LINK_TYPE=dynamic
 HERE=`dirname "$0"`
 
 module swap PrgEnv-intel PrgEnv-gnu
