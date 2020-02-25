@@ -34,19 +34,19 @@ DataSet DataStore::root() const {
     return DataSet(std::make_shared<DataSetImpl>(m_impl, 0, std::make_shared<std::string>(""), ""));
 }
 
-DataStore DataStore::connect() { 
+DataStore DataStore::connect(bool use_progress_thread) { 
     char* file = getenv("HEPNOS_CONFIG_FILE");
     if(file == nullptr) 
         throw Exception("HEPNOS_CONFIG_FILE environment variable not set");
     std::string configFile(file);
     auto impl = std::make_shared<DataStoreImpl>();
-    impl->init(configFile);
+    impl->init(configFile, use_progress_thread);
     return DataStore(std::move(impl));
 }
 
-DataStore DataStore::connect(const std::string& configFile) {
+DataStore DataStore::connect(const std::string& configFile, bool use_progress_thread) {
     auto impl = std::make_shared<DataStoreImpl>();
-    impl->init(configFile);
+    impl->init(configFile, use_progress_thread);
     return DataStore(std::move(impl));
 }
 

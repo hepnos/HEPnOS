@@ -102,7 +102,7 @@ class DataStoreImpl {
         db_info.chi = ch_placement_initialize("hash_lookup3", db_info.dbs.size(), 4, 0);
     }
 
-    void init(const std::string& configFile) {
+    void init(const std::string& configFile, bool use_progress_thread) {
         int ret;
         hg_return_t hret;
         YAML::Node config = YAML::LoadFile(configFile);
@@ -110,7 +110,7 @@ class DataStoreImpl {
         // get protocol
         std::string proto = config["hepnos"]["client"]["protocol"].as<std::string>();
         // initialize Margo
-        m_mid = margo_init(proto.c_str(), MARGO_CLIENT_MODE, 0, 0);
+        m_mid = margo_init(proto.c_str(), MARGO_CLIENT_MODE, use_progress_thread, 0);
         if(!m_mid) {
             cleanup();
             throw Exception("Could not initialized Margo");

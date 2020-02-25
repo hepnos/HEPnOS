@@ -18,6 +18,7 @@ class RunSet;
 class Run;
 class SubRun;
 class Event;
+class EventSet;
 class DataStoreImpl;
 class DataSetImpl;
 class RunSetImpl;
@@ -41,6 +42,7 @@ class DataStore {
     friend class WriteBatch;
     friend class DataStoreImpl;
     friend class AsyncEngine;
+    friend class EventSet;
 
     public:
 
@@ -48,8 +50,10 @@ class DataStore {
      * @brief Constructor. Initializes the DataStore by taking
      * the name of the configuration file from the environment
      * variable HEPNOS_CONFIG_FILE.
+     *
+     * @param use_progress_thread whether to use a background thread for networking.
      */
-    static DataStore connect();
+    static DataStore connect(bool use_progress_thread=false);
 
     /**
      * @brief Constructor. Initializes the DataStore using a YAML
@@ -57,8 +61,9 @@ class DataStore {
      * service when started.
      *
      * @param configFile Path to a YAML configuration file.
+     * @param use_progress_thread whether to use a background thread for networking.
      */
-    static DataStore connect(const std::string& configFile);
+    static DataStore connect(const std::string& configFile, bool use_progress_thread=false);
 
     /**
      * @brief Default constructor (for an invalid DataStore not yet initialized).
