@@ -32,5 +32,4 @@ wait
 
 # cleanup
 rm -rf $TEST_DIR
-rm -rf /dev/shm/hepnos.*.dat
 exit 0

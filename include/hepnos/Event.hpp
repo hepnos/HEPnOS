@@ -15,11 +15,15 @@
 
 namespace hepnos {
 
+class SubRun;
+class EventSet;
+
 class Event : public KeyValueContainer {
 
     private:
 
     friend class SubRun;
+    friend class EventSet;
 
     std::shared_ptr<ItemImpl> m_impl;
 
