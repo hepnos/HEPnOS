@@ -45,9 +45,11 @@ class WriteBatchImpl {
         *ok = 1;
         try {
             db->put_multi(keys, vals);
-        } catch(Exception& ex) {
-            *ok = 0;
-            *exception = ex;
+        } catch(sdskv::exception& ex) {
+            if(ex.error() != SDSKV_ERR_KEYEXISTS) {
+                *ok = 0;
+                *exception = Exception(std::string("SDSKV error: ")+ex.what());
+            }
         }
     }
 
