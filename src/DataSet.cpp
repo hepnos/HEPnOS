@@ -60,7 +60,10 @@ ProductID DataSet::storeRawData(WriteBatch& batch, const std::string& key, const
     }
     // forward the call to the datastore's store function
     ItemDescriptor id(m_impl->m_uuid);
-    return batch.m_impl->storeRawProduct(id, key, value, vsize);
+    if(batch.m_impl)
+        return batch.m_impl->storeRawProduct(id, key, value, vsize);
+    else
+        return m_impl->m_datastore->storeRawProduct(id, key, value, vsize);
 }
 
 ProductID DataSet::storeRawData(AsyncEngine& async, const std::string& key, const char* value, size_t vsize) {
@@ -69,7 +72,10 @@ ProductID DataSet::storeRawData(AsyncEngine& async, const std::string& key, cons
     }
     // forward the call to the async engine's store function
     ItemDescriptor id(m_impl->m_uuid);
-    return async.m_impl->storeRawProduct(id, key, value, vsize);
+    if(async.m_impl)
+        return async.m_impl->storeRawProduct(id, key, value, vsize);
+    else
+        return m_impl->m_datastore->storeRawProduct(id, key, value, vsize);
 }
 
 bool DataSet::loadRawData(const std::string& key, std::string& buffer) const {
@@ -156,7 +162,10 @@ Run DataSet::createRun(WriteBatch& batch, const RunNumber& runNumber) {
     if(InvalidRunNumber == runNumber) {
         throw Exception("Trying to create a Run with InvalidRunNumber");
     }
-    batch.m_impl->createItem(m_impl->m_uuid, runNumber);
+    if(batch.m_impl)
+        batch.m_impl->createItem(m_impl->m_uuid, runNumber);
+    else
+        m_impl->m_datastore->createItem(m_impl->m_uuid, runNumber);
     return Run(std::make_shared<ItemImpl>(
                     m_impl->m_datastore,
                     m_impl->m_uuid,
@@ -167,7 +176,10 @@ Run DataSet::createRun(AsyncEngine& async, const RunNumber& runNumber) {
     if(InvalidRunNumber == runNumber) {
         throw Exception("Trying to create a Run with InvalidRunNumber");
     }
-    async.m_impl->createItem(m_impl->m_uuid, runNumber);
+    if(async.m_impl)
+        async.m_impl->createItem(m_impl->m_uuid, runNumber);
+    else
+        m_impl->m_datastore->createItem(m_impl->m_uuid, runNumber);
     return Run(std::make_shared<ItemImpl>(
                     m_impl->m_datastore,
                     m_impl->m_uuid,

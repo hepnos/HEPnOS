@@ -60,7 +60,10 @@ ProductID SubRun::storeRawData(WriteBatch& batch, const std::string& key, const 
     }
     // forward the call to the batch's store function
     auto& id = m_impl->m_descriptor;
-    return batch.m_impl->storeRawProduct(id, key, value, vsize);
+    if(batch.m_impl)
+        return batch.m_impl->storeRawProduct(id, key, value, vsize);
+    else
+        return m_impl->m_datastore->storeRawProduct(id, key, value, vsize);
 }
 
 ProductID SubRun::storeRawData(AsyncEngine& async, const std::string& key, const char* value, size_t vsize) {
@@ -69,7 +72,10 @@ ProductID SubRun::storeRawData(AsyncEngine& async, const std::string& key, const
     }
     // forward the call to async engine's store function
     auto& id = m_impl->m_descriptor;
-    return async.m_impl->storeRawProduct(id, key, value, vsize);
+    if(async.m_impl)
+        return async.m_impl->storeRawProduct(id, key, value, vsize);
+    else
+        return m_impl->m_datastore->storeRawProduct(id, key, value, vsize);
 }
 
 bool SubRun::loadRawData(const std::string& key, std::string& buffer) const {
@@ -121,7 +127,10 @@ Event SubRun::createEvent(WriteBatch& batch, const EventNumber& eventNumber) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
     auto& id = m_impl->m_descriptor;
-    batch.m_impl->createItem(id.dataset, id.run, id.subrun, eventNumber);
+    if(batch.m_impl)
+        batch.m_impl->createItem(id.dataset, id.run, id.subrun, eventNumber);
+    else
+        m_impl->m_datastore->createItem(id.dataset, id.run, id.subrun, eventNumber);
     return Event(std::make_shared<ItemImpl>(m_impl->m_datastore, id.dataset, id.run, id.subrun, eventNumber));
 }
 
@@ -130,7 +139,10 @@ Event SubRun::createEvent(AsyncEngine& async, const EventNumber& eventNumber) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
     auto& id = m_impl->m_descriptor;
-    async.m_impl->createItem(id.dataset, id.run, id.subrun, eventNumber);
+    if(async.m_impl)
+        async.m_impl->createItem(id.dataset, id.run, id.subrun, eventNumber);
+    else
+        m_impl->m_datastore->createItem(id.dataset, id.run, id.subrun, eventNumber);
     return Event(std::make_shared<ItemImpl>(m_impl->m_datastore, id.dataset, id.run, id.subrun, eventNumber));
 }
 

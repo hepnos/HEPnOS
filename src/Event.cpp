@@ -57,7 +57,10 @@ ProductID Event::storeRawData(WriteBatch& batch, const std::string& key, const c
     }
     // forward the call to the batch's store function
     auto& id = m_impl->m_descriptor;
-    return batch.m_impl->storeRawProduct(id, key, value, vsize);
+    if(batch.m_impl)
+        return batch.m_impl->storeRawProduct(id, key, value, vsize);
+    else
+        return m_impl->m_datastore->storeRawProduct(id, key, value, vsize);
 }
 
 ProductID Event::storeRawData(AsyncEngine& async, const std::string& key, const char* value, size_t vsize) {
@@ -66,7 +69,10 @@ ProductID Event::storeRawData(AsyncEngine& async, const std::string& key, const 
     }
     // forward the call to the async engine's store function
     auto& id = m_impl->m_descriptor;
-    return async.m_impl->storeRawProduct(id, key, value, vsize);
+    if(async.m_impl)
+        return async.m_impl->storeRawProduct(id, key, value, vsize);
+    else
+        return m_impl->m_datastore->storeRawProduct(id, key, value, vsize);
 }
 
 bool Event::loadRawData(const std::string& key, std::string& buffer) const {
