@@ -40,8 +40,8 @@ class WriteBatch {
 
     public:
 
-    WriteBatch(DataStore& ds);
-    WriteBatch(DataStore& ds, AsyncEngine& async);
+    WriteBatch(DataStore& ds, unsigned max_batch_size=128);
+    WriteBatch(DataStore& ds, AsyncEngine& async, unsigned max_batch_size=128);
     ~WriteBatch();
     WriteBatch(const WriteBatch&) = delete;
     WriteBatch& operator=(const WriteBatch&) = delete;
