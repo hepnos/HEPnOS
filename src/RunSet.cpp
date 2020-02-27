@@ -56,7 +56,7 @@ RunSet::const_iterator RunSet::find(const RunNumber& runNumber) const {
 
 RunSet::iterator RunSet::begin() {
     auto it = find(0);
-    if(it != end()) return *it;
+    if(it != end()) return it;
 
     auto ds_level = m_impl->m_level;
     auto datastore = m_impl->m_datastore;

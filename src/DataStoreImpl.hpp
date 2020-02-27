@@ -391,6 +391,7 @@ class DataStoreImpl {
             throw Exception("Error occured when calling sdskv::database::list_keys (SDSKV error="+std::string(ex.what()) + ")");
         }
         result.resize(0);
+        unsigned j=0;
         for(const auto& entry : entries) {
             size_t i = entry.find_last_of('/');
             if(i == std::string::npos) i = 1;
@@ -401,9 +402,10 @@ class DataStoreImpl {
                         level,
                         current->m_container,
                         entry.substr(i),
-                        uuids[i]
+                        uuids[j]
                     )
                 );
+            j += 1;
         }
         return result.size();
     }

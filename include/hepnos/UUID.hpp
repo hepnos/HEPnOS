@@ -52,7 +52,7 @@ struct UUID {
 
 template<typename T>
 T& operator<<(T& stream, const UUID& id) {
-    stream << (std::string)id;
+    stream << id.to_string();
     return stream;
 }
 

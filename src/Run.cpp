@@ -181,7 +181,7 @@ Run::const_iterator Run::find(const SubRunNumber& subRunNumber) const {
 
 Run::iterator Run::begin() {
     auto it = find(0);
-    if(it != end()) return *it;
+    if(it != end()) return it;
 
     auto& id = m_impl->m_descriptor;
     auto new_subrun_impl = std::make_shared<ItemImpl>(m_impl->m_datastore, id.dataset, id.run, 0);

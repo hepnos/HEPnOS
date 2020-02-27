@@ -24,8 +24,8 @@ void navigate_dataset(int level, hepnos::DataSet& ds) {
     for(auto& sub_ds : ds) {
         navigate_dataset(level+1, sub_ds);
     }
-    for(auto& r : ds.runs()) {
-        navigate_run(level+1, r);
+    for(auto it = ds.runs().begin(); it != ds.runs().end(); it++) {
+        navigate_run(level+1, *it);
     }
 }
 
