@@ -20,6 +20,7 @@
 #include "StringHash.hpp"
 #include "DataSetImpl.hpp"
 #include "ItemImpl.hpp"
+#include "ItemType.hpp"
 
 namespace hepnos {
 
@@ -476,15 +477,15 @@ class DataStoreImpl {
     // Access functions for numbered items (Runs, SubRuns, and Events)
     ///////////////////////////////////////////////////////////////////////////
 
-    const sdskv::database& locateItemDb(const ItemDescriptor& id) const {
+    const sdskv::database& locateItemDb(const ItemType& type, const ItemDescriptor& id) const {
         long unsigned db_idx = 0;
         uint64_t hash;
         size_t prime = 1099511628211ULL;
         hash = id.dataset.hash();
-        if(id.subrun == InvalidSubRunNumber) { // we are locating a Run
+        if(type == ItemType::RUN) { // we are locating a Run
             ch_placement_find_closest(m_run_dbs.chi, hash, 1, &db_idx);
             return m_run_dbs.dbs[db_idx];
-        } else if(id.event == InvalidEventNumber) { // we are locating a SubRun
+        } else if(type == ItemType::SUBRUN) { // we are locating a SubRun
             hash *= prime;
             hash = hash ^ id.run;
             ch_placement_find_closest(m_subrun_dbs.chi, hash, 1, &db_idx);
@@ -502,13 +503,15 @@ class DataStoreImpl {
      * maxRuns shared_ptr to RunImpl coming after the
      * current run. Returns the number of Runs read.
      */
-    size_t nextItems(const std::shared_ptr<ItemImpl>& current, 
+    size_t nextItems(
+            const ItemType& type,
+            const std::shared_ptr<ItemImpl>& current, 
             std::vector<std::shared_ptr<ItemImpl>>& result,
             size_t maxItems) const {
         int ret;
         result.resize(0);
         const ItemDescriptor& start_key   = current->m_descriptor;
-        auto& db = locateItemDb(start_key);
+        auto& db = locateItemDb(type, start_key);
         // ignore keys that don't have the same uuid
         // issue an sdskv_list_keys
         std::vector<ItemDescriptor> descriptors(maxItems);
@@ -546,8 +549,14 @@ class DataStoreImpl {
         k.run     = run_number;
         k.subrun  = subrun_number;
         k.event   = event_number;
+        ItemType type = ItemType::RUN;
+        if(subrun_number != InvalidSubRunNumber) {
+            type = ItemType::SUBRUN;
+            if(event_number != InvalidEventNumber)
+                type = ItemType::EVENT;
+        }
         // find out which DB to access
-        auto& db = locateItemDb(k);
+        auto& db = locateItemDb(type, k);
         try {
             bool b = db.exists(&k, sizeof(k));
             return b;
@@ -570,8 +579,14 @@ class DataStoreImpl {
         k.run     = run_number;
         k.subrun  = subrun_number;
         k.event   = event_number;
+        ItemType type = ItemType::RUN;
+        if(subrun_number != InvalidSubRunNumber) {
+            type = ItemType::SUBRUN;
+            if(event_number != InvalidEventNumber)
+                type = ItemType::EVENT;
+        }
         // find out which DB to access
-        auto& db = locateItemDb(k);
+        auto& db = locateItemDb(type, k);
         try {
             db.put(&k, sizeof(k), nullptr, 0);
         } catch(sdskv::exception& ex) {

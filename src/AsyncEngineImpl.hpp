@@ -96,10 +96,16 @@ class AsyncEngineImpl {
         id.run     = run_number;
         id.subrun  = subrun_number;
         id.event   = event_number;
+        ItemType type = ItemType::RUN;
+        if(subrun_number != InvalidSubRunNumber) {
+            type = ItemType::SUBRUN;
+            if(event_number != InvalidEventNumber)
+                type = ItemType::EVENT;
+        }
         // make a thread that will store the data
-        m_pool.make_thread([this, id, ds=m_datastore]() {
+        m_pool.make_thread([this, id, type, ds=m_datastore]() {
             // locate db
-            auto& db = ds->locateItemDb(id);
+            auto& db = ds->locateItemDb(type, id);
             try {
                 db.put(&id, sizeof(id), nullptr, 0);
             } catch(sdskv::exception& ex) {

@@ -35,7 +35,7 @@ Run Run::next() const {
     if(!valid()) return Run();
    
     std::vector<std::shared_ptr<ItemImpl>> next_runs;
-    size_t s = m_impl->m_datastore->nextItems(m_impl, next_runs, 1);
+    size_t s = m_impl->m_datastore->nextItems(ItemType::RUN, m_impl, next_runs, 1);
     if(s == 0) return Run();
     return Run(std::move(next_runs[0]));
 }

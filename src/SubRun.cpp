@@ -36,7 +36,7 @@ SubRun SubRun::next() const {
     if(!valid()) return SubRun();
   
     std::vector<std::shared_ptr<ItemImpl>> next_subruns; 
-    size_t s = m_impl->m_datastore->nextItems(m_impl, next_subruns, 1);
+    size_t s = m_impl->m_datastore->nextItems(ItemType::SUBRUN, m_impl, next_subruns, 1);
     if(s == 0) return SubRun();
     return SubRun(std::move(next_subruns[0]));
 }
