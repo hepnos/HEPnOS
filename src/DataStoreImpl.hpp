@@ -504,14 +504,15 @@ class DataStoreImpl {
      * current run. Returns the number of Runs read.
      */
     size_t nextItems(
-            const ItemType& type,
+            const ItemType& item_type,
+            const ItemType& prefix_type,
             const std::shared_ptr<ItemImpl>& current, 
             std::vector<std::shared_ptr<ItemImpl>>& result,
             size_t maxItems) const {
         int ret;
         result.resize(0);
         const ItemDescriptor& start_key   = current->m_descriptor;
-        auto& db = locateItemDb(type, start_key);
+        auto& db = locateItemDb(item_type, start_key);
         // ignore keys that don't have the same uuid
         // issue an sdskv_list_keys
         std::vector<ItemDescriptor> descriptors(maxItems);
@@ -523,7 +524,7 @@ class DataStoreImpl {
         try {
             hg_size_t s = maxItems;
             db.list_keys(&start_key, sizeof(start_key),
-                         &start_key, current->parentPrefixSize(),
+                         &start_key, ItemImpl::descriptorSize(prefix_type),
                          keys_addr.data(), keys_sizes.data(), &s);
             maxItems = s;
         } catch(sdskv::exception& ex) {

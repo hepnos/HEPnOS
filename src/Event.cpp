@@ -32,7 +32,7 @@ Event Event::next() const {
     if(!valid()) return Event();
 
     std::vector<std::shared_ptr<ItemImpl>> next_events;
-    size_t s = m_impl->m_datastore->nextItems(ItemType::EVENT, m_impl, next_events, 1);
+    size_t s = m_impl->m_datastore->nextItems(ItemType::EVENT, ItemType::SUBRUN, m_impl, next_events, 1);
     if(s == 0) return Event();
     return Event(std::move(next_events[0]));   
 }
