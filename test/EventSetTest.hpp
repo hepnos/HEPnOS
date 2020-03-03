@@ -10,6 +10,7 @@ class EventSetTest : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE( EventSetTest );
     CPPUNIT_TEST( testFillDataStore );
+    CPPUNIT_TEST( testInvalid );
     CPPUNIT_TEST( testBeginEnd );
     CPPUNIT_TEST_SUITE_END();
 
@@ -19,6 +20,7 @@ class EventSetTest : public CppUnit::TestFixture
     void tearDown();
 
     void testFillDataStore();
+    void testInvalid();
     void testBeginEnd();
 };
 

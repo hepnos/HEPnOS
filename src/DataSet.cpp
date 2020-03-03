@@ -342,10 +342,16 @@ EventSet DataSet::events(int target) const {
     if(!valid()) {
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
+    auto numTargets = m_impl->m_datastore->numTargets(ItemType::EVENT);
+    if(target >= (int)numTargets) {
+        throw Exception(std::string("Invalid target number ")
+                        +std::to_string(target) 
+                        +" for EventSet (>= "
+                        +std::to_string(numTargets)+")");
+    }
     if(target >= 0) 
         return EventSet(std::make_shared<EventSetImpl>(*m_impl, target));
     else {
-        auto numTargets = m_impl->m_datastore->numTargets(ItemType::EVENT);
         return EventSet(std::make_shared<EventSetImpl>(*m_impl, 0, numTargets));
     }
 }

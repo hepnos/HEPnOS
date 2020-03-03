@@ -58,6 +58,13 @@ void EventSetTest::testFillDataStore() {
     onevent.createRun(1).createSubRun(3).createEvent(76);
 }
 
+void EventSetTest::testInvalid() {
+    auto root = datastore->root();
+    DataSet mds = root["matthieu"];
+    CPPUNIT_ASSERT_THROW(mds.events(datastore->numTargets(ItemType::EVENT)+1), Exception);
+    CPPUNIT_ASSERT_THROW(mds.events(datastore->numTargets(ItemType::EVENT)+1), Exception);
+}
+
 void EventSetTest::testBeginEnd() {
     auto root = datastore->root();
     DataSet mds = root["matthieu"];
