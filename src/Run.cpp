@@ -4,6 +4,7 @@
  * See COPYRIGHT in top-level directory.
  */
 #include "hepnos/Run.hpp"
+#include "hepnos/DataSet.hpp"
 #include "hepnos/AsyncEngine.hpp"
 #include "ItemImpl.hpp"
 #include "ItemImpl.hpp"

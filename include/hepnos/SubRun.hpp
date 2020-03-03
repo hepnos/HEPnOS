@@ -20,6 +20,7 @@ class SubRun : public KeyValueContainer {
 
     private:
 
+    friend class Event;
     friend class Run;
 
     std::shared_ptr<ItemImpl> m_impl;
@@ -148,6 +149,11 @@ class SubRun : public KeyValueContainer {
      * @return The subrun number.
      */
     const SubRunNumber& number() const;
+
+    /**
+     * @brief Returns an instance of the enclosing Run.
+     */
+    Run run() const;
 
     class const_iterator;
     class iterator;

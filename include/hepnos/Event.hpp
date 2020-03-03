@@ -150,6 +150,12 @@ class Event : public KeyValueContainer {
      */
     const EventNumber& number() const;
 
+    /**
+     * @brief Returns an intance of the enclosing SubRun.
+     *
+     * @return Parent SubRun.
+     */
+    SubRun subrun() const;
 };
 
 }
