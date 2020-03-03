@@ -4,6 +4,7 @@
  * See COPYRIGHT in top-level directory.
  */
 #include "hepnos/Run.hpp"
+#include "hepnos/DataSet.hpp"
 #include "hepnos/AsyncEngine.hpp"
 #include "ItemImpl.hpp"
 #include "ItemImpl.hpp"
@@ -35,7 +36,7 @@ Run Run::next() const {
     if(!valid()) return Run();
    
     std::vector<std::shared_ptr<ItemImpl>> next_runs;
-    size_t s = m_impl->m_datastore->nextItems(m_impl, next_runs, 1);
+    size_t s = m_impl->m_datastore->nextItems(ItemType::RUN, ItemType::DATASET, m_impl, next_runs, 1);
     if(s == 0) return Run();
     return Run(std::move(next_runs[0]));
 }

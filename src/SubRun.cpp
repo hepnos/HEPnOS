@@ -32,11 +32,21 @@ DataStore SubRun::datastore() const {
     return DataStore(m_impl->m_datastore);
 }
 
+Run SubRun::run() const {
+    if(!valid()) {
+        throw Exception("Calling SubRun member function on invalid SubRun object");
+    }
+    ItemDescriptor run_descriptor(
+            m_impl->m_descriptor.dataset,
+            m_impl->m_descriptor.run);
+    return Run(std::make_shared<ItemImpl>(m_impl->m_datastore, run_descriptor));
+}
+
 SubRun SubRun::next() const {
     if(!valid()) return SubRun();
   
     std::vector<std::shared_ptr<ItemImpl>> next_subruns; 
-    size_t s = m_impl->m_datastore->nextItems(m_impl, next_subruns, 1);
+    size_t s = m_impl->m_datastore->nextItems(ItemType::SUBRUN, ItemType::RUN, m_impl, next_subruns, 1);
     if(s == 0) return SubRun();
     return SubRun(std::move(next_subruns[0]));
 }

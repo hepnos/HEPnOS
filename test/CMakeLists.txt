@@ -12,44 +12,50 @@ target_link_libraries(example hepnos ${BOOST_DEPS})
 
 set(CTEST_ENVIRONMENT "MKTEMP=mktemp" "TIMEOUT=timeout")
 
-add_executable(DataStoreTest DataStoreTest.cpp HEPnOSTestMain.cpp)
-target_link_libraries(DataStoreTest ${CPPUNIT_LIBRARIES} hepnos)
+add_library(HEPnOSTest HEPnOSTestMain.cpp)
+target_link_libraries(HEPnOSTest ${CPPUNIT_LIBRARIES} hepnos)
 
-add_executable(DataSetTest DataSetTest.cpp HEPnOSTestMain.cpp)
-target_link_libraries(DataSetTest ${CPPUNIT_LIBRARIES} hepnos)
+add_executable(DataStoreTest DataStoreTest.cpp)
+target_link_libraries(DataStoreTest HEPnOSTest)
 
-add_executable(RunSetTest RunSetTest.cpp HEPnOSTestMain.cpp)
-target_link_libraries(RunSetTest ${CPPUNIT_LIBRARIES} hepnos)
+add_executable(DataSetTest DataSetTest.cpp)
+target_link_libraries(DataSetTest HEPnOSTest)
 
-add_executable(RunTest RunTest.cpp HEPnOSTestMain.cpp)
-target_link_libraries(RunTest ${CPPUNIT_LIBRARIES} hepnos)
+add_executable(RunSetTest RunSetTest.cpp)
+target_link_libraries(RunSetTest HEPnOSTest)
 
-add_executable(SubRunTest SubRunTest.cpp HEPnOSTestMain.cpp)
-target_link_libraries(SubRunTest ${CPPUNIT_LIBRARIES} hepnos)
+add_executable(EventSetTest EventSetTest.cpp)
+target_link_libraries(EventSetTest HEPnOSTest)
 
-add_executable(EventTest EventTest.cpp HEPnOSTestMain.cpp)
-target_link_libraries(EventTest ${CPPUNIT_LIBRARIES} hepnos)
+add_executable(RunTest RunTest.cpp)
+target_link_libraries(RunTest HEPnOSTest)
 
-add_executable(LoadStoreTest LoadStoreTest.cpp HEPnOSTestMain.cpp)
-target_link_libraries(LoadStoreTest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DEPS})
+add_executable(SubRunTest SubRunTest.cpp)
+target_link_libraries(SubRunTest HEPnOSTest)
 
-add_executable(LoadStoreVectorsTest LoadStoreVectorsTest.cpp HEPnOSTestMain.cpp)
-target_link_libraries(LoadStoreVectorsTest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DEPS})
+add_executable(EventTest EventTest.cpp)
+target_link_libraries(EventTest HEPnOSTest)
 
-add_executable(PtrTest PtrTest.cpp HEPnOSTestMain.cpp)
-target_link_libraries(PtrTest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DEPS})
+add_executable(LoadStoreTest LoadStoreTest.cpp)
+target_link_libraries(LoadStoreTest HEPnOSTest ${BOOST_DEPS})
 
-add_executable(WriteAndRestartTest WriteAndRestartTest.cpp HEPnOSTestMain.cpp)
-target_link_libraries(WriteAndRestartTest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DEPS})
+add_executable(LoadStoreVectorsTest LoadStoreVectorsTest.cpp)
+target_link_libraries(LoadStoreVectorsTest HEPnOSTest ${BOOST_DEPS})
 
-add_executable(RestartAndReadTest RestartAndReadTest.cpp HEPnOSTestMain.cpp)
-target_link_libraries(RestartAndReadTest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DEPS})
+add_executable(PtrTest PtrTest.cpp)
+target_link_libraries(PtrTest HEPnOSTest ${BOOST_DEPS})
 
-add_executable(WriteBatchTest WriteBatchTest.cpp HEPnOSTestMain.cpp)
-target_link_libraries(WriteBatchTest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DEPS})
+add_executable(WriteAndRestartTest WriteAndRestartTest.cpp)
+target_link_libraries(WriteAndRestartTest HEPnOSTest ${BOOST_DEPS})
 
-add_executable(AsyncWriteBatchTest AsyncWriteBatchTest.cpp HEPnOSTestMain.cpp)
-target_link_libraries(AsyncWriteBatchTest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DEPS})
+add_executable(RestartAndReadTest RestartAndReadTest.cpp)
+target_link_libraries(RestartAndReadTest HEPnOSTest ${BOOST_DEPS})
+
+add_executable(WriteBatchTest WriteBatchTest.cpp)
+target_link_libraries(WriteBatchTest HEPnOSTest ${BOOST_DEPS})
+
+add_executable(AsyncWriteBatchTest AsyncWriteBatchTest.cpp)
+target_link_libraries(AsyncWriteBatchTest HEPnOSTest ${BOOST_DEPS})
 
 #add_executable(ParallelMPITest ParallelMPITest.cpp HEPnOSTestMain.cpp)
 #target_link_libraries(ParallelMPITest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DEPS})
@@ -57,6 +63,7 @@ target_link_libraries(AsyncWriteBatchTest ${CPPUNIT_LIBRARIES} hepnos ${BOOST_DE
 add_test(NAME DataStoreTest COMMAND run-test.sh ./DataStoreTest)
 add_test(NAME DataSetTest   COMMAND run-test.sh ./DataSetTest)
 add_test(NAME RunSetTest    COMMAND run-test.sh ./RunSetTest)
+add_test(NAME EventSetTest  COMMAND run-test.sh ./EventSetTest)
 add_test(NAME RunTest       COMMAND run-test.sh ./RunTest)
 add_test(NAME SubRunTest    COMMAND run-test.sh ./SubRunTest)
 add_test(NAME EventTest     COMMAND run-test.sh ./EventTest)

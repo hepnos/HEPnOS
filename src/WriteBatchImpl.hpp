@@ -164,8 +164,14 @@ class WriteBatchImpl {
         id.run     = run_number;
         id.subrun  = subrun_number;
         id.event   = event_number;
+        ItemType type = ItemType::RUN;
+        if(subrun_number != InvalidSubRunNumber) {
+            type = ItemType::SUBRUN;
+            if(event_number != InvalidEventNumber)
+                type = ItemType::EVENT;
+        }
         // locate db
-        auto& db = m_datastore->locateItemDb(id);
+        auto& db = m_datastore->locateItemDb(type, id);
         // insert in the map of entries
         bool was_empty;
         {

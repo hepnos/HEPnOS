@@ -9,6 +9,7 @@
 #include "hepnos/AsyncEngine.hpp"
 #include "ItemImpl.hpp"
 #include "DataSetImpl.hpp"
+#include "EventSetImpl.hpp"
 #include "DataStoreImpl.hpp"
 #include "AsyncEngineImpl.hpp"
 #include "WriteBatchImpl.hpp"
@@ -347,6 +348,24 @@ RunSet DataSet::runs() const {
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
     return RunSet(m_impl);
+}
+
+EventSet DataSet::events(int target) const {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
+    auto numTargets = m_impl->m_datastore->numTargets(ItemType::EVENT);
+    if(target >= (int)numTargets) {
+        throw Exception(std::string("Invalid target number ")
+                        +std::to_string(target) 
+                        +" for EventSet (>= "
+                        +std::to_string(numTargets)+")");
+    }
+    if(target >= 0) 
+        return EventSet(std::make_shared<EventSetImpl>(*m_impl, target));
+    else {
+        return EventSet(std::make_shared<EventSetImpl>(*m_impl, 0, numTargets));
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////

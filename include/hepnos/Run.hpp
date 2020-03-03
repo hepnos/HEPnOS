@@ -22,6 +22,7 @@ class Run : public KeyValueContainer {
 
     private:
 
+    friend class SubRun;
     friend class RunSet;
     friend class DataSet;
 

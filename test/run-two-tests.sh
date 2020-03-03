@@ -17,6 +17,7 @@ export HEPNOS_CONFIG_FILE=$CON_FILE
 # Run HEPnOS
 hepnos_test_start_servers 2 1 20 $CFG_FILE $CON_FILE
 
+sleep 1
 # Run a test client
 run_to 10 $1 $CON_FILE
 if [ $? -ne 0 ]; then
@@ -30,6 +31,7 @@ wait
 # Run HEPnOS again
 hepnos_test_start_servers 2 1 20 $CFG_FILE $CON_FILE
 
+sleep 1
 # Run the second test client
 run_to 10 $2 $CON_FILE
 if [ $? -ne 0 ]; then

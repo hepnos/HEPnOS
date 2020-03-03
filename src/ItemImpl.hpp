@@ -11,7 +11,7 @@
 #include <memory>
 #include "hepnos/Run.hpp"
 #include "hepnos/UUID.hpp"
-#include "NumberUtil.hpp"
+#include "hepnos/ItemType.hpp"
 #include "ItemDescriptor.hpp"
 
 namespace hepnos {
@@ -42,12 +42,14 @@ class ItemImpl {
             return m_descriptor == other.m_descriptor;
         }
 
-        size_t parentPrefixSize() const {
-            size_t s = sizeof(ItemDescriptor) - sizeof(m_descriptor.event);
-            if(m_descriptor.event == InvalidEventNumber) 
-                s -= sizeof(m_descriptor.subrun);
-            if(m_descriptor.subrun == InvalidSubRunNumber)
-                s -= sizeof(m_descriptor.run);
+        static size_t descriptorSize(const ItemType& type) {
+            size_t s = sizeof(ItemDescriptor);
+            if(type == ItemType::EVENT) return s;
+            s -= sizeof(EventNumber);
+            if(type == ItemType::SUBRUN) return s;
+            s -= sizeof(SubRunNumber);
+            if(type == ItemType::RUN) return s;
+            s -= sizeof(RunNumber);
             return s;
         }
 };

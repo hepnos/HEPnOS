@@ -28,11 +28,22 @@ DataStore Event::datastore() const {
     return DataStore(m_impl->m_datastore);
 }
 
+SubRun Event::subrun() const {
+    if(!valid()) {
+        throw Exception("Calling Event member function on invalid Event object");
+    }
+    ItemDescriptor subrun_descriptor(
+            m_impl->m_descriptor.dataset,
+            m_impl->m_descriptor.run,
+            m_impl->m_descriptor.subrun);
+    return SubRun(std::make_shared<ItemImpl>(m_impl->m_datastore, subrun_descriptor));
+}
+
 Event Event::next() const {
     if(!valid()) return Event();
 
     std::vector<std::shared_ptr<ItemImpl>> next_events;
-    size_t s = m_impl->m_datastore->nextItems(m_impl, next_events, 1);
+    size_t s = m_impl->m_datastore->nextItems(ItemType::EVENT, ItemType::SUBRUN, m_impl, next_events, 1);
     if(s == 0) return Event();
     return Event(std::move(next_events[0]));   
 }

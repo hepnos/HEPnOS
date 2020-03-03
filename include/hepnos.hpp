@@ -7,6 +7,7 @@
 #include <hepnos/Demangle.hpp>
 #include <hepnos/Event.hpp>
 #include <hepnos/EventNumber.hpp>
+#include <hepnos/EventSet.hpp>
 #include <hepnos/Exception.hpp>
 #include <hepnos/KeyValueContainer.hpp>
 #include <hepnos/Run.hpp>

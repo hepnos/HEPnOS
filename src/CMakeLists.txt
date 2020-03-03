@@ -7,7 +7,8 @@ set(hepnos-src DataStore.cpp
 	       Event.cpp
 	       UUID.cpp
 	       WriteBatch.cpp
-	       AsyncEngine.cpp) 
+	       AsyncEngine.cpp
+	       EventSet.cpp) 
 
 set(hepnos-service-src service/HEPnOSService.cpp
 		       service/ServiceConfig.cpp
