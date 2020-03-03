@@ -71,7 +71,7 @@ packages:
     paths:
       m4@1.4.17: /usr
     buildable: False
-  margo:
+  mochi-margo:
     version: [ develop ]
   mercury:
     variants: ~boostsys~verbose
@@ -90,7 +90,7 @@ packages:
       pkg-config@0.29.1 arch=linux-ubuntu16.04-x86_64: /usr
       pkg-config@0.26 arch=linux-ubuntu14.04-x86_64: /usr
     buildable: False
-  sdskeyval:
+  mochi-kv:
     version: [ develop ]
   tar:
     paths:
@@ -101,7 +101,7 @@ packages:
       texinfo@6.1 arch=linux-ubuntu16.04-x86_64: /usr
       texinfo@5.2 arch=linux-ubuntu14.04-x86_64: /usr
     buildable: False
-  thallium:
+  mochi-thallium:
     version: [ develop ]
   xz:
     paths:

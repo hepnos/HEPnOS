@@ -18,8 +18,8 @@ spack repo add sds-repo
 echo "Installing depencencies"
 spack install mpich
 spack install ch-placement
-spack install thallium
-spack install sdskeyval
+spack install mochi-thallium
+spack install mochi-kv
 spack install yaml-cpp
 spack install boost+serialization
 spack install cmake
@@ -32,8 +32,8 @@ spack find
 echo "Loading packages"
 spack load -r mpich
 spack load -r ch-placement
-spack load -r thallium
-spack load -r sdskeyval
+spack load -r mochi-thallium
+spack load -r mochi-kv
 spack load -r yaml-cpp
 spack load -r boost
 spack load -r cmake
