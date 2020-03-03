@@ -7,46 +7,24 @@
 #define __HEPNOS_PRIVATE_EVENTSET_IMPL_H
 
 #include "hepnos/EventSet.hpp"
-#include "hepnos/UUID.hpp"
+#include "DataSetImpl.hpp"
 
 namespace hepnos {
 
 class DataStoreImpl;
 
-class EventSetImpl {
+class EventSetImpl : public DataSetImpl {
 
-    public:
+        public:
 
-        std::shared_ptr<DataStoreImpl>  m_datastore;
-        uint8_t                         m_level;
-        std::shared_ptr<std::string>    m_container;
-        std::string                     m_name;
-        UUID                            m_uuid;
+        const int m_target; // target to which to restrict the EventSet, or -1 if no restriction
+        const int m_num_targets; // number of targets; copy of datastore->numTargets(ItemType::EVENT)
 
-        static EventSet::iterator m_end;
-
-        EventSetImpl(const std::shared_ptr<DataStoreImpl>& ds,
-             uint8_t level, 
-             const std::shared_ptr<std::string>& container,
-             const std::string& name,
-             const UUID& uuid = UUID())
-        : m_datastore(ds)
-        , m_level(level)
-        , m_container(container)
-        , m_name(name)
-        , m_uuid(uuid) {}
-
-        EventSetImpl(const std::shared_ptr<DataStoreImpl>& ds,
-             uint8_t level,
-             const std::string& fullname,
-             const UUID& uuid = UUID())
-        : m_datastore(ds)
-        , m_level(level)
-        , m_uuid(uuid) {
-            size_t p = fullname.find_last_of('/');
-            m_name = fullname.substr(p+1);
-            m_container = std::make_shared<std::string>(fullname.substr(0, p));
-        }
+        EventSetImpl(const DataSetImpl& dataset, int target=-1, int num_targets=0)
+        : DataSetImpl(dataset)
+        , m_target(target)
+        , m_num_targets(num_targets)
+        {}
 };
 
 }

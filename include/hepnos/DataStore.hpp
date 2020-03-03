@@ -9,6 +9,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <hepnos/ItemType.hpp>
 
 namespace hepnos {
 
@@ -166,6 +167,16 @@ class DataStore {
      * @brief Shuts down the HEPnOS service.
      */
     void shutdown();
+
+    /**
+     * @brief Returns the number of underlying targets for the
+     * specified item type.
+     *
+     * @param type Item type.
+     *
+     * @return The number of targets for the item type.
+     */
+    size_t numTargets(const ItemType& type) const;
 
     private:
 

@@ -15,157 +15,49 @@
 namespace hepnos {
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-// EventSet implementation
-////////////////////////////////////////////////////////////////////////////////////////////
-
-static EventSet::iterator EventSet_end;
-
-EventSet::EventSet(const std::shared_ptr<EventSetImpl>& impl)
-: m_impl(impl) {}
-
-EventSet::EventSet(std::shared_ptr<EventSetImpl>&& impl)
-: m_impl(std::move(impl)) {}
-
-DataStore EventSet::datastore() const {
-    return DataStore(m_impl->m_datastore);
-}
-
-EventSet::iterator EventSet::find(const RunNumber& runNumber,
-                                  const SubRunNumber& subrunNumber,
-                                  const EventNumber& eventNumber) {
-    int ret;
-    auto& datastore = m_impl->m_datastore;
-    bool b = datastore->itemExists(m_impl->m_uuid, runNumber, subrunNumber, eventNumber);
-    if(!b) return end();
-    return iterator(
-            std::make_shared<ItemImpl>(
-                datastore,
-                m_impl->m_uuid,
-                runNumber));
-}
-
-EventSet::const_iterator EventSet::find(const RunNumber& runNumber,
-                                        const SubRunNumber& subrunNumber,
-                                        const EventNumber& eventNumber) const {
-    iterator it = const_cast<EventSet*>(this)->find(runNumber, subrunNumber, eventNumber);
-    return it;
-}
-
-EventSet::iterator EventSet::begin() {
-    auto it = find(0,0,0);
-    if(it != end()) return *it;
-
-    auto ds_level = m_impl->m_level;
-    auto datastore = m_impl->m_datastore;
-    auto new_event_impl = std::make_shared<ItemImpl>(datastore, m_impl->m_uuid, 0, 0, 0);
-    Event event(std::move(new_event_impl));
-    event = event.next();
-
-    if(event.valid()) return iterator(event);
-    else return end();
-}
-
-EventSet::iterator EventSet::end() {
-    return EventSet_end;
-}
-
-EventSet::const_iterator EventSet::cbegin() const {
-    return const_iterator(const_cast<EventSet*>(this)->begin());
-}
-
-EventSet::const_iterator EventSet::cend() const {
-    return EventSet_end;
-}
-
-EventSet::const_iterator EventSet::begin() const {
-    return const_iterator(const_cast<EventSet*>(this)->begin());
-}
-
-EventSet::const_iterator EventSet::end() const {
-    return EventSet_end;
-}
-
-EventSet::iterator EventSet::lower_bound(const RunNumber& lb_run,
-                                         const SubRunNumber& lb_subrun,
-                                         const EventNumber& lb_event) {
-    if(lb_run == 0 && lb_subrun == 0 && lb_event == 0) {
-        auto it = find(0,0,0);
-        if(it != end()) {
-            return it;
-        } else {
-            Event event(std::make_shared<ItemImpl>(
-                    m_impl->m_datastore, 
-                    m_impl->m_uuid, 0, 0, 0));
-            event = event.next();
-            if(!event.valid()) return end();
-            else return iterator(event);
-        }
-    } else {
-        // XXX the bellow is actually not correct
-        auto it = find(lb_run, lb_subrun, lb_event-1);
-        if(it != end()) {
-            ++it;
-            return it;
-        }
-        Event event(std::make_shared<ItemImpl>(
-                m_impl->m_datastore, 
-                m_impl->m_uuid, lb_event-1));
-        event = event.next();
-        if(!event.valid()) return end();
-        else return iterator(event);
-    }
-}
-
-EventSet::const_iterator EventSet::lower_bound(const RunNumber& lb_run,
-                                               const SubRunNumber& lb_subrun,
-                                               const EventNumber& lb_event) const {
-    iterator it = const_cast<EventSet*>(this)->lower_bound(lb_run, lb_subrun, lb_event);
-    return it;
-}
-
-EventSet::iterator EventSet::upper_bound(const RunNumber& ub_run,
-                                         const SubRunNumber& ub_subrun,
-                                         const EventNumber& ub_event) {
-    Event event(std::make_shared<ItemImpl>(m_impl->m_datastore, 
-                    m_impl->m_uuid, ub_run, ub_subrun, ub_event));
-    event = event.next();
-    if(!event.valid()) return end();
-    else return iterator(event);
-}
-
-EventSet::const_iterator EventSet::upper_bound(const RunNumber& ub_run,
-                                               const SubRunNumber& ub_subrun,
-                                               const EventNumber& ub_event) const {
-    iterator it = const_cast<EventSet*>(this)->upper_bound(ub_run, ub_subrun, ub_event);
-    return it;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////
 // EventSet::const_iterator::Impl implementation
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 class EventSet::const_iterator::Impl {
+
+        friend class EventSet;
+
     public:
         Event m_current_event;
+        int m_target = 0;
+        int m_num_targets = 0;
 
         Impl()
         : m_current_event()
         {}
 
-        Impl(const Event& event)
+        Impl(const Event& event, int target, int num_targets=0)
         : m_current_event(event)
+        , m_target(target)
+        , m_num_targets(num_targets)
         {}
 
-        Impl(Event&& event)
-            : m_current_event(std::move(event))
+        Impl(Event&& event, int target, int num_targets=0)
+        : m_current_event(std::move(event))
+        , m_target(target)
+        , m_num_targets(num_targets)
         {}
 
         Impl(const Impl& other)
-            : m_current_event(other.m_current_event)
+        : m_current_event(other.m_current_event)
+        , m_target(other.m_target)
+        , m_num_targets(other.m_num_targets)
         {}
 
         bool operator==(const Impl& other) const {
-            return m_current_event == other.m_current_event;
+            auto v1 = m_current_event.valid();
+            auto v2 = other.m_current_event.valid();
+            if(!v1 && !v2) return true;
+            if(!v1 &&  v2) return false;
+            if(v1  && !v2) return false;
+            return m_current_event == other.m_current_event
+                && m_target == other.m_target
+                && m_num_targets == other.m_num_targets;
         }
 };
 
@@ -176,11 +68,8 @@ class EventSet::const_iterator::Impl {
 EventSet::const_iterator::const_iterator()
 : m_impl(std::make_unique<Impl>()) {}
 
-EventSet::const_iterator::const_iterator(const Event& event)
-: m_impl(std::make_unique<Impl>(event)) {}
-
-EventSet::const_iterator::const_iterator(Event&& event)
-: m_impl(std::make_unique<Impl>(std::move(event))) {}
+EventSet::const_iterator::const_iterator(std::unique_ptr<Impl>&& impl)
+: m_impl(std::move(impl)) {}
 
 EventSet::const_iterator::~const_iterator() {}
 
@@ -206,7 +95,56 @@ EventSet::const_iterator::self_type EventSet::const_iterator::operator++() {
     if(!m_impl) {
         throw Exception("Trying to increment an invalid iterator");
     }
-    m_impl->m_current_event = m_impl->m_current_event.next();
+    if(!(m_impl->m_current_event.valid())) {
+        throw Exception("Trying to increment an iterator past the end of the EventSet");
+    }
+    std::vector<std::shared_ptr<ItemImpl>> next_events;
+    auto& ds = m_impl->m_current_event.m_impl->m_datastore;
+
+    if(m_impl->m_num_targets == 0) { // single target access
+        size_t s = ds->nextItems(ItemType::EVENT, ItemType::DATASET,
+                                 m_impl->m_current_event.m_impl,
+                                 next_events, 1, m_impl->m_target);
+        if(s != 0) {
+            m_impl->m_current_event.m_impl = std::move(next_events[0]);
+        } else {
+            m_impl->m_current_event = Event();
+        }
+    } else { // multi-target access
+        // try to get next event from current target
+        size_t s = ds->nextItems(ItemType::EVENT, ItemType::DATASET,
+                                 m_impl->m_current_event.m_impl,
+                                 next_events, 1, m_impl->m_target);
+        if(s == 1) {
+            // event found
+            m_impl->m_current_event.m_impl = std::move(next_events[0]);
+            return *this;
+        }
+        // event not found, incrementing target
+        m_impl->m_target += 1;
+        // start looping over targets
+        while(m_impl->m_target < m_impl->m_num_targets) {
+            // search for event (0,0,0)
+            auto& uuid = m_impl->m_current_event.m_impl->m_descriptor.dataset;
+            auto event_impl000 = std::make_shared<ItemImpl>(ds, uuid, 0, 0, 0);
+            if(ds->itemExists(uuid, 0, 0, 0, m_impl->m_target)) {
+                // there exists an item 0,0,0; make the iterator point to it
+                m_impl->m_current_event.m_impl = std::move(event_impl000);
+                return *this;
+            } 
+            // if event (0,0,0) does not exist, then try to get the next one
+            size_t s = ds->nextItems(ItemType::EVENT, ItemType::DATASET,
+                    event_impl000, next_events, 1, m_impl->m_target);
+            if(s == 1) {
+                // item found, make the iterator point to it
+                m_impl->m_current_event.m_impl = std::move(next_events[0]);
+                return *this;
+            }
+            m_impl->m_target += 1;
+        }
+        // if we get out of the loop, we haven't found any event
+        m_impl->m_current_event = Event();
+    }
     return *this;
 }
 
@@ -243,14 +181,11 @@ bool EventSet::const_iterator::operator!=(const self_type& rhs) const {
 // EventSet::iterator implementation
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-EventSet::iterator::iterator(const Event& current)
-: const_iterator(current) {}
-
-EventSet::iterator::iterator(Event&& current)
-: const_iterator(std::move(current)) {}
-
 EventSet::iterator::iterator()
 : const_iterator() {}
+
+EventSet::iterator::iterator(std::unique_ptr<EventSet::const_iterator::Impl>&& impl)
+: const_iterator(std::move(impl)) {}
 
 EventSet::iterator::~iterator() {}
 
@@ -279,5 +214,77 @@ EventSet::iterator::reference EventSet::iterator::operator*() {
 EventSet::iterator::pointer EventSet::iterator::operator->() {
     return const_cast<pointer>(const_iterator::operator->());
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// EventSet implementation
+////////////////////////////////////////////////////////////////////////////////////////////
+static EventSet::iterator EventSet_end;
+
+EventSet::EventSet(const std::shared_ptr<EventSetImpl>& impl)
+: m_impl(impl) {}
+
+EventSet::EventSet(std::shared_ptr<EventSetImpl>&& impl)
+: m_impl(std::move(impl)) {}
+
+DataStore EventSet::datastore() const {
+    return DataStore(m_impl->m_datastore);
+}
+
+EventSet::iterator EventSet::begin() {
+    // search for the first event in the event set
+    auto& datastore = m_impl->m_datastore;
+    // set the target at which to start
+    int target = m_impl->m_target;
+    if(target == -1) target = 0;
+    int num_targets = m_impl->m_num_targets;
+    do {
+        // search for event (0,0,0)
+        auto event_impl000 = std::make_shared<ItemImpl>(datastore, m_impl->m_uuid, 0, 0, 0);
+        if(datastore->itemExists(m_impl->m_uuid, 0, 0, 0, target)) {
+            // there exists an item 0,0,0; make the iterator point to it
+            Event event(std::move(event_impl000));
+            auto iterator_impl = std::unique_ptr<EventSet::const_iterator::Impl>(
+                    new EventSet::const_iterator::Impl(
+                        std::move(event), target, num_targets));
+            return iterator(std::move(iterator_impl)); 
+        }
+        // if event (0,0,0) does not exist, then try to get the next one
+        std::vector<std::shared_ptr<ItemImpl>> nextItems;
+        size_t s = datastore->nextItems(ItemType::EVENT, ItemType::DATASET,
+                                event_impl000, nextItems, 1, target);
+        if(s == 1) {
+            // item found, make the iterator point to it
+            auto iterator_impl = std::unique_ptr<EventSet::const_iterator::Impl>(
+                    new EventSet::const_iterator::Impl(
+                        std::move(nextItems[0]), target, num_targets));
+            return iterator(std::move(iterator_impl));
+        }
+        // if we haven't found any more items, and we can increase the target number,
+        // let's do it and try with the next target
+        target += 1;
+    } while(target < num_targets);
+    return end();
+}
+
+EventSet::iterator EventSet::end() {
+    return EventSet_end;
+}
+
+EventSet::const_iterator EventSet::cbegin() const {
+    return const_iterator(const_cast<EventSet*>(this)->begin());
+}
+
+EventSet::const_iterator EventSet::cend() const {
+    return EventSet_end;
+}
+
+EventSet::const_iterator EventSet::begin() const {
+    return const_iterator(const_cast<EventSet*>(this)->begin());
+}
+
+EventSet::const_iterator EventSet::end() const {
+    return EventSet_end;
+}
+
 
 }

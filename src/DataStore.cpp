@@ -73,5 +73,12 @@ bool DataStore::loadRawProduct(const ProductID& productID, char* data, size_t* s
     return m_impl->loadRawProduct(productID, data, size);
 }
 
+size_t DataStore::numTargets(const ItemType& type) const {
+    if(!m_impl) {
+        throw Exception("Calling DataStore member function on an invalid DataStore object");
+    }
+    return m_impl->numTargets(type);
+}
+
 }
 

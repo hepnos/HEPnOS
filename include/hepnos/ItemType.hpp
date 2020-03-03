@@ -7,7 +7,8 @@ enum class ItemType : uint32_t {
     DATASET,
     RUN,
     SUBRUN,
-    EVENT
+    EVENT,
+    PRODUCT
 };
 
 }

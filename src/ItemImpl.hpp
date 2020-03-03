@@ -11,7 +11,7 @@
 #include <memory>
 #include "hepnos/Run.hpp"
 #include "hepnos/UUID.hpp"
-#include "ItemType.hpp"
+#include "hepnos/ItemType.hpp"
 #include "ItemDescriptor.hpp"
 
 namespace hepnos {

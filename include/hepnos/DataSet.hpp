@@ -369,7 +369,7 @@ class DataSet : public KeyValueContainer {
     /**
      * @brief Returns the RunSet associated with this DataSet.
      *
-     * @return a reference to the RunSet associated with this DataSet.
+     * @return the RunSet associated with this DataSet.
      */
     RunSet runs() const;
 
@@ -384,6 +384,17 @@ class DataSet : public KeyValueContainer {
      * @return a Run corresponding to the provided run number.
      */
     Run operator[](const RunNumber& runNumber) const;
+
+    /**
+     * @brief Returns an EventSet pointing to Events in
+     * the specified target. If target is -1, the EventSet
+     * will also iterate over targets.
+     *
+     * @param target Target index in which to find events.
+     *
+     * @return an EventSet associated with the DataSet.
+     */
+    EventSet events(int target=-1) const;
 };
 
 class DataSet::const_iterator {

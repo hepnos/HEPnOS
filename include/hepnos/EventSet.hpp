@@ -89,41 +89,6 @@ class EventSet {
     DataStore datastore() const;
 
     /**
-     * @brief Searches this EventSet for an Event with 
-     * the provided run, subrun, and event number and returns
-     * an iterator to it if found, otherwise it returns an iterator
-     * pointing to EventSet::end().
-     *
-     * @param runNumber Run number of the Event to find.
-     * @param subrunNumber SubRun number of the Event to find.
-     * @param eventNumber Event number of the Event to find.
-     *
-     * @return an iterator pointing to the Run if found,
-     * EventSet::end() otherwise.
-     */
-    iterator find(const RunNumber& runNumber,
-                  const SubRunNumber& subrunNumber,
-                  const EventNumber& eventNumber);
-
-    /**
-     * @brief Searches this EventSet for an Event with
-     * the provided run, subrun, and event number and returns a
-     * const_iterator to it if found, otherwise it returns an iterator
-     * pointing to EventSet::cend().
-     *
-     * @param runNumber Run number of the Event to find.
-     * @param subrunNumber SubRun number of the Event to find.
-     * @param eventNumber Event number of the Event to find.
-     *
-     * @return a const_iterator pointing to the Event if found,
-     * EventSet::cend() otherwise.
-     */
-    const_iterator find(const RunNumber& runNumber,
-                        const SubRunNumber& subrunNumber,
-                        const EventNumber& eventNumber) const;
-
-
-    /**
      * @brief Returns an iterator referring to the first Event
      * in this EventSet.
      *
@@ -174,76 +139,11 @@ class EventSet {
      */
     const_iterator cend() const;
 
-    /**
-     * @brief Returns an iterator pointing to the first Event in this
-     * EventSet, whose run, subrun, end event numbers is equal or greater
-     * than the lower bounds.
-     *
-     * @param lb_run Lower bound Run number.
-     * @param lb_subrun Lower bound SubRun number.
-     * @param lb_event Lower bound Event number.
-     *
-     * @return An iterator to the first Event in this EventSet 
-     * whose number is equal or greater than lower bounds or EventSet::end() 
-     * if such an Event does not exist.
-     */
-    iterator lower_bound(const RunNumber& lb_run,
-                         const SubRunNumber& lb_subrun,
-                         const EventNumber& lb_event);
-
-    /**
-     * @brief Returns a const_iterator pointing to the first Event in this
-     * EventSet, whose run, subrun, end event numbers is equal or greater
-     * than the lower bounds.
-     *
-     * @param lb_run Lower bound Run number.
-     * @param lb_subrun Lower bound SubRun number.
-     * @param lb_event Lower bound Event number.
-     *
-     * @return An iterator to the first Event in this EventSet 
-     * whose number is equal or greater than lower bounds or EventSet::end() 
-     * if such an Event does not exist.
-     */
-    const_iterator lower_bound(const RunNumber& lb_run,
-                               const SubRunNumber& lb_subrun,
-                               const EventNumber& lb_event) const;
-
-    /**
-     * @brief Returns an iterator pointing to the first Event in the 
-     * EventSet whose run, subrun, and event number are strictly greater than
-     * the provided upper bounds.
-     *
-     * @param ub_run Upper bound Run number.
-     * @param ub_subrun Upper bound SubRun number.
-     * @param ub_event Upper bound Event number.
-     *
-     * @return An iterator to the the first Event in this EventSet,
-     * whose number is stricly greater than provided upper bound, or
-     * EventSet::end() if no such an Event exist.
-     */
-    iterator upper_bound(const RunNumber& ub_run,
-                         const SubRunNumber& ub_subrun,
-                         const EventNumber& ub_event);
-
-    /**
-     * @brief Returns a const_iterator pointing to the first Event in the 
-     * EventSet whose run, subrun, and event number are strictly greater than
-     * the provided upper bounds.
-     *
-     * @param ub_run Upper bound Run number.
-     * @param ub_subrun Upper bound SubRun number.
-     * @param ub_event Upper bound Event number.
-     *
-     * @return An iterator to the the first Event in this EventSet,
-     * whose number is stricly greater than provided upper bound, or
-     * EventSet::end() if no such an Event exist.
-     */
-    const_iterator upper_bound(const RunNumber& ub_run,
-                               const SubRunNumber& ub_subrun,
-                               const EventNumber& ub_event) const;
 };
 
 class EventSet::const_iterator {
+
+    friend class EventSet;
 
     protected:
 
@@ -253,28 +153,14 @@ class EventSet::const_iterator {
     class Impl;
     std::unique_ptr<Impl> m_impl; /*!< Pointer to implementation */
 
+    const_iterator(std::unique_ptr<Impl>&& impl);
+
     public:
     /**
      * @brief Constructor. Creates a const_iterator pointing
      * to an invalid Event.
      */
     const_iterator();
-
-    /**
-     * @brief Constructor. Creates a const_iterator pointing
-     * to a given Run. The Run may or may not be valid. 
-     *
-     * @param current Run to make the const_iterator point to.
-     */
-    const_iterator(const Event& current);
-
-    /**
-     * @brief Constructor. Creates a const_iterator pointing
-     * to a given Event. The Event may or may not be valid. 
-     *
-     * @param current Event to make the const_iterator point to.
-     */
-    const_iterator(Event&& current);
 
     typedef const_iterator self_type;
     typedef Event value_type;
@@ -379,6 +265,12 @@ class EventSet::const_iterator {
 
 class EventSet::iterator : public EventSet::const_iterator {
 
+    friend class EventSet;
+
+    private:
+
+    iterator(std::unique_ptr<EventSet::const_iterator::Impl>&& impl);
+
     public:
 
     /**
@@ -386,22 +278,6 @@ class EventSet::iterator : public EventSet::const_iterator {
      * invalid Event.
      */
     iterator();
-
-    /**
-     * @brief Constructor. Builds an iterator pointing to
-     * an existing Event. The Event may or may not be valid.
-     *
-     * @param current Event to point to.
-     */
-    iterator(const Event& current);
-
-    /**
-     * @brief Constructor. Builds an iterator pointing to
-     * an existing Event. The Run may or may not be valid.
-     *
-     * @param current DataSet to point to.
-     */
-    iterator(Event&& current);
 
     typedef iterator self_type;
     typedef Event value_type;
