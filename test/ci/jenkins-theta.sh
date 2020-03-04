@@ -19,7 +19,7 @@ echo "Copying packages.yaml file"
 cp $HERE/theta-packages.yaml $HOME/.spack/cray/packages.yaml
 
 echo "Installing depencencies"
-spack install ch-placement
+spack install mochi-ch-placement
 spack install mochi-thallium
 spack install mochi-kv
 spack install yaml-cpp
@@ -32,7 +32,7 @@ echo "List of packages"
 spack find
 
 echo "Loading packages"
-spack load -r ch-placement
+spack load -r mochi-ch-placement
 spack load -r mochi-thallium
 spack load -r mochi-kv
 spack load -r yaml-cpp

@@ -17,7 +17,7 @@ spack repo add sds-repo
 
 echo "Installing depencencies"
 spack install mpich
-spack install ch-placement
+spack install mochi-ch-placement
 spack install mochi-thallium
 spack install mochi-kv
 spack install yaml-cpp
@@ -31,7 +31,7 @@ spack find
 
 echo "Loading packages"
 spack load -r mpich
-spack load -r ch-placement
+spack load -r mochi-ch-placement
 spack load -r mochi-thallium
 spack load -r mochi-kv
 spack load -r yaml-cpp
