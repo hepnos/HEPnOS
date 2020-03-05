@@ -27,8 +27,11 @@ Contents
    organization.rst
    deployment.rst
    connection.rst
-   accessing.rst
-   products.rst
+   accessing_datasets.rst
+   accessing_runs.rst
+   accessing_subruns.rst
+   accessing_events.rst
+   accessing_products.rst
    optimizations.rst
    theta.rst
 
