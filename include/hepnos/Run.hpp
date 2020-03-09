@@ -16,7 +16,13 @@
 
 namespace hepnos {
 
+constexpr const int RunDescriptorLength = 24;
+
 class RunSet;
+
+struct RunDescriptor {
+    char data[RunDescriptorLength];
+};
 
 class Run : public KeyValueContainer {
 
@@ -304,6 +310,28 @@ class Run : public KeyValueContainer {
     SubRun createSubRun(const SubRunNumber& subRunNumber);
     SubRun createSubRun(AsyncEngine& async, const SubRunNumber& subRunNumber);
     SubRun createSubRun(WriteBatch& batch, const SubRunNumber& subRunNumber);
+
+    /**
+     * @brief Fills a RunDescriptor with the information from this Run object.
+     *
+     * @param descriptor RunDescriptor to fill.
+     */
+    void toDescriptor(RunDescriptor& descriptor);
+
+    /**
+     * @brief Creates a Run instance from a RunDescriptor.
+     * If validate is true, this function will check that the corresponding Run
+     * exists in the DataStore. If it does not exist, the returned Run will be
+     * invalid. validate can be set to false if, for example, the client
+     * application already knows by some other means that the Run exists.
+     *
+     * @param ds DataStore
+     * @param descriptor RunDescriptor
+     * @param validate whether to validate the existence of the Run.
+     *
+     * @return A Run object.
+     */
+    static Run fromDescriptor(const DataStore& ds, const RunDescriptor& descriptor, bool validate=true);
 };
 
 class Run::const_iterator {

@@ -563,6 +563,28 @@ class DataStoreImpl {
     /**
      * @brief Checks if a particular Run/SubRun/Event exists.
      */
+    bool itemExists(const ItemDescriptor& descriptor,
+                    int target = -1) const {
+        ItemType type = ItemType::RUN;
+        if(descriptor.subrun != InvalidSubRunNumber) {
+            type = ItemType::SUBRUN;
+            if(descriptor.event != InvalidEventNumber)
+                type = ItemType::EVENT;
+        }
+        // find out which DB to access
+        auto& db = locateItemDb(type, descriptor, target);
+        try {
+            bool b = db.exists(&descriptor, sizeof(descriptor));
+            return b;
+        } catch(sdskv::exception& ex) {
+            throw Exception("Error occured when calling sdskv::database::exists (SDSKV error="+std::to_string(ex.error())+")");
+        }
+        return false;
+    }
+
+    /**
+     * @brief Checks if a particular Run/SubRun/Event exists.
+     */
     bool itemExists(const UUID& containerUUID,
                     const RunNumber& run_number,
                     const SubRunNumber& subrun_number = InvalidSubRunNumber,
@@ -574,21 +596,7 @@ class DataStoreImpl {
         k.run     = run_number;
         k.subrun  = subrun_number;
         k.event   = event_number;
-        ItemType type = ItemType::RUN;
-        if(subrun_number != InvalidSubRunNumber) {
-            type = ItemType::SUBRUN;
-            if(event_number != InvalidEventNumber)
-                type = ItemType::EVENT;
-        }
-        // find out which DB to access
-        auto& db = locateItemDb(type, k, target);
-        try {
-            bool b = db.exists(&k, sizeof(k));
-            return b;
-        } catch(sdskv::exception& ex) {
-            throw Exception("Error occured when calling sdskv::database::exists (SDSKV error="+std::to_string(ex.error())+")");
-        }
-        return false;
+        return itemExists(k, target);
     }
     
     /**

@@ -18,6 +18,26 @@ void SubRunTest::testFillDataStore() {
     SubRun sr1 = r1.createSubRun(3);
 }
 
+void SubRunTest::testDescriptor() {
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
+    auto r1 = mds[42];
+    auto sr1 = r1[3];
+    CPPUNIT_ASSERT(sr1.valid());
+    SubRunDescriptor sr1_desc;
+    sr1.toDescriptor(sr1_desc);
+
+    SubRun sr2 = SubRun::fromDescriptor(*datastore, sr1_desc);
+    CPPUNIT_ASSERT(sr2.valid());
+
+    SubRunDescriptor invalid_desc;
+    SubRun sr3 = SubRun::fromDescriptor(*datastore, invalid_desc);
+    CPPUNIT_ASSERT(!sr3.valid());
+
+    SubRun sr4 = SubRun::fromDescriptor(*datastore, invalid_desc, false);
+    CPPUNIT_ASSERT(sr4.valid());
+}
+
 void SubRunTest::testCreateEvents() {
     auto root = datastore->root();
     auto mds = root["matthieu"];

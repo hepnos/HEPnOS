@@ -10,6 +10,7 @@ class RunTest : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE( RunTest );
     CPPUNIT_TEST( testFillDataStore );
+    CPPUNIT_TEST( testDescriptor );
     CPPUNIT_TEST( testCreateSubRuns );
     CPPUNIT_TEST( testBraketOperator );
     CPPUNIT_TEST( testFind );
@@ -24,6 +25,7 @@ class RunTest : public CppUnit::TestFixture
     void tearDown();
 
     void testFillDataStore();
+    void testDescriptor();
     void testCreateSubRuns();
     void testBraketOperator();
     void testFind();

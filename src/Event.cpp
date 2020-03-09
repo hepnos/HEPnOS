@@ -13,7 +13,7 @@
 namespace hepnos {
 
 Event::Event()
-: m_impl(std::make_shared<ItemImpl>(nullptr, UUID(), InvalidRunNumber)) {} 
+: m_impl(std::make_shared<ItemImpl>(nullptr, UUID(), InvalidRunNumber)) {}
 
 Event::Event(std::shared_ptr<ItemImpl>&& impl)
 : m_impl(std::move(impl)) { }
@@ -122,6 +122,21 @@ const EventNumber& Event::number() const {
         throw Exception("Calling Event member function on an invalid Event object");
     }
     return m_impl->m_descriptor.event;
+}
+
+void Event::toDescriptor(EventDescriptor& descriptor) {
+    std::memset(descriptor.data, 0, sizeof(descriptor.data));
+    if(!valid()) return;
+    std::memcpy(descriptor.data, &(m_impl->m_descriptor), sizeof(descriptor.data));
+}
+
+Event Event::fromDescriptor(const DataStore& datastore, const EventDescriptor& descriptor, bool validate) {
+    auto itemImpl = std::make_shared<ItemImpl>(datastore.m_impl, UUID(), InvalidRunNumber);
+    auto& itemDescriptor = itemImpl->m_descriptor;
+    std::memcpy(&itemDescriptor, descriptor.data, sizeof(descriptor.data));
+    if((!validate) || datastore.m_impl->itemExists(itemDescriptor))
+        return Event(std::move(itemImpl));
+    else return Event();
 }
 
 }

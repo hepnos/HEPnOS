@@ -17,6 +17,25 @@ void RunTest::testFillDataStore() {
     CPPUNIT_ASSERT(r1.valid());
 }
 
+void RunTest::testDescriptor() {
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
+    auto r1 = mds[42];
+    CPPUNIT_ASSERT(r1.valid());
+    RunDescriptor r1_desc;
+    r1.toDescriptor(r1_desc);
+
+    Run r2 = Run::fromDescriptor(*datastore, r1_desc);
+    CPPUNIT_ASSERT(r2.valid());
+
+    RunDescriptor invalid_desc;
+    Run r3 = Run::fromDescriptor(*datastore, invalid_desc);
+    CPPUNIT_ASSERT(!r3.valid());
+
+    Run r4 = Run::fromDescriptor(*datastore, invalid_desc, false);
+    CPPUNIT_ASSERT(r4.valid());
+}
+
 void RunTest::testCreateSubRuns() {
     auto root = datastore->root();
     DataSet mds = root["matthieu"];

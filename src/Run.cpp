@@ -273,6 +273,21 @@ Run::const_iterator Run::upper_bound(const SubRunNumber& ub) const {
     return it;
 }
 
+void Run::toDescriptor(RunDescriptor& descriptor) {
+    std::memset(descriptor.data, 0, sizeof(descriptor.data));
+    if(!valid()) return;
+    std::memcpy(descriptor.data, &(m_impl->m_descriptor), sizeof(descriptor.data));
+}
+
+Run Run::fromDescriptor(const DataStore& datastore, const RunDescriptor& descriptor, bool validate) {
+    auto itemImpl = std::make_shared<ItemImpl>(datastore.m_impl, UUID(), InvalidRunNumber);
+    auto& itemDescriptor = itemImpl->m_descriptor;
+    std::memcpy(&itemDescriptor, descriptor.data, sizeof(descriptor.data));
+    if((!validate) || datastore.m_impl->itemExists(itemDescriptor))
+        return Run(std::move(itemImpl));
+    else return Run();
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Run::const_iterator::Impl implementation
 ////////////////////////////////////////////////////////////////////////////////////////////

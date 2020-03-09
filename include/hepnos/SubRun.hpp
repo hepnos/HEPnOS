@@ -16,6 +16,12 @@
 
 namespace hepnos {
 
+constexpr const int SubRunDescriptorLength = 32;
+
+struct SubRunDescriptor {
+    char data[SubRunDescriptorLength];
+};
+
 class SubRun : public KeyValueContainer {
 
     private:
@@ -306,6 +312,28 @@ class SubRun : public KeyValueContainer {
     Event createEvent(const EventNumber& eventNumber);
     Event createEvent(WriteBatch& batch, const EventNumber& eventNumber);
     Event createEvent(AsyncEngine& batch, const EventNumber& eventNumber);
+
+    /**
+     * @brief Fills a SubRunDescriptor with the information from this SubRun object.
+     *
+     * @param descriptor SubRunDescriptor to fill.
+     */
+    void toDescriptor(SubRunDescriptor& descriptor);
+
+    /**
+     * @brief Creates a SubRun instance from a SubRunDescriptor.
+     * If validate is true, this function will check that the corresponding SubRun
+     * exists in the DataStore. If it does not exist, the returned SubRun will be
+     * invalid. validate can be set to false if, for example, the client
+     * application already knows by some other means that the SubRun exists.
+     *
+     * @param ds DataStore
+     * @param descriptor SubRunDescriptor
+     * @param validate whether to validate the existence of the SubRun.
+     *
+     * @return A SubRun object.
+     */
+    static SubRun fromDescriptor(const DataStore& ds, const SubRunDescriptor& descriptor, bool validate=true);
 };
 
 class SubRun::const_iterator {

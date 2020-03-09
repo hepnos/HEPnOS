@@ -269,6 +269,21 @@ SubRun::const_iterator SubRun::upper_bound(const EventNumber& ub) const {
     return it;
 }
 
+void SubRun::toDescriptor(SubRunDescriptor& descriptor) {
+    std::memset(descriptor.data, 0, sizeof(descriptor.data));
+    if(!valid()) return;
+    std::memcpy(descriptor.data, &(m_impl->m_descriptor), sizeof(descriptor.data));
+}
+
+SubRun SubRun::fromDescriptor(const DataStore& datastore, const SubRunDescriptor& descriptor, bool validate) {
+    auto itemImpl = std::make_shared<ItemImpl>(datastore.m_impl, UUID(), InvalidRunNumber);
+    auto& itemDescriptor = itemImpl->m_descriptor;
+    std::memcpy(&itemDescriptor, descriptor.data, sizeof(descriptor.data));
+    if((!validate) || datastore.m_impl->itemExists(itemDescriptor))
+        return SubRun(std::move(itemImpl));
+    else return SubRun();
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 // SubRun::const_iterator::Impl implementation
 ////////////////////////////////////////////////////////////////////////////////////////////

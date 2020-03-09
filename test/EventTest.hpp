@@ -10,6 +10,7 @@ class EventTest : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE( EventTest );
     CPPUNIT_TEST( testFillDataStore );
+    CPPUNIT_TEST( testDescriptor );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -18,6 +19,7 @@ class EventTest : public CppUnit::TestFixture
     void tearDown();
 
     void testFillDataStore();
+    void testDescriptor();
 };
 
 #endif

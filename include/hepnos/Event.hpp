@@ -15,8 +15,14 @@
 
 namespace hepnos {
 
+constexpr const int EventDescriptorLength = 40;
+
 class SubRun;
 class EventSet;
+
+struct EventDescriptor {
+    char data[EventDescriptorLength];
+};
 
 class Event : public KeyValueContainer {
 
@@ -156,6 +162,28 @@ class Event : public KeyValueContainer {
      * @return Parent SubRun.
      */
     SubRun subrun() const;
+
+    /**
+     * @brief Fills an EventDescriptor with the information from this Event object.
+     *
+     * @param descriptor EventDescriptor to fill.
+     */
+    void toDescriptor(EventDescriptor& descriptor);
+
+    /**
+     * @brief Creates a Event instance from an EventDescriptor.
+     * If validate is true, this function will check that the corresponding Event
+     * exists in the DataStore. If it does not exist, the returned Event will be
+     * invalid. validate can be set to false if, for example, the client
+     * application already knows by some other means that the Event exists.
+     *
+     * @param ds DataStore
+     * @param descriptor EventDescriptor
+     * @param validate whether to validate the existence of the Event.
+     *
+     * @return An Event object.
+     */
+    static Event fromDescriptor(const DataStore& ds, const EventDescriptor& descriptor, bool validate=true);
 };
 
 }

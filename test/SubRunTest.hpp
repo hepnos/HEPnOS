@@ -10,6 +10,7 @@ class SubRunTest : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE( SubRunTest );
     CPPUNIT_TEST( testFillDataStore );
+    CPPUNIT_TEST( testDescriptor );
     CPPUNIT_TEST( testCreateEvents );
     CPPUNIT_TEST( testBraketOperator );
     CPPUNIT_TEST( testFind );
@@ -24,6 +25,7 @@ class SubRunTest : public CppUnit::TestFixture
     void tearDown();
 
     void testFillDataStore();
+    void testDescriptor();
     void testCreateEvents();
     void testBraketOperator();
     void testFind();
