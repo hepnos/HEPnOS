@@ -8,7 +8,7 @@
 #
 
 cmake_minimum_required (VERSION 3.12)
-project (hepnos CXX)
+project (hepnos C CXX)
 
 add_definitions (-g)
 set (CMAKE_CXX_STANDARD 14)
@@ -32,6 +32,8 @@ set (CMAKE_PREFIX_PATH "" CACHE STRING "External dependencies path")
 set (BUILD_SHARED_LIBS "OFF" CACHE BOOL "Build a shared library")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+find_package(MPI REQUIRED)
 
 # packages we depend on
 include (xpkg-import)

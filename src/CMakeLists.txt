@@ -45,7 +45,7 @@ set_target_properties (hepnos
     SOVERSION ${HEPNOS_VERSION_MAJOR})
 
 add_library(hepnos-service ${hepnos-service-src})
-target_link_libraries (hepnos-service uuid thallium mercury margo yaml-cpp sdskv-client sdskv-server ch-placement)
+target_link_libraries (hepnos-service ${MPI_CXX_LIBRARIES} uuid thallium mercury margo yaml-cpp sdskv-client sdskv-server ch-placement)
 target_include_directories (hepnos-service PUBLIC $<INSTALL_INTERFACE:include>)
 
 # local include's BEFORE, in case old incompatable .h files in prefix/include
