@@ -90,7 +90,7 @@ packages:
       pkg-config@0.29.1 arch=linux-ubuntu16.04-x86_64: /usr
       pkg-config@0.26 arch=linux-ubuntu14.04-x86_64: /usr
     buildable: False
-  mochi-kv:
+  mochi-sdskv:
     version: [ develop ]
   tar:
     paths:

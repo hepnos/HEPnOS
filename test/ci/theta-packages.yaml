@@ -81,7 +81,7 @@ packages:
         paths:
             pkg-config@0.29: /usr
         buildable: False
-    mochi-kv:
+    mochi-sdskv:
         version: [ develop ]
     tar:
         paths:
