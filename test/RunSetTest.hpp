@@ -16,6 +16,7 @@ class RunSetTest : public CppUnit::TestFixture
     CPPUNIT_TEST( testLowerUpperBounds );
     CPPUNIT_TEST( testCreateSubRuns );
     CPPUNIT_TEST( testAsync );
+    CPPUNIT_TEST( testPrefetcher );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -30,6 +31,7 @@ class RunSetTest : public CppUnit::TestFixture
     void testLowerUpperBounds();
     void testCreateSubRuns();
     void testAsync();
+    void testPrefetcher();
 };
 
 #endif

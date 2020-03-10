@@ -18,6 +18,7 @@ namespace hepnos {
 
 constexpr const int RunDescriptorLength = 24;
 
+class Prefetcher;
 class RunSet;
 
 struct RunDescriptor {
@@ -173,6 +174,7 @@ class Run : public KeyValueContainer {
      * Run::end() otherwise.
      */
     iterator find(const SubRunNumber& srn);
+    iterator find(const SubRunNumber& srn, const Prefetcher& prefetcher);
 
     /**
      * @brief Searches this Run for a SubRun with 
@@ -185,6 +187,7 @@ class Run : public KeyValueContainer {
      * Run::cend() otherwise.
      */
     const_iterator find(const SubRunNumber&) const;
+    const_iterator find(const SubRunNumber&, const Prefetcher&) const;
 
     /**
      * @brief Returns an iterator referring to the first SubRun
@@ -193,6 +196,7 @@ class Run : public KeyValueContainer {
      * @return an iterator referring to the first SubRun in this Run.
      */
     iterator begin();
+    iterator begin(const Prefetcher&);
 
     /**
      * @brief Returns an iterator referring to the end of the Run.
@@ -210,6 +214,7 @@ class Run : public KeyValueContainer {
      * @return a const_iterator referring to the first SubRun in this Run.
      */
     const_iterator begin() const;
+    const_iterator begin(const Prefetcher&) const;
 
     /**
      * @brief Returns a const_iterator referring to the end of the Run.
@@ -227,6 +232,7 @@ class Run : public KeyValueContainer {
      * @return a const_iterator referring to the first SubRun in this Run.
      */
     const_iterator cbegin() const;
+    const_iterator cbegin(const Prefetcher&) const;
 
     /**
      * @brief Returns a const_iterator referring to the end of the Run.
@@ -248,6 +254,7 @@ class Run : public KeyValueContainer {
      * if all subrun numbers are lower.
      */
     iterator lower_bound(const SubRunNumber&);
+    iterator lower_bound(const SubRunNumber&, const Prefetcher&);
 
     /**
      * @brief Returns a const_iterator pointing to the first SubRun in this
@@ -260,6 +267,7 @@ class Run : public KeyValueContainer {
      * if all subrun numbers are lower.
      */
     const_iterator lower_bound(const SubRunNumber&) const;
+    const_iterator lower_bound(const SubRunNumber&, const Prefetcher&) const;
 
     /**
      * @brief Returns an iterator pointing to the first SubRun in the 
@@ -272,6 +280,7 @@ class Run : public KeyValueContainer {
      * no such SubRun exists.
      */
     iterator upper_bound(const SubRunNumber&);
+    iterator upper_bound(const SubRunNumber&, const Prefetcher&);
 
     /**
      * @brief Returns a const_iterator pointing to the first SubRun in the 
@@ -284,6 +293,7 @@ class Run : public KeyValueContainer {
      * no such SubRun exists.
      */
     const_iterator upper_bound(const SubRunNumber&) const;
+    const_iterator upper_bound(const SubRunNumber&, const Prefetcher&) const;
 
     /**
      * @brief Accesses an existing ubun using the []

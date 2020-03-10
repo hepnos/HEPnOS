@@ -27,6 +27,7 @@ class ItemImpl;
 template<typename T, typename C = std::vector<T>> class Ptr;
 class WriteBatch;
 class AsyncEngine;
+class Prefetcher;
 
 /**
  * The DataStore class is the main handle referencing an HEPnOS service.
@@ -44,6 +45,7 @@ class DataStore {
     friend class DataStoreImpl;
     friend class AsyncEngine;
     friend class EventSet;
+    friend class Prefetcher;
 
     public:
 

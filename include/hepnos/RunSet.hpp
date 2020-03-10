@@ -15,6 +15,8 @@
 
 namespace hepnos {
 
+class Prefetcher;
+
 /**
  * @brief The RunSet class is a helper class to access Runs
  * stored in a particular DataSet.
@@ -110,6 +112,7 @@ class RunSet {
      * RunSet::end() otherwise.
      */
     iterator find(const RunNumber& runNumber);
+    iterator find(const RunNumber& runNumber, const Prefetcher& prefetcher);
 
     /**
      * @brief Searches this RunSet for a Run with 
@@ -123,6 +126,7 @@ class RunSet {
      * RunSet::cend() otherwise.
      */
     const_iterator find(const RunNumber& runNumber) const;
+    const_iterator find(const RunNumber& runNumber, const Prefetcher& prefetcher) const;
 
 
     /**
@@ -132,6 +136,7 @@ class RunSet {
      * @return an iterator referring to the first Run in this RunSet.
      */
     iterator begin();
+    iterator begin(const Prefetcher& prefetcher);
 
     /**
      * @brief Returns an iterator referring to the end of the RunSet.
@@ -149,6 +154,7 @@ class RunSet {
      * @return an iterator referring to the first Run in this RunSet.
      */
     const_iterator begin() const;
+    const_iterator begin(const Prefetcher& prefetcher) const;
 
     /**
      * @brief Returns a const_iterator referring to the end of the RunSet.
@@ -166,6 +172,7 @@ class RunSet {
      * @return a const_iterator referring to the first Run in this RunSet.
      */
     const_iterator cbegin() const;
+    const_iterator cbegin(const Prefetcher& prefetcher) const;
 
     /**
      * @brief Returns a const_iterator referring to the end of the RunSet.
@@ -187,6 +194,7 @@ class RunSet {
      * if such a Run does not exist.
      */
     iterator lower_bound(const RunNumber& lb);
+    iterator lower_bound(const RunNumber& lb, const Prefetcher& prefetcher);
 
     /**
      * @brief Returns a const_iterator pointing to the first Run in this
@@ -199,6 +207,7 @@ class RunSet {
      * if such a Run does not exist.
      */
     const_iterator lower_bound(const RunNumber& lb) const;
+    const_iterator lower_bound(const RunNumber& lb, const Prefetcher& prefetcher) const;
 
     /**
      * @brief Returns an iterator pointing to the first Run in the 
@@ -211,6 +220,7 @@ class RunSet {
      * no such a Run exist.
      */
     iterator upper_bound(const RunNumber& ub);
+    iterator upper_bound(const RunNumber& ub,const Prefetcher& prefetcher);
 
     /**
      * @brief Returns a const_iterator pointing to the first Run in the 
@@ -223,9 +233,12 @@ class RunSet {
      * no such a Run exist.
      */
     const_iterator upper_bound(const RunNumber& ub) const;
+    const_iterator upper_bound(const RunNumber& ub, const Prefetcher& prefetcher) const;
 };
 
 class RunSet::const_iterator {
+
+    friend class RunSet;
 
     protected:
 

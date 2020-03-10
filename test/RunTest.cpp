@@ -198,3 +198,6 @@ void RunTest::testAsync() {
     }
 }
 
+void RunTest::testPrefetcher() {
+    // TODO
+}

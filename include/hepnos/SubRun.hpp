@@ -16,6 +16,8 @@
 
 namespace hepnos {
 
+class Prefetcher;
+
 constexpr const int SubRunDescriptorLength = 32;
 
 struct SubRunDescriptor {
@@ -175,6 +177,7 @@ class SubRun : public KeyValueContainer {
      * SubRun::end() otherwise.
      */
     iterator find(const EventNumber& en);
+    iterator find(const EventNumber& en, const Prefetcher& prefetcher);
 
     /**
      * @brief Searches this SubRun for an Event with 
@@ -187,6 +190,7 @@ class SubRun : public KeyValueContainer {
      * SubRun::cend() otherwise.
      */
     const_iterator find(const EventNumber& en) const;
+    const_iterator find(const EventNumber& en, const Prefetcher& prefetcher) const;
 
     /**
      * @brief Returns an iterator referring to the first Event
@@ -195,6 +199,7 @@ class SubRun : public KeyValueContainer {
      * @return an iterator referring to the first Event in this SubRun.
      */
     iterator begin();
+    iterator begin(const Prefetcher& prefetcher);
 
     /**
      * @brief Returns an iterator referring to the end of the SubRun.
@@ -212,6 +217,7 @@ class SubRun : public KeyValueContainer {
      * @return a const_iterator referring to the first Event in this SubRun.
      */
     const_iterator begin() const;
+    const_iterator begin(const Prefetcher& prefetcher) const;
 
     /**
      * @brief Returns a const_iterator referring to the end of the SubRun.
@@ -229,6 +235,7 @@ class SubRun : public KeyValueContainer {
      * @return a const_iterator referring to the first Event in this SubRun.
      */
     const_iterator cbegin() const;
+    const_iterator cbegin(const Prefetcher& prefetcher) const;
 
     /**
      * @brief Returns a const_iterator referring to the end of the SubRun.
@@ -250,6 +257,7 @@ class SubRun : public KeyValueContainer {
      * if all event numbers are lower.
      */
     iterator lower_bound(const EventNumber&);
+    iterator lower_bound(const EventNumber&, const Prefetcher&);
 
     /**
      * @brief Returns a const_iterator pointing to the first Event in this
@@ -262,6 +270,7 @@ class SubRun : public KeyValueContainer {
      * if all event numbers are lower.
      */
     const_iterator lower_bound(const SubRunNumber&) const;
+    const_iterator lower_bound(const SubRunNumber&, const Prefetcher&) const;
 
     /**
      * @brief Returns an iterator pointing to the first Event in the 
@@ -274,6 +283,7 @@ class SubRun : public KeyValueContainer {
      * no such Event exists.
      */
     iterator upper_bound(const EventNumber&);
+    iterator upper_bound(const EventNumber&, const Prefetcher&);
 
     /**
      * @brief Returns a const_iterator pointing to the first Event in the 
@@ -286,6 +296,7 @@ class SubRun : public KeyValueContainer {
      * no such Event exists.
      */
     const_iterator upper_bound(const SubRunNumber&) const;
+    const_iterator upper_bound(const SubRunNumber&, const Prefetcher&) const;
 
     /**
      * @brief Accesses an existing event using the []

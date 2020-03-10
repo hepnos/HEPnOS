@@ -18,6 +18,8 @@ class SubRun;
 class Event;
 class WriteBatch;
 class WriteBatchImpl;
+class Prefetcher;
+class PrefetcherImpl;
 class AsyncEngineImpl;
 
 class AsyncEngine {
@@ -29,6 +31,7 @@ class AsyncEngine {
     friend class Event;
     friend class KeyValueContainer;
     friend class WriteBatch;
+    friend class Prefetcher;
 
     private:
 

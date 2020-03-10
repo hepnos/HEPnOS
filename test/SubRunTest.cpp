@@ -196,3 +196,7 @@ void SubRunTest::testAsync() {
         CPPUNIT_ASSERT(e.valid());
     }
 }
+
+void SubRunTest::testPrefetcher() {
+    // TODO
+}

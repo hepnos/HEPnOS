@@ -8,11 +8,57 @@
 #include <string>
 #include "hepnos/DataSet.hpp"
 #include "hepnos/RunSet.hpp"
+#include "hepnos/Prefetcher.hpp"
 #include "DataSetImpl.hpp"
 #include "DataStoreImpl.hpp"
 #include "ItemImpl.hpp"
+#include "PrefetcherImpl.hpp"
 
 namespace hepnos {
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// RunSet::const_iterator::Impl declaration
+////////////////////////////////////////////////////////////////////////////////////////////
+
+class RunSet::const_iterator::Impl {
+    public:
+        Run m_current_run;
+        std::shared_ptr<PrefetcherImpl> m_prefetcher;
+
+        Impl()
+        : m_current_run()
+        {}
+
+        Impl(const Run& run)
+        : m_current_run(run)
+        {}
+
+        Impl(Run&& run)
+            : m_current_run(std::move(run))
+        {}
+
+        Impl(const Impl& other)
+            : m_current_run(other.m_current_run)
+        {}
+
+        ~Impl() {
+            if(m_prefetcher)
+                m_prefetcher->m_associated = false;
+        }
+
+        bool operator==(const Impl& other) const {
+            return m_current_run == other.m_current_run;
+        }
+
+        void setPrefetcher(const std::shared_ptr<PrefetcherImpl>& p) {
+            if(p->m_associated)
+                throw Exception("Prefetcher object already in use");
+            if(m_prefetcher)
+                m_prefetcher->m_associated = false;
+            m_prefetcher = p;
+            m_prefetcher->m_associated = true;
+        }
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // RunSet implementation
@@ -49,8 +95,22 @@ RunSet::iterator RunSet::find(const RunNumber& runNumber) {
                 runNumber));
 }
 
+RunSet::iterator RunSet::find(const RunNumber& runNumber, const Prefetcher& prefetcher) {
+    auto it = find(runNumber);
+    if(it != end())
+        it.m_impl->setPrefetcher(prefetcher.m_impl);
+    return it;
+}
+
 RunSet::const_iterator RunSet::find(const RunNumber& runNumber) const {
     iterator it = const_cast<RunSet*>(this)->find(runNumber);
+    return it;
+}
+
+RunSet::const_iterator RunSet::find(const RunNumber& runNumber, const Prefetcher& prefetcher) const {
+    iterator it = const_cast<RunSet*>(this)->find(runNumber);
+    if(it != end())
+        it.m_impl->setPrefetcher(prefetcher.m_impl);
     return it;
 }
 
@@ -68,6 +128,13 @@ RunSet::iterator RunSet::begin() {
     else return end();
 }
 
+RunSet::iterator RunSet::begin(const Prefetcher& prefetcher) {
+    auto it = begin();
+    if(it != end())
+        it.m_impl->setPrefetcher(prefetcher.m_impl);
+    return it;
+}
+
 RunSet::iterator RunSet::end() {
     return RunSet_end;
 }
@@ -76,12 +143,26 @@ RunSet::const_iterator RunSet::cbegin() const {
     return const_iterator(const_cast<RunSet*>(this)->begin());
 }
 
+RunSet::const_iterator RunSet::cbegin(const Prefetcher& prefetcher) const {
+    auto it = cbegin();
+    if(it != cend())
+        it.m_impl->setPrefetcher(prefetcher.m_impl);
+    return it;
+}
+
 RunSet::const_iterator RunSet::cend() const {
     return RunSet_end;
 }
 
 RunSet::const_iterator RunSet::begin() const {
     return const_iterator(const_cast<RunSet*>(this)->begin());
+}
+
+RunSet::const_iterator RunSet::begin(const Prefetcher& prefetcher) const {
+    auto it = const_iterator(const_cast<RunSet*>(this)->begin());
+    if(it != end())
+        it.m_impl->setPrefetcher(prefetcher.m_impl);
+    return it;
 }
 
 RunSet::const_iterator RunSet::end() const {
@@ -116,8 +197,22 @@ RunSet::iterator RunSet::lower_bound(const RunNumber& lb) {
     }
 }
 
+RunSet::iterator RunSet::lower_bound(const RunNumber& lb, const Prefetcher& prefetcher) {
+    auto it = lower_bound(lb);
+    if(it != end())
+        it.m_impl->setPrefetcher(prefetcher.m_impl);
+    return it;
+}
+
 RunSet::const_iterator RunSet::lower_bound(const RunNumber& lb) const {
     iterator it = const_cast<RunSet*>(this)->lower_bound(lb);
+    return it;
+}
+
+RunSet::const_iterator RunSet::lower_bound(const RunNumber& lb, const Prefetcher& prefetcher) const {
+    iterator it = const_cast<RunSet*>(this)->lower_bound(lb);
+    if(it != end())
+        it.m_impl->setPrefetcher(prefetcher.m_impl);
     return it;
 }
 
@@ -129,39 +224,26 @@ RunSet::iterator RunSet::upper_bound(const RunNumber& ub) {
     else return iterator(run);
 }
 
+RunSet::iterator RunSet::upper_bound(const RunNumber& ub, const Prefetcher& prefetcher) {
+    auto it = upper_bound(ub);
+    if(it != end())
+        it.m_impl->setPrefetcher(prefetcher.m_impl);
+    return it;
+}
+
 RunSet::const_iterator RunSet::upper_bound(const RunNumber& ub) const {
     iterator it = const_cast<RunSet*>(this)->upper_bound(ub);
     return it;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////
-// RunSet::const_iterator::Impl implementation
-////////////////////////////////////////////////////////////////////////////////////////////
 
-class RunSet::const_iterator::Impl {
-    public:
-        Run m_current_run;
+RunSet::const_iterator RunSet::upper_bound(const RunNumber& ub, const Prefetcher& prefetcher) const {
+    iterator it = const_cast<RunSet*>(this)->upper_bound(ub);
+    if(it != end())
+        it.m_impl->setPrefetcher(prefetcher.m_impl);
+    return it;
+}
 
-        Impl()
-        : m_current_run()
-        {}
-
-        Impl(const Run& run)
-        : m_current_run(run)
-        {}
-
-        Impl(Run&& run)
-            : m_current_run(std::move(run))
-        {}
-
-        Impl(const Impl& other)
-            : m_current_run(other.m_current_run)
-        {}
-
-        bool operator==(const Impl& other) const {
-            return m_current_run == other.m_current_run;
-        }
-};
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // RunSet::const_iterator implementation
@@ -200,7 +282,18 @@ RunSet::const_iterator::self_type RunSet::const_iterator::operator++() {
     if(!m_impl) {
         throw Exception("Trying to increment an invalid iterator");
     }
-    m_impl->m_current_run = m_impl->m_current_run.next();
+    if(!m_impl->m_prefetcher)
+        m_impl->m_current_run = m_impl->m_current_run.next();
+    else {
+        std::vector<std::shared_ptr<ItemImpl>> next_runs;
+        size_t s = m_impl->m_prefetcher->nextItems(ItemType::RUN, 
+                ItemType::DATASET, m_impl->m_current_run.m_impl, next_runs, 1);
+        if(s == 1) {
+            m_impl->m_current_run.m_impl = std::move(next_runs[0]);
+        } else {
+            m_impl->m_current_run = Run();
+        }
+    }
     return *this;
 }
 

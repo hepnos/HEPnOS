@@ -185,3 +185,48 @@ void RunSetTest::testAsync() {
         CPPUNIT_ASSERT(mds[i].valid());
     }
 }
+
+void RunSetTest::testPrefetcher() {
+    auto root = datastore->root();
+    DataSet mds = root.createDataSet("matthieu_prefetch");
+    CPPUNIT_ASSERT(mds.valid());
+    
+    for(unsigned i=0; i < 20; i++) {
+        Run r = mds.createRun(i);
+        CPPUNIT_ASSERT(r.valid());
+    }
+
+    // test begin/end
+    {
+        Prefetcher prefetcher(*datastore);
+        unsigned i=0;
+        for(auto it = mds.runs().begin(prefetcher); it != mds.runs().end(); it++) {
+            CPPUNIT_ASSERT(it->valid());
+            CPPUNIT_ASSERT(it->number() == i);
+            i += 1;
+        }
+    }
+
+    // test lower_bound
+    {
+        Prefetcher prefetcher(*datastore);
+        unsigned i=5;
+        auto it = mds.runs().lower_bound(5);
+        for(; it != mds.runs().end(); it++) {
+            CPPUNIT_ASSERT(it->valid());
+            CPPUNIT_ASSERT(it->number() == i);
+            i += 1;
+        }
+    }
+    // test lower_bound
+    {
+        Prefetcher prefetcher(*datastore);
+        unsigned i=6;
+        auto it = mds.runs().upper_bound(5);
+        for(; it != mds.runs().end(); it++) {
+            CPPUNIT_ASSERT(it->valid());
+            CPPUNIT_ASSERT(it->number() == i);
+            i += 1;
+        }
+    }
+}

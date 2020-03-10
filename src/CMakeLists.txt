@@ -7,6 +7,7 @@ set(hepnos-src DataStore.cpp
 	       Event.cpp
 	       UUID.cpp
 	       WriteBatch.cpp
+	       Prefetcher.cpp
 	       AsyncEngine.cpp
 	       EventSet.cpp) 
 

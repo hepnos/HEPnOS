@@ -10,6 +10,7 @@
 #include <hepnos/EventSet.hpp>
 #include <hepnos/Exception.hpp>
 #include <hepnos/KeyValueContainer.hpp>
+#include <hepnos/Prefetcher.hpp>
 #include <hepnos/Run.hpp>
 #include <hepnos/RunNumber.hpp>
 #include <hepnos/RunSet.hpp>
