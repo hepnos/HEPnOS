@@ -9,10 +9,16 @@ class DataStore;
 class PrefetcherImpl;
 class AsyncEngine;
 class RunSet;
+class EventSet;
+class Run;
+class SubRun;
 
 class Prefetcher {
 
     friend class RunSet;
+    friend class EventSet;
+    friend class Run;
+    friend class SubRun;
 
     private:
 

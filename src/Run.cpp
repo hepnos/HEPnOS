@@ -6,13 +6,62 @@
 #include "hepnos/Run.hpp"
 #include "hepnos/DataSet.hpp"
 #include "hepnos/AsyncEngine.hpp"
+#include "hepnos/Prefetcher.hpp"
 #include "ItemImpl.hpp"
-#include "ItemImpl.hpp"
+#include "PrefetcherImpl.hpp"
 #include "DataStoreImpl.hpp"
 #include "WriteBatchImpl.hpp"
 #include "AsyncEngineImpl.hpp"
 
 namespace hepnos {
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// Run::const_iterator::Impl declaration
+////////////////////////////////////////////////////////////////////////////////////////////
+
+class Run::const_iterator::Impl {
+
+    friend class Run;
+
+    public:
+        SubRun m_current_subrun;
+        std::shared_ptr<PrefetcherImpl> m_prefetcher;
+
+        Impl()
+        : m_current_subrun()
+        {}
+
+        Impl(const SubRun& subrun)
+        : m_current_subrun(subrun)
+        {}
+
+        Impl(SubRun&& subrun)
+            : m_current_subrun(std::move(subrun))
+        {}
+
+        Impl(const Impl& other)
+            : m_current_subrun(other.m_current_subrun)
+        {}
+
+        ~Impl() {
+            if(m_prefetcher)
+                m_prefetcher->m_associated = false;
+        }
+
+        bool operator==(const Impl& other) const {
+            return m_current_subrun == other.m_current_subrun;
+        }
+
+        void setPrefetcher(const std::shared_ptr<PrefetcherImpl>& p) {
+            if(p->m_associated)
+                throw Exception("Prefetcher object already in use");
+            if(m_prefetcher)
+                m_prefetcher->m_associated = false;
+            m_prefetcher = p;
+            m_prefetcher->m_associated = true;
+        }
+};
+
 
 static Run::iterator Run_end;
 
@@ -175,6 +224,15 @@ Run::iterator Run::find(const SubRunNumber& subRunNumber) {
     return iterator(SubRun(std::move(new_subrun_impl)));
 }
 
+Run::iterator Run::find(const SubRunNumber& subRunNumber, const Prefetcher& prefetcher) {
+    auto it = find(subRunNumber);
+    if(it != end()) {
+        it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->prefetchFrom(ItemType::SUBRUN, ItemType::RUN, it.m_impl->m_current_subrun.m_impl);
+    }
+    return it;
+}
+
 Run::const_iterator Run::find(const SubRunNumber& subRunNumber) const {
     iterator it = const_cast<Run*>(this)->find(subRunNumber);
     return it;
@@ -194,6 +252,15 @@ Run::iterator Run::begin() {
     else return end();
 }
 
+Run::iterator Run::begin(const Prefetcher& prefetcher) {
+    auto it = begin();
+    if(it != end()) {
+        it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->prefetchFrom(ItemType::SUBRUN, ItemType::RUN, it.m_impl->m_current_subrun.m_impl);
+    }
+    return it;
+}
+
 Run::iterator Run::end() {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run object");
@@ -205,6 +272,10 @@ Run::const_iterator Run::begin() const {
     return const_iterator(const_cast<Run*>(this)->begin());
 }
 
+Run::const_iterator Run::begin(const Prefetcher& prefetcher) const {
+    return const_iterator(const_cast<Run*>(this)->begin(prefetcher));
+}
+
 Run::const_iterator Run::end() const {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run object");
@@ -214,6 +285,10 @@ Run::const_iterator Run::end() const {
 
 Run::const_iterator Run::cbegin() const {
     return const_iterator(const_cast<Run*>(this)->begin());
+}
+
+Run::const_iterator Run::cbegin(const Prefetcher& prefetcher) const {
+    return const_iterator(const_cast<Run*>(this)->begin(prefetcher));
 }
 
 Run::const_iterator Run::cend() const {
@@ -251,9 +326,21 @@ Run::iterator Run::lower_bound(const SubRunNumber& lb) {
     }
 }
 
-Run::const_iterator Run::lower_bound(const SubRunNumber& lb) const {
-    iterator it = const_cast<Run*>(this)->lower_bound(lb);
+Run::iterator Run::lower_bound(const SubRunNumber& lb, const Prefetcher& prefetcher) {
+    auto it = lower_bound(lb);
+    if(it != end()) {
+        it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->prefetchFrom(ItemType::SUBRUN, ItemType::RUN, it.m_impl->m_current_subrun.m_impl);
+    }
     return it;
+}
+
+Run::const_iterator Run::lower_bound(const SubRunNumber& lb) const {
+    return const_cast<Run*>(this)->lower_bound(lb);
+}
+
+Run::const_iterator Run::lower_bound(const SubRunNumber& lb, const Prefetcher& prefetcher) const {
+    return const_cast<Run*>(this)->lower_bound(lb, prefetcher);
 }
 
 Run::iterator Run::upper_bound(const SubRunNumber& ub) {
@@ -268,9 +355,21 @@ Run::iterator Run::upper_bound(const SubRunNumber& ub) {
     else return iterator(subrun);
 }
 
-Run::const_iterator Run::upper_bound(const SubRunNumber& ub) const {
-    iterator it = const_cast<Run*>(this)->upper_bound(ub);
+Run::iterator Run::upper_bound(const SubRunNumber& ub, const Prefetcher& prefetcher) {
+    auto it = upper_bound(ub);
+    if(it != end()) {
+        it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->prefetchFrom(ItemType::SUBRUN, ItemType::RUN, it.m_impl->m_current_subrun.m_impl);
+    }
     return it;
+}
+
+Run::const_iterator Run::upper_bound(const SubRunNumber& ub) const {
+    return const_cast<Run*>(this)->upper_bound(ub);
+}
+
+Run::const_iterator Run::upper_bound(const SubRunNumber& ub, const Prefetcher& prefetcher) const {
+    return const_cast<Run*>(this)->upper_bound(ub, prefetcher);
 }
 
 void Run::toDescriptor(RunDescriptor& descriptor) {
@@ -287,35 +386,6 @@ Run Run::fromDescriptor(const DataStore& datastore, const RunDescriptor& descrip
         return Run(std::move(itemImpl));
     else return Run();
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////
-// Run::const_iterator::Impl implementation
-////////////////////////////////////////////////////////////////////////////////////////////
-
-class Run::const_iterator::Impl {
-    public:
-        SubRun m_current_subrun;
-
-        Impl()
-        : m_current_subrun()
-        {}
-
-        Impl(const SubRun& subrun)
-        : m_current_subrun(subrun)
-        {}
-
-        Impl(SubRun&& subrun)
-            : m_current_subrun(std::move(subrun))
-        {}
-
-        Impl(const Impl& other)
-            : m_current_subrun(other.m_current_subrun)
-        {}
-
-        bool operator==(const Impl& other) const {
-            return m_current_subrun == other.m_current_subrun;
-        }
-};
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Run::const_iterator implementation

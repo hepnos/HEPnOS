@@ -346,6 +346,8 @@ class Run : public KeyValueContainer {
 
 class Run::const_iterator {
 
+    friend class Run;
+
     protected:
 
     /**

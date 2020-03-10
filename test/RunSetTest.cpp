@@ -206,7 +206,6 @@ void RunSetTest::testPrefetcher() {
             i += 1;
         }
     }
-
     // test lower_bound
     {
         Prefetcher prefetcher(*datastore);
@@ -218,7 +217,7 @@ void RunSetTest::testPrefetcher() {
             i += 1;
         }
     }
-    // test lower_bound
+    // test upper_bound
     {
         Prefetcher prefetcher(*datastore);
         unsigned i=6;

@@ -97,8 +97,10 @@ RunSet::iterator RunSet::find(const RunNumber& runNumber) {
 
 RunSet::iterator RunSet::find(const RunNumber& runNumber, const Prefetcher& prefetcher) {
     auto it = find(runNumber);
-    if(it != end())
+    if(it != end()) {
         it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->prefetchFrom(ItemType::RUN, ItemType::DATASET, it.m_impl->m_current_run.m_impl);
+    }
     return it;
 }
 
@@ -109,8 +111,10 @@ RunSet::const_iterator RunSet::find(const RunNumber& runNumber) const {
 
 RunSet::const_iterator RunSet::find(const RunNumber& runNumber, const Prefetcher& prefetcher) const {
     iterator it = const_cast<RunSet*>(this)->find(runNumber);
-    if(it != end())
+    if(it != end()) {
         it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->prefetchFrom(ItemType::RUN, ItemType::DATASET, it.m_impl->m_current_run.m_impl);
+    }
     return it;
 }
 
@@ -130,8 +134,10 @@ RunSet::iterator RunSet::begin() {
 
 RunSet::iterator RunSet::begin(const Prefetcher& prefetcher) {
     auto it = begin();
-    if(it != end())
+    if(it != end()) {
         it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->prefetchFrom(ItemType::RUN, ItemType::DATASET, it.m_impl->m_current_run.m_impl);
+    }
     return it;
 }
 
@@ -145,8 +151,10 @@ RunSet::const_iterator RunSet::cbegin() const {
 
 RunSet::const_iterator RunSet::cbegin(const Prefetcher& prefetcher) const {
     auto it = cbegin();
-    if(it != cend())
+    if(it != cend()) {
         it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->prefetchFrom(ItemType::RUN, ItemType::DATASET, it.m_impl->m_current_run.m_impl);
+    }
     return it;
 }
 
@@ -160,8 +168,10 @@ RunSet::const_iterator RunSet::begin() const {
 
 RunSet::const_iterator RunSet::begin(const Prefetcher& prefetcher) const {
     auto it = const_iterator(const_cast<RunSet*>(this)->begin());
-    if(it != end())
+    if(it != end()) {
         it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->prefetchFrom(ItemType::RUN, ItemType::DATASET, it.m_impl->m_current_run.m_impl);
+    }
     return it;
 }
 
@@ -199,8 +209,10 @@ RunSet::iterator RunSet::lower_bound(const RunNumber& lb) {
 
 RunSet::iterator RunSet::lower_bound(const RunNumber& lb, const Prefetcher& prefetcher) {
     auto it = lower_bound(lb);
-    if(it != end())
+    if(it != end()) {
         it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->prefetchFrom(ItemType::RUN, ItemType::DATASET, it.m_impl->m_current_run.m_impl);
+    }
     return it;
 }
 
@@ -211,8 +223,10 @@ RunSet::const_iterator RunSet::lower_bound(const RunNumber& lb) const {
 
 RunSet::const_iterator RunSet::lower_bound(const RunNumber& lb, const Prefetcher& prefetcher) const {
     iterator it = const_cast<RunSet*>(this)->lower_bound(lb);
-    if(it != end())
+    if(it != end()) {
         it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->prefetchFrom(ItemType::RUN, ItemType::DATASET, it.m_impl->m_current_run.m_impl);
+    }
     return it;
 }
 
@@ -226,8 +240,10 @@ RunSet::iterator RunSet::upper_bound(const RunNumber& ub) {
 
 RunSet::iterator RunSet::upper_bound(const RunNumber& ub, const Prefetcher& prefetcher) {
     auto it = upper_bound(ub);
-    if(it != end())
+    if(it != end()) {
         it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->prefetchFrom(ItemType::RUN, ItemType::DATASET, it.m_impl->m_current_run.m_impl);
+    }
     return it;
 }
 
@@ -239,8 +255,10 @@ RunSet::const_iterator RunSet::upper_bound(const RunNumber& ub) const {
 
 RunSet::const_iterator RunSet::upper_bound(const RunNumber& ub, const Prefetcher& prefetcher) const {
     iterator it = const_cast<RunSet*>(this)->upper_bound(ub);
-    if(it != end())
+    if(it != end()) {
         it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->prefetchFrom(ItemType::RUN, ItemType::DATASET, it.m_impl->m_current_run.m_impl);
+    }
     return it;
 }
 
