@@ -2,6 +2,7 @@
 #define __HEPNOS_PREFETCHER_HPP
 
 #include <memory>
+#include <hepnos/Prefetchable.hpp>
 
 namespace hepnos {
 
@@ -42,6 +43,11 @@ class Prefetcher {
     void setCacheSize(unsigned int size);
     unsigned int getBatchSize() const;
     void setBatchSize(unsigned int size);
+
+    template<typename Container>
+    Prefetchable<Container> operator()(const Container& c) const {
+        return Prefetchable<Container>(c, *this);
+    }
 };
 
 }

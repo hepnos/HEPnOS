@@ -206,6 +206,16 @@ void RunSetTest::testPrefetcher() {
             i += 1;
         }
     }
+    // test begin/end using a Prefetchable object
+    {
+        Prefetcher prefetch(*datastore);
+        unsigned i=0;
+        for(auto& r : prefetch(mds.runs())) {
+            CPPUNIT_ASSERT(r.valid());
+            CPPUNIT_ASSERT(r.number() == i);
+            i += 1;
+        }
+    }
     // test lower_bound
     {
         Prefetcher prefetcher(*datastore);
