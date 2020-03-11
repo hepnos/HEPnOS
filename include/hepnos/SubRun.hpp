@@ -349,6 +349,8 @@ class SubRun : public KeyValueContainer {
 
 class SubRun::const_iterator {
 
+    friend class SubRun;
+
     protected:
 
     /**

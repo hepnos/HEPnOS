@@ -198,5 +198,49 @@ void SubRunTest::testAsync() {
 }
 
 void SubRunTest::testPrefetcher() {
-    // TODO
+    auto root = datastore->root();
+    DataSet mds = root.createDataSet("matthieu_prefetch");
+    CPPUNIT_ASSERT(mds.valid());
+    Run r = mds.createRun(42);
+    CPPUNIT_ASSERT(r.valid());
+    SubRun sr = r.createSubRun(3);
+    CPPUNIT_ASSERT(sr.valid());
+
+    for(unsigned i=0; i < 20; i++) {
+        Event e = sr.createEvent(i);
+        CPPUNIT_ASSERT(e.valid());
+    }
+
+    // test begin/end
+    {
+        Prefetcher prefetcher(*datastore);
+        unsigned i=0;
+        for(auto it = sr.begin(prefetcher); it != sr.end(); it++) {
+            CPPUNIT_ASSERT(it->valid());
+            CPPUNIT_ASSERT(it->number() == i);
+            i += 1;
+        }
+    }
+    // test lower_bound
+    {
+        Prefetcher prefetcher(*datastore);
+        unsigned i=5;
+        auto it = sr.lower_bound(5);
+        for(; it != sr.end(); it++) {
+            CPPUNIT_ASSERT(it->valid());
+            CPPUNIT_ASSERT(it->number() == i);
+            i += 1;
+        }
+    }
+    // test upper_bound
+    {
+        Prefetcher prefetcher(*datastore);
+        unsigned i=6;
+        auto it = sr.upper_bound(5);
+        for(; it != sr.end(); it++) {
+            CPPUNIT_ASSERT(it->valid());
+            CPPUNIT_ASSERT(it->number() == i);
+            i += 1;
+        }
+    }
 }

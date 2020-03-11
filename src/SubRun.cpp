@@ -7,6 +7,8 @@
 #include <memory>
 #include "hepnos/SubRun.hpp"
 #include "hepnos/AsyncEngine.hpp"
+#include "hepnos/Prefetcher.hpp"
+#include "PrefetcherImpl.hpp"
 #include "ItemImpl.hpp"
 #include "DataStoreImpl.hpp"
 #include "WriteBatchImpl.hpp"
@@ -14,7 +16,57 @@
 
 namespace hepnos {
 
+////////////////////////////////////////////////////////////////////////////////////////////
+// SubRun::const_iterator::Impl implementation
+////////////////////////////////////////////////////////////////////////////////////////////
+
+class SubRun::const_iterator::Impl {
+
+    public:
+        Event m_current_event;
+        std::shared_ptr<PrefetcherImpl> m_prefetcher;
+
+        Impl()
+        : m_current_event()
+        {}
+
+        Impl(const Event& event)
+        : m_current_event(event)
+        {}
+
+        Impl(Event&& event)
+            : m_current_event(std::move(event))
+        {}
+
+        Impl(const Impl& other)
+            : m_current_event(other.m_current_event)
+        {}
+
+        ~Impl() {
+            if(m_prefetcher)
+                m_prefetcher->m_associated = false;
+        }
+
+        bool operator==(const Impl& other) const {
+            return m_current_event == other.m_current_event;
+        }
+
+        void setPrefetcher(const std::shared_ptr<PrefetcherImpl>& p) {
+            if(p->m_associated)
+                throw Exception("Prefetcher object already in use");
+            if(m_prefetcher)
+                m_prefetcher->m_associated = false;
+            m_prefetcher = p;
+            m_prefetcher->m_associated = true;
+        }
+};
+
+
 static SubRun::iterator SubRun_end;
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// SubRun implementation
+////////////////////////////////////////////////////////////////////////////////////////////
 
 SubRun::SubRun()
 : m_impl(std::make_shared<ItemImpl>(nullptr, UUID(), InvalidRunNumber)) {} 
@@ -175,9 +227,21 @@ SubRun::iterator SubRun::find(const EventNumber& eventNumber) {
     return iterator(Event(std::make_shared<ItemImpl>(m_impl->m_datastore, id.dataset, id.run, id.subrun, eventNumber)));
 }
 
-SubRun::const_iterator SubRun::find(const EventNumber& eventNumber) const {
-    iterator it = const_cast<SubRun*>(this)->find(eventNumber);
+SubRun::iterator SubRun::find(const EventNumber& eventNumber, const Prefetcher& prefetcher) {
+    auto it = find(eventNumber);
+    if(it != end()) {
+        it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->prefetchFrom(ItemType::EVENT, ItemType::SUBRUN, it.m_impl->m_current_event.m_impl);
+    }
     return it;
+}
+
+SubRun::const_iterator SubRun::find(const EventNumber& eventNumber) const {
+    return const_cast<SubRun*>(this)->find(eventNumber);
+}
+
+SubRun::const_iterator SubRun::find(const EventNumber& eventNumber, const Prefetcher& prefetcher) const {
+    return const_cast<SubRun*>(this)->find(eventNumber, prefetcher);
 }
 
 SubRun::iterator SubRun::begin() {
@@ -193,6 +257,15 @@ SubRun::iterator SubRun::begin() {
     else return end();
 }
 
+SubRun::iterator SubRun::begin(const Prefetcher& prefetcher) {
+    auto it = begin();
+    if(it != end()) {
+        it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->prefetchFrom(ItemType::EVENT, ItemType::SUBRUN, it.m_impl->m_current_event.m_impl);
+    }
+    return it;
+}
+
 SubRun::iterator SubRun::end() {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
@@ -204,6 +277,10 @@ SubRun::const_iterator SubRun::begin() const {
     return const_iterator(const_cast<SubRun*>(this)->begin());
 }
 
+SubRun::const_iterator SubRun::begin(const Prefetcher& prefetcher) const {
+    return const_iterator(const_cast<SubRun*>(this)->begin(prefetcher));
+}
+
 SubRun::const_iterator SubRun::end() const {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
@@ -213,6 +290,10 @@ SubRun::const_iterator SubRun::end() const {
 
 SubRun::const_iterator SubRun::cbegin() const {
     return const_iterator(const_cast<SubRun*>(this)->begin());
+}
+
+SubRun::const_iterator SubRun::cbegin(const Prefetcher& prefetcher) const {
+    return const_iterator(const_cast<SubRun*>(this)->begin(prefetcher));
 }
 
 SubRun::const_iterator SubRun::cend() const {
@@ -248,9 +329,21 @@ SubRun::iterator SubRun::lower_bound(const EventNumber& lb) {
     }
 }
 
-SubRun::const_iterator SubRun::lower_bound(const EventNumber& lb) const {
-    iterator it = const_cast<SubRun*>(this)->lower_bound(lb);
+SubRun::iterator SubRun::lower_bound(const EventNumber& lb, const Prefetcher& prefetcher) {
+    auto it = lower_bound(lb);
+    if(it != end()) {
+        it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->prefetchFrom(ItemType::EVENT, ItemType::SUBRUN, it.m_impl->m_current_event.m_impl);
+    }
     return it;
+}
+
+SubRun::const_iterator SubRun::lower_bound(const EventNumber& lb) const {
+    return const_cast<SubRun*>(this)->lower_bound(lb);
+}
+
+SubRun::const_iterator SubRun::lower_bound(const EventNumber& lb, const Prefetcher& prefetcher) const {
+    return const_cast<SubRun*>(this)->lower_bound(lb, prefetcher);
 }
 
 SubRun::iterator SubRun::upper_bound(const EventNumber& ub) {
@@ -264,9 +357,21 @@ SubRun::iterator SubRun::upper_bound(const EventNumber& ub) {
     else return iterator(event);
 }
 
-SubRun::const_iterator SubRun::upper_bound(const EventNumber& ub) const {
-    iterator it = const_cast<SubRun*>(this)->upper_bound(ub);
+SubRun::iterator SubRun::upper_bound(const EventNumber& lb, const Prefetcher& prefetcher) {
+    auto it = upper_bound(lb);
+    if(it != end()) {
+        it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->prefetchFrom(ItemType::EVENT, ItemType::SUBRUN, it.m_impl->m_current_event.m_impl);
+    }
     return it;
+}
+
+SubRun::const_iterator SubRun::upper_bound(const EventNumber& ub) const {
+    return const_cast<SubRun*>(this)->upper_bound(ub);
+}
+
+SubRun::const_iterator SubRun::upper_bound(const EventNumber& ub, const Prefetcher& prefetcher) const {
+    return const_cast<SubRun*>(this)->upper_bound(ub, prefetcher);
 }
 
 void SubRun::toDescriptor(SubRunDescriptor& descriptor) {
@@ -283,35 +388,6 @@ SubRun SubRun::fromDescriptor(const DataStore& datastore, const SubRunDescriptor
         return SubRun(std::move(itemImpl));
     else return SubRun();
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////
-// SubRun::const_iterator::Impl implementation
-////////////////////////////////////////////////////////////////////////////////////////////
-
-class SubRun::const_iterator::Impl {
-    public:
-        Event m_current_event;
-
-        Impl()
-        : m_current_event()
-        {}
-
-        Impl(const Event& event)
-        : m_current_event(event)
-        {}
-
-        Impl(Event&& event)
-            : m_current_event(std::move(event))
-        {}
-
-        Impl(const Impl& other)
-            : m_current_event(other.m_current_event)
-        {}
-
-        bool operator==(const Impl& other) const {
-            return m_current_event == other.m_current_event;
-        }
-};
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // SubRun::const_iterator implementation
