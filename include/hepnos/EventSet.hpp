@@ -15,6 +15,7 @@
 
 namespace hepnos {
 
+class Prefetcher;
 class EventSetImpl;
 
 /**
@@ -95,6 +96,7 @@ class EventSet {
      * @return an iterator referring to the first Event in this EventSet.
      */
     iterator begin();
+    iterator begin(const Prefetcher& prefetcher);
 
     /**
      * @brief Returns an iterator referring to the end of the EventSet.
@@ -112,6 +114,7 @@ class EventSet {
      * @return an iterator referring to the first Event in this EventSet.
      */
     const_iterator begin() const;
+    const_iterator begin(const Prefetcher& prefetcher) const;
 
     /**
      * @brief Returns a const_iterator referring to the end of the EventSet.
@@ -129,6 +132,7 @@ class EventSet {
      * @return a const_iterator referring to the first Event in this EventSet.
      */
     const_iterator cbegin() const;
+    const_iterator cbegin(const Prefetcher& prefetcher) const;
 
     /**
      * @brief Returns a const_iterator referring to the end of the EventSet.

@@ -224,7 +224,7 @@ void RunTest::testPrefetcher() {
     {
         Prefetcher prefetcher(*datastore);
         unsigned i=5;
-        auto it = r.lower_bound(5);
+        auto it = r.lower_bound(5, prefetcher);
         for(; it != r.end(); it++) {
             CPPUNIT_ASSERT(it->valid());
             CPPUNIT_ASSERT(it->number() == i);
@@ -235,7 +235,7 @@ void RunTest::testPrefetcher() {
     {
         Prefetcher prefetcher(*datastore);
         unsigned i=6;
-        auto it = r.upper_bound(5);
+        auto it = r.upper_bound(5, prefetcher);
         for(; it != r.end(); it++) {
             CPPUNIT_ASSERT(it->valid());
             CPPUNIT_ASSERT(it->number() == i);

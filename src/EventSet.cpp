@@ -8,6 +8,8 @@
 #include <string>
 #include "hepnos/DataSet.hpp"
 #include "hepnos/EventSet.hpp"
+#include "hepnos/Prefetcher.hpp"
+#include "PrefetcherImpl.hpp"
 #include "EventSetImpl.hpp"
 #include "DataStoreImpl.hpp"
 #include "ItemImpl.hpp"
@@ -24,6 +26,7 @@ class EventSet::const_iterator::Impl {
 
     public:
         Event m_current_event;
+        std::shared_ptr<PrefetcherImpl> m_prefetcher;
         int m_target = 0;
         int m_num_targets = 0;
 
@@ -49,6 +52,11 @@ class EventSet::const_iterator::Impl {
         , m_num_targets(other.m_num_targets)
         {}
 
+        ~Impl() {
+            if(m_prefetcher)
+                m_prefetcher->m_associated = false;
+        }
+
         bool operator==(const Impl& other) const {
             auto v1 = m_current_event.valid();
             auto v2 = other.m_current_event.valid();
@@ -58,6 +66,15 @@ class EventSet::const_iterator::Impl {
             return m_current_event == other.m_current_event
                 && m_target == other.m_target
                 && m_num_targets == other.m_num_targets;
+        }
+
+        void setPrefetcher(const std::shared_ptr<PrefetcherImpl>& p) {
+            if(p->m_associated)
+                throw Exception("Prefetcher object already in use");
+            if(m_prefetcher)
+                m_prefetcher->m_associated = false;
+            m_prefetcher = p;
+            m_prefetcher->m_associated = true;
         }
 };
 
@@ -102,9 +119,19 @@ EventSet::const_iterator::self_type EventSet::const_iterator::operator++() {
     auto& ds = m_impl->m_current_event.m_impl->m_datastore;
 
     if(m_impl->m_num_targets == 0) { // single target access
-        size_t s = ds->nextItems(ItemType::EVENT, ItemType::DATASET,
-                                 m_impl->m_current_event.m_impl,
-                                 next_events, 1, m_impl->m_target);
+        size_t s = 0;
+        if(!m_impl->m_prefetcher) {
+            s = ds->nextItems(ItemType::EVENT,
+                              ItemType::DATASET,
+                              m_impl->m_current_event.m_impl,
+                              next_events, 1, m_impl->m_target);
+        } else {
+            s = m_impl->m_prefetcher->nextItems(
+                            ItemType::EVENT,
+                            ItemType::DATASET,
+                            m_impl->m_current_event.m_impl,
+                            next_events, 1, m_impl->m_target);
+        }
         if(s != 0) {
             m_impl->m_current_event.m_impl = std::move(next_events[0]);
         } else {
@@ -112,9 +139,17 @@ EventSet::const_iterator::self_type EventSet::const_iterator::operator++() {
         }
     } else { // multi-target access
         // try to get next event from current target
-        size_t s = ds->nextItems(ItemType::EVENT, ItemType::DATASET,
-                                 m_impl->m_current_event.m_impl,
-                                 next_events, 1, m_impl->m_target);
+        size_t s = 0;
+        if(!m_impl->m_prefetcher) {
+            s = ds->nextItems(ItemType::EVENT, ItemType::DATASET,
+                              m_impl->m_current_event.m_impl,
+                              next_events, 1, m_impl->m_target);
+        } else {
+            s = m_impl->m_prefetcher->nextItems(
+                              ItemType::EVENT, ItemType::DATASET,
+                              m_impl->m_current_event.m_impl,
+                              next_events, 1, m_impl->m_target);
+        }
         if(s == 1) {
             // event found
             m_impl->m_current_event.m_impl = std::move(next_events[0]);
@@ -133,8 +168,15 @@ EventSet::const_iterator::self_type EventSet::const_iterator::operator++() {
                 return *this;
             } 
             // if event (0,0,0) does not exist, then try to get the next one
-            size_t s = ds->nextItems(ItemType::EVENT, ItemType::DATASET,
-                    event_impl000, next_events, 1, m_impl->m_target);
+            size_t s = 0;
+            if(!m_impl->m_prefetcher) {
+                s = ds->nextItems(ItemType::EVENT, ItemType::DATASET,
+                        event_impl000, next_events, 1, m_impl->m_target);
+            } else {
+                s = m_impl->m_prefetcher->nextItems(
+                        ItemType::EVENT, ItemType::DATASET,
+                        event_impl000, next_events, 1, m_impl->m_target);
+            }
             if(s == 1) {
                 // item found, make the iterator point to it
                 m_impl->m_current_event.m_impl = std::move(next_events[0]);
@@ -266,6 +308,16 @@ EventSet::iterator EventSet::begin() {
     return end();
 }
 
+EventSet::iterator EventSet::begin(const Prefetcher& prefetcher) {
+    auto it = begin();
+    if(it != end()) {
+        it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->prefetchFrom(ItemType::EVENT, ItemType::DATASET, 
+                it.m_impl->m_current_event.m_impl, it.m_impl->m_target);
+    }
+    return it;
+}
+
 EventSet::iterator EventSet::end() {
     return EventSet_end;
 }
@@ -274,12 +326,20 @@ EventSet::const_iterator EventSet::cbegin() const {
     return const_iterator(const_cast<EventSet*>(this)->begin());
 }
 
+EventSet::const_iterator EventSet::cbegin(const Prefetcher& prefetcher) const {
+    return const_iterator(const_cast<EventSet*>(this)->begin(prefetcher));
+}
+
 EventSet::const_iterator EventSet::cend() const {
     return EventSet_end;
 }
 
 EventSet::const_iterator EventSet::begin() const {
     return const_iterator(const_cast<EventSet*>(this)->begin());
+}
+
+EventSet::const_iterator EventSet::begin(const Prefetcher& prefetcher) const {
+    return const_iterator(const_cast<EventSet*>(this)->begin(prefetcher));
 }
 
 EventSet::const_iterator EventSet::end() const {

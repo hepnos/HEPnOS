@@ -12,6 +12,7 @@ class EventSetTest : public CppUnit::TestFixture
     CPPUNIT_TEST( testFillDataStore );
     CPPUNIT_TEST( testInvalid );
     CPPUNIT_TEST( testBeginEnd );
+    CPPUNIT_TEST( testPrefetcher );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -22,6 +23,7 @@ class EventSetTest : public CppUnit::TestFixture
     void testFillDataStore();
     void testInvalid();
     void testBeginEnd();
+    void testPrefetcher();
 };
 
 #endif

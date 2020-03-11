@@ -429,7 +429,18 @@ Run::const_iterator::self_type Run::const_iterator::operator++() {
     if(!m_impl) {
         throw Exception("Trying to increment an invalid iterator");
     }
-    m_impl->m_current_subrun = m_impl->m_current_subrun.next();
+    if(!m_impl->m_prefetcher) {
+        m_impl->m_current_subrun = m_impl->m_current_subrun.next();
+    } else {
+        std::vector<std::shared_ptr<ItemImpl>> next_subruns;
+        size_t s = m_impl->m_prefetcher->nextItems(ItemType::SUBRUN,
+                ItemType::SUBRUN, m_impl->m_current_subrun.m_impl, next_subruns, 1);
+        if(s == 1) {
+            m_impl->m_current_subrun.m_impl = std::move(next_subruns[0]);
+        } else {
+            m_impl->m_current_subrun = SubRun();
+        }
+    }
     return *this;
 }
 
