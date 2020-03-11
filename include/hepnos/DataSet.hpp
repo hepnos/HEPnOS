@@ -164,6 +164,8 @@ class DataSet : public KeyValueContainer {
      */
     bool loadRawData(const std::string& key, std::string& value) const override;
     bool loadRawData(const std::string& key, char* value, size_t* vsize) const override;
+    bool loadRawData(const Prefetcher& prefetcher, const std::string& key, std::string& value) const override;
+    bool loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const override;
 
     /**
      * @brief Comparison operator.

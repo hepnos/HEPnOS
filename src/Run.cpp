@@ -146,6 +146,22 @@ bool Run::loadRawData(const std::string& key, char* value, size_t* vsize) const 
     return m_impl->m_datastore->loadRawProduct(id, key, value, vsize);
 }
 
+bool Run::loadRawData(const Prefetcher& prefetcher, const std::string& key, std::string& buffer) const {
+    if(!valid()) {
+        throw Exception("Calling Run member function on an invalid Run object");
+    }
+    const ItemDescriptor& id = m_impl->m_descriptor;
+    return prefetcher.m_impl->loadRawProduct(id, key, buffer);
+}
+
+bool Run::loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
+    const ItemDescriptor& id = m_impl->m_descriptor;
+    return prefetcher.m_impl->loadRawProduct(id, key, value, vsize);
+}
+
 bool Run::operator==(const Run& other) const {
     bool v1 = valid();
     bool v2 = other.valid();
@@ -228,6 +244,7 @@ Run::iterator Run::find(const SubRunNumber& subRunNumber, const Prefetcher& pref
     auto it = find(subRunNumber);
     if(it != end()) {
         it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->fetchRequestedProducts(it.m_impl->m_current_subrun.m_impl);
         prefetcher.m_impl->prefetchFrom(ItemType::SUBRUN, ItemType::RUN, it.m_impl->m_current_subrun.m_impl);
     }
     return it;
@@ -256,6 +273,7 @@ Run::iterator Run::begin(const Prefetcher& prefetcher) {
     auto it = begin();
     if(it != end()) {
         it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->fetchRequestedProducts(it.m_impl->m_current_subrun.m_impl);
         prefetcher.m_impl->prefetchFrom(ItemType::SUBRUN, ItemType::RUN, it.m_impl->m_current_subrun.m_impl);
     }
     return it;
@@ -330,6 +348,7 @@ Run::iterator Run::lower_bound(const SubRunNumber& lb, const Prefetcher& prefetc
     auto it = lower_bound(lb);
     if(it != end()) {
         it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->fetchRequestedProducts(it.m_impl->m_current_subrun.m_impl);
         prefetcher.m_impl->prefetchFrom(ItemType::SUBRUN, ItemType::RUN, it.m_impl->m_current_subrun.m_impl);
     }
     return it;
@@ -359,6 +378,7 @@ Run::iterator Run::upper_bound(const SubRunNumber& ub, const Prefetcher& prefetc
     auto it = upper_bound(ub);
     if(it != end()) {
         it.m_impl->setPrefetcher(prefetcher.m_impl);
+        prefetcher.m_impl->fetchRequestedProducts(it.m_impl->m_current_subrun.m_impl);
         prefetcher.m_impl->prefetchFrom(ItemType::SUBRUN, ItemType::RUN, it.m_impl->m_current_subrun.m_impl);
     }
     return it;

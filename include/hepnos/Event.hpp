@@ -128,6 +128,8 @@ class Event : public KeyValueContainer {
      */
     bool loadRawData(const std::string& key, std::string& value) const override;
     bool loadRawData(const std::string& key, char* value, size_t* vsize) const override;
+    bool loadRawData(const Prefetcher& prefetcher, const std::string& key, std::string& buffer) const override;
+    bool loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const override;
 
     /**
      * @brief Compares this Event with another Event. The Events must point to

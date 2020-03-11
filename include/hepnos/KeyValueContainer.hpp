@@ -22,6 +22,7 @@ namespace hepnos {
 
 class WriteBatch;
 class AsyncEngine;
+class Prefetcher;
 
 class KeyValueContainer {
 
@@ -103,6 +104,10 @@ class KeyValueContainer {
     virtual bool loadRawData(const std::string& key, std::string& buffer) const = 0;
 
     virtual bool loadRawData(const std::string& key, char* value, size_t* vsize) const = 0;
+
+    virtual bool loadRawData(const Prefetcher& prefetcher, const std::string& key, std::string& buffer) const = 0;
+
+    virtual bool loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const = 0;
 
     /**
      * @brief Stores a key/value pair into the KeyValueContainer.
@@ -207,6 +212,16 @@ class KeyValueContainer {
         return loadVectorImpl(key, value, std::is_pod<V>());
     }
 
+    template<typename K, typename V>
+    bool load(const Prefetcher& prefetcher, const K& key, V& value) const {
+        return loadImpl(prefetcher, key, value, std::is_pod<V>());
+    }
+
+    template<typename K, typename V>
+    bool load(const Prefetcher& prefetcher, const K& key, std::vector<V>& value) const {
+        return loadVectorImpl(prefetcher, key, value, std::is_pod<V>());
+    }
+
     private:
 
     /**
@@ -297,6 +312,19 @@ class KeyValueContainer {
         return vsize == sizeof(value);
     }
 
+    template<typename K, typename V>
+    bool loadImpl(const Prefetcher& prefetcher, const K& key, V& value,
+            const std::integral_constant<bool, true>&) const {
+        std::string buffer;
+        std::stringstream ss_key;
+        ss_key << key << "#" << demangle<V>();
+        size_t vsize = sizeof(value);
+        if(!loadRawData(prefetcher, ss_key.str(), reinterpret_cast<char*>(&value), &vsize)) {
+            return false;
+        }
+        return vsize == sizeof(value);
+    }
+
     /**
      * @brief Implementation of the load function when the value type is not a POD.
      */
@@ -319,6 +347,25 @@ class KeyValueContainer {
         return true;
     }
 
+    template<typename K, typename V>
+    bool loadImpl(const Prefetcher& prefetcher, const K& key, V& value,
+            const std::integral_constant<bool, false>&) const {
+        std::string buffer;
+        std::stringstream ss_key;
+        ss_key << key << "#" << demangle<V>();
+        if(!loadRawData(prefetcher, ss_key.str(), buffer)) {
+            return false;
+        }
+        try {
+            std::stringstream ss(buffer);
+            InputArchive ia(datastore(), ss);
+            ia >> value;
+        } catch(...) {
+            throw Exception("Exception occured during serialization");
+        }
+        return true;
+    }
+
     /**
      * @brief Implementation of the load function when the value type is a vector of POD.
      */
@@ -329,6 +376,28 @@ class KeyValueContainer {
         std::stringstream ss_key;
         ss_key << key << "#" << demangle<std::vector<V>>();
         if(!loadRawData(ss_key.str(), buffer)) {
+            return false;
+        }
+        size_t count = 0;
+        if(buffer.size() < sizeof(count)) {
+            return false;
+        }
+        std::memcpy(&count, buffer.data(), sizeof(count));
+        if(buffer.size() != sizeof(count) + count*sizeof(V)) {
+            return false;
+        }
+        value.resize(count);
+        std::memcpy(value.data(), buffer.data()+sizeof(count), count*sizeof(V));
+        return true;
+    }
+
+    template<typename K, typename V>
+    bool loadVectorImpl(const Prefetcher& prefetcher, const K& key, std::vector<V>& value,
+            const std::integral_constant<bool, true>&) const {
+        std::string buffer;
+        std::stringstream ss_key;
+        ss_key << key << "#" << demangle<std::vector<V>>();
+        if(!loadRawData(prefetcher, ss_key.str(), buffer)) {
             return false;
         }
         size_t count = 0;
@@ -370,6 +439,31 @@ class KeyValueContainer {
         }
         return true;
     }
+
+    template<typename K, typename V>
+    bool loadVectorImpl(const Prefetcher& prefetcher, const K& key, std::vector<V>& value,
+            const std::integral_constant<bool, false>&) const {
+        std::string buffer;
+        std::stringstream ss_key;
+        ss_key << key << "#" << demangle<std::vector<V>>();
+        if(!loadRawData(prefetcher, ss_key.str(), buffer)) {
+            return false;
+        }
+        try {
+            std::stringstream ss(buffer);
+            InputArchive ia(datastore(), ss);
+            size_t count = 0;
+            ia >> count;
+            value.resize(count);
+            for(unsigned i=0; i<count; i++) {
+                ia >> value[i];
+            }
+        } catch(...) {
+            throw Exception("Exception occured during serialization");
+        }
+        return true;
+    }
+
     /**
      * @brief Creates the string key based on the provided key
      * and the type of the value. Serializes the value into a string.

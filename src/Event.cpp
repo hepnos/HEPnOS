@@ -5,10 +5,12 @@
  */
 #include "hepnos/Event.hpp"
 #include "hepnos/AsyncEngine.hpp"
+#include "hepnos/Prefetcher.hpp"
 #include "ItemImpl.hpp"
 #include "DataStoreImpl.hpp"
 #include "WriteBatchImpl.hpp"
 #include "AsyncEngineImpl.hpp"
+#include "PrefetcherImpl.hpp"
 
 namespace hepnos {
 
@@ -102,6 +104,22 @@ bool Event::loadRawData(const std::string& key, char* value, size_t* vsize) cons
     // forward the call to the datastore's load function
     auto& id = m_impl->m_descriptor;
     return m_impl->m_datastore->loadRawProduct(id, key, value, vsize);
+}
+
+bool Event::loadRawData(const Prefetcher& prefetcher, const std::string& key, std::string& buffer) const {
+    if(!valid()) {
+        throw Exception("Calling Event member function on an invalid Event object");
+    }
+    auto& id = m_impl->m_descriptor;
+    return prefetcher.m_impl->loadRawProduct(id, key, buffer);
+}
+
+bool Event::loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
+    auto& id = m_impl->m_descriptor;
+    return prefetcher.m_impl->loadRawProduct(id, key, value, vsize);
 }
 
 bool Event::operator==(const Event& other) const {

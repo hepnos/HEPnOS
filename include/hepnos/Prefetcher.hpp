@@ -2,6 +2,7 @@
 #define __HEPNOS_PREFETCHER_HPP
 
 #include <memory>
+#include <hepnos/Demangle.hpp>
 #include <hepnos/Prefetchable.hpp>
 
 namespace hepnos {
@@ -13,6 +14,7 @@ class RunSet;
 class EventSet;
 class Run;
 class SubRun;
+class Event;
 
 class Prefetcher {
 
@@ -20,10 +22,7 @@ class Prefetcher {
     friend class EventSet;
     friend class Run;
     friend class SubRun;
-
-    private:
-
-    std::shared_ptr<PrefetcherImpl> m_impl;
+    friend class Event;
 
     public:
 
@@ -48,6 +47,18 @@ class Prefetcher {
     Prefetchable<Container> operator()(const Container& c) const {
         return Prefetchable<Container>(c, *this);
     }
+
+    template<typename V>
+    void fetchProduct(const std::string& label, bool fetch=true) const {
+        fetchProductImpl(label + "#" + demangle<V>(), fetch);
+    }
+
+    private:
+
+    std::shared_ptr<PrefetcherImpl> m_impl;
+
+    void fetchProductImpl(const std::string& labelAndType, bool fetch) const;
+
 };
 
 }

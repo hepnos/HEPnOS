@@ -18,6 +18,7 @@ class LoadStoreTest : public CppUnit::TestFixture
     CPPUNIT_TEST( testAsyncLoadStoreRun );
     CPPUNIT_TEST( testAsyncLoadStoreSubRun );
     CPPUNIT_TEST( testAsyncLoadStoreEvent );
+    CPPUNIT_TEST( testPrefetchLoadStore );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -34,6 +35,7 @@ class LoadStoreTest : public CppUnit::TestFixture
     void testAsyncLoadStoreRun();
     void testAsyncLoadStoreSubRun();
     void testAsyncLoadStoreEvent();
+    void testPrefetchLoadStore();
 };
 
 #endif

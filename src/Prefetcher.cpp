@@ -34,4 +34,12 @@ void Prefetcher::setBatchSize(unsigned int size) {
     m_impl->m_batch_size = size;
 }
 
+void Prefetcher::fetchProductImpl(const std::string& label, bool fetch=true) const {
+    if(fetch) {
+        m_impl->m_active_product_keys.insert(label);
+    } else {
+        m_impl->m_active_product_keys.erase(label);
+    }
+}
+
 }

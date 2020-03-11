@@ -130,6 +130,8 @@ class SubRun : public KeyValueContainer {
      */
     bool loadRawData(const std::string& key, std::string& buffer) const override;
     bool loadRawData(const std::string& key, char* value, size_t* vsize) const override;
+    bool loadRawData(const Prefetcher& prefetcher, const std::string& key, std::string& buffer) const override;
+    bool loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const override;
 
     /**
      * @brief Compares this SubRun with another SubRun. The SubRuns must point to
