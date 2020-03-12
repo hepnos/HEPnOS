@@ -20,7 +20,8 @@ class ProductID {
     friend class DataStoreImpl;
     friend class AsyncEngineImpl;
     friend class WriteBatchImpl;
-    friend class PrefetcherImpl;
+    friend class AsyncPrefetcherImpl;
+    friend class SyncPrefetcherImpl;
     friend class boost::serialization::access;
 
     public:

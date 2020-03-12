@@ -10,11 +10,13 @@ namespace tl = thallium;
 namespace hepnos {
 
 class WriteBatchImpl;
+class AsyncPrefetcherImpl;
 
 class AsyncEngineImpl {
 
     friend class WriteBatchImpl;
     friend class AsyncEngine;
+    friend class AsyncPrefetcherImpl;
 
     std::shared_ptr<DataStoreImpl>        m_datastore;
     tl::pool                              m_pool;
@@ -45,6 +47,7 @@ class AsyncEngineImpl {
             if(pools.size() != 1) {
                 throw Exception("Could not get current execution stream's main Argobots pool");
             }
+            m_pool = pools[0];
         }
     }
 

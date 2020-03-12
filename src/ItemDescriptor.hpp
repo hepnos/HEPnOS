@@ -85,10 +85,17 @@ struct ItemDescriptor {
 
 template<typename S>
 S& operator<<(S& s, const ItemDescriptor& d) {
-    s << "[" << d.dataset.to_string() << ", "
-      << d.run << ", "
-      << d.subrun << ", "
-      << d.event << "]";
+    s << "[" << d.dataset.to_string();
+    if(d.run != InvalidRunNumber) {
+        s << ", " << d.run;
+        if(d.subrun != InvalidSubRunNumber) {
+            s << ", " << d.subrun;
+            if(d.event != InvalidEventNumber) {
+                s << ", " << d.event;
+            }
+        }
+    }
+    s << "]";
     return s;
 }
 

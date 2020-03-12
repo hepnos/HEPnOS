@@ -1,17 +1,18 @@
 #include "hepnos/Prefetcher.hpp"
 #include "hepnos/AsyncEngine.hpp"
-#include "PrefetcherImpl.hpp"
+#include "SyncPrefetcherImpl.hpp"
+#include "AsyncPrefetcherImpl.hpp"
 
 namespace hepnos {
 
 Prefetcher::Prefetcher(const DataStore& ds, unsigned int cache_size, unsigned int batch_size)
-: m_impl(std::make_shared<PrefetcherImpl>(ds.m_impl)) {
+: m_impl(std::make_shared<SyncPrefetcherImpl>(ds.m_impl)) {
     m_impl->m_cache_size = cache_size;
     m_impl->m_batch_size = batch_size;
 }
 
 Prefetcher::Prefetcher(const DataStore& ds, const AsyncEngine& async, unsigned int cache_size, unsigned int batch_size)
-: m_impl(std::make_shared<PrefetcherImpl>(ds.m_impl, async.m_impl)) {
+: m_impl(std::make_shared<AsyncPrefetcherImpl>(ds.m_impl, async.m_impl)) {
     m_impl->m_cache_size = cache_size;
     m_impl->m_batch_size = batch_size;
 }
@@ -35,10 +36,14 @@ void Prefetcher::setBatchSize(unsigned int size) {
 }
 
 void Prefetcher::fetchProductImpl(const std::string& label, bool fetch=true) const {
+    auto& v = m_impl->m_active_product_keys;
+    auto it = std::find(v.begin(), v.end(), label);
     if(fetch) {
-        m_impl->m_active_product_keys.insert(label);
+        if(it != v.end())
+            v.push_back(label);
     } else {
-        m_impl->m_active_product_keys.erase(label);
+        if(it != v.end())
+            v.erase(it);
     }
 }
 

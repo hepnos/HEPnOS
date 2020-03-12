@@ -243,3 +243,54 @@ void RunTest::testPrefetcher() {
         }
     }
 }
+
+void RunTest::testAsyncPrefetcher() {
+    auto root = datastore->root();
+    DataSet mds = root.createDataSet("matthieu_prefetch");
+    CPPUNIT_ASSERT(mds.valid());
+    Run r = mds.createRun(42);
+    CPPUNIT_ASSERT(r.valid());
+
+    for(unsigned i=0; i < 20; i++) {
+        SubRun sr = r.createSubRun(i);
+        CPPUNIT_ASSERT(sr.valid());
+    }
+    // test begin/end
+    {
+        AsyncEngine async(*datastore, 1);
+        Prefetcher prefetcher(*datastore, async);
+        unsigned i=0;
+        for(auto it = r.begin(prefetcher); it != r.end(); it++) {
+            CPPUNIT_ASSERT(it->valid());
+            CPPUNIT_ASSERT(it->number() == i);
+            i += 1;
+        }
+        CPPUNIT_ASSERT_EQUAL(20, (int)i);
+    }
+    // test lower_bound
+    {
+        AsyncEngine async(*datastore, 1);
+        Prefetcher prefetcher(*datastore, async);
+        unsigned i=5;
+        auto it = r.lower_bound(5, prefetcher);
+        for(; it != r.end(); it++) {
+            CPPUNIT_ASSERT(it->valid());
+            CPPUNIT_ASSERT(it->number() == i);
+            i += 1;
+        }
+        CPPUNIT_ASSERT(i == 20);
+    }
+    // test upper_bound
+    {
+        AsyncEngine async(*datastore, 1);
+        Prefetcher prefetcher(*datastore, async);
+        unsigned i=6;
+        auto it = r.upper_bound(5, prefetcher);
+        for(; it != r.end(); it++) {
+            CPPUNIT_ASSERT(it->valid());
+            CPPUNIT_ASSERT(it->number() == i);
+            i += 1;
+        }
+        CPPUNIT_ASSERT(i == 20);
+    }
+}
