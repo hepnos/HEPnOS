@@ -447,3 +447,42 @@ void LoadStoreTest::testPrefetchLoadStore() {
         }
     }
 }
+
+void LoadStoreTest::testAsyncPrefetchLoadStore() {
+    auto root = datastore->root();
+    auto mds = root.createDataSet("prefetch_run");
+    std::string label = "key";
+    {
+        TestObjectA obj_a;
+        TestObjectB obj_b;
+        for(unsigned i = 0; i < 20; i++) {
+            obj_a.x() = i;
+            obj_a.y() = 2*i;
+            obj_b.a() = 3*i;
+            obj_b.b() = "matthieu";
+            auto r = mds.createRun(i);
+            CPPUNIT_ASSERT(r.valid());
+            r.store(label, obj_a);
+            r.store(label, obj_b);
+        }
+    }
+    {
+        // iterate through the dataset with a prefetcher
+        AsyncEngine async(*datastore, 1);
+        Prefetcher p(*datastore, async);
+        p.fetchProduct<TestObjectA>(label);
+        p.fetchProduct<TestObjectB>(label);
+        unsigned i = 0;
+        for(auto& run : p(mds.runs())) {
+            TestObjectA obj_a;
+            TestObjectB obj_b;
+            run.load(p, label, obj_a);
+            run.load(p, label, obj_b);
+            CPPUNIT_ASSERT(obj_a.x() == i);
+            CPPUNIT_ASSERT(obj_a.y() == 2*i);
+            CPPUNIT_ASSERT(obj_b.a() == 3*i);
+            CPPUNIT_ASSERT(obj_b.b() == "matthieu");
+            i += 1;
+        }
+    }
+}
