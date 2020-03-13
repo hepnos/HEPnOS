@@ -17,6 +17,7 @@ class RunSetTest : public CppUnit::TestFixture
     CPPUNIT_TEST( testCreateSubRuns );
     CPPUNIT_TEST( testAsync );
     CPPUNIT_TEST( testPrefetcher );
+    CPPUNIT_TEST( testAsyncPrefetcher );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -32,6 +33,7 @@ class RunSetTest : public CppUnit::TestFixture
     void testCreateSubRuns();
     void testAsync();
     void testPrefetcher();
+    void testAsyncPrefetcher();
 };
 
 #endif
