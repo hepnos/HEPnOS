@@ -21,4 +21,12 @@ void WriteBatch::flush() {
     m_impl->flush();
 }
 
+void WriteBatch::activateStatistics(bool activate) {
+    m_impl->m_stats_enabled = activate;
+}
+
+void WriteBatch::collectStatistics(WriteBatchStatistics& stats) const {
+    m_impl->collectStatistics(stats);
+}
+
 }

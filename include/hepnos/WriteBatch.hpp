@@ -14,6 +14,7 @@
 #include <hepnos/ProductID.hpp>
 #include <hepnos/DataStore.hpp>
 #include <hepnos/Exception.hpp>
+#include <hepnos/Statistics.hpp>
 
 namespace hepnos {
 
@@ -24,6 +25,12 @@ class SubRun;
 class Event;
 class WriteBatchImpl;
 class AsyncEngine;
+
+struct WriteBatchStatistics {
+    Statistics<size_t> batch_sizes;
+    Statistics<size_t> key_sizes;
+    Statistics<size_t> value_sizes; // only non-empty values are accounted for
+};
 
 /**
  * @brief The WriteBatch oject can be used to batch
@@ -100,6 +107,20 @@ class WriteBatch {
      * everything is flushed.
      */
     void flush();
+
+    /**
+     * @brief Activate statistics collection.
+     *
+     * @param activate Whether to activate statistics.
+     */
+    void activateStatistics(bool activate=true);
+
+    /**
+     * @brief Collects the usage statistics.
+     *
+     * @param stats WriteBatchStatistics object to fill.
+     */
+    void collectStatistics(WriteBatchStatistics& stats) const;
 };
 
 }
