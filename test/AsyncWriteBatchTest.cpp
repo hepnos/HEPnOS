@@ -23,7 +23,7 @@ void AsyncWriteBatchTest::testAsyncWriteBatchRun() {
     hepnos::AsyncEngine async_engine(*datastore, 2);
 
     {
-        hepnos::WriteBatch batch(*datastore, async_engine);
+        hepnos::WriteBatch batch(async_engine);
 
         for(auto i = 0; i < 5; i++) {
             auto run = dataset.createRun(batch, i);
@@ -33,7 +33,7 @@ void AsyncWriteBatchTest::testAsyncWriteBatchRun() {
     }
     async_engine.wait(); // useless, but just to test
     {
-        hepnos::WriteBatch batch(*datastore, async_engine);
+        hepnos::WriteBatch batch(async_engine);
 
         for(auto i = 5; i < 10; i++) {
             auto run = dataset.createRun(batch, i);
@@ -69,7 +69,7 @@ void AsyncWriteBatchTest::testAsyncWriteBatchSubRun() {
     auto run = dataset.createRun(42);
 
     {
-        hepnos::WriteBatch batch(*datastore, async_engine);
+        hepnos::WriteBatch batch(async_engine);
 
         for(auto i = 0; i < 10; i++) {
             auto sr = run.createSubRun(batch, i);
@@ -106,7 +106,7 @@ void AsyncWriteBatchTest::testAsyncWriteBatchEvent() {
     auto subrun = run.createSubRun(2);
 
     {
-        hepnos::WriteBatch batch(*datastore, async_engine);
+        hepnos::WriteBatch batch(async_engine);
 
         for(auto i = 0; i < 10; i++) {
             auto e = subrun.createEvent(batch, i);

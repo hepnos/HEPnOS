@@ -24,6 +24,10 @@ struct EventDescriptor {
     char data[EventDescriptorLength];
 };
 
+/**
+ * @brief The Event class is a KeyValueContainer contained in SubRuns
+ * and with no sub-container.
+ */
 class Event : public KeyValueContainer {
 
     private:
@@ -107,28 +111,38 @@ class Event : public KeyValueContainer {
     bool valid() const;
 
     /**
-     * @brief Stores raw key/value data in this Event.
-     *
-     * @param key Key
-     * @param value Value
-     *
-     * @return a valid ProductID if the key did not already exist, an invalid one otherwise.
+     * @see KeyValueContainer::storeRawData()
      */
     ProductID storeRawData(const std::string& key, const char* value, size_t vsize) override;
+
+    /**
+     * @see KeyValueContainer::storeRawData()
+     */
     ProductID storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) override;
+
+    /**
+     * @see KeyValueContainer::storeRawData()
+     */
     ProductID storeRawData(AsyncEngine& async, const std::string& key, const char* value, size_t vsize) override;
 
     /**
-     * @brief Loads raw key/value data from this Event.
-     *
-     * @param key Key
-     * @param value Buffer used to hold the value.
-     *
-     * @return true if the key exists, false otherwise.
+     * @see KeyValueContainer::loadRawData()
      */
     bool loadRawData(const std::string& key, std::string& value) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
     bool loadRawData(const std::string& key, char* value, size_t* vsize) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
     bool loadRawData(const Prefetcher& prefetcher, const std::string& key, std::string& buffer) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
     bool loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const override;
 
     /**

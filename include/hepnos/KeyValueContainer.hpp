@@ -81,15 +81,34 @@ class KeyValueContainer {
      * @brief Stores raw key/value data in a WriteBatch.
      * This function is virtual and must be overloaded in the child class.
      *
+     * Note since the WriteBatch is flushed later to the DataStore, the DataStore will
+     * not be able to check whether the product could be created or not. Hence the
+     * ProductID returned is valid but may not ultimately correspond to an actual
+     * Product in the DataStore, should the storage operation fail.
+     *
      * @param batch Batch in which to write.
      * @param key Key
      * @param value Value pointer
      * @param vsize Value size (in bytes)
      *
-     * @return 
+     * @return A valid ProductID.
      */
     virtual ProductID storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) = 0;
 
+    /**
+     * @brief Stores binary data associated with a particular key using the AsyncEngine.
+     * Note since the AsyncEngine makes the operation happen later in the background,
+     * the DataStore will not be able to check whether the product could be created or not.
+     * Hence the ProductID returned is valid but may not ultimately correspond to an actual
+     * Product in the DataStore, should the storage operation fail.
+     *
+     * @param engine AsyncEngine to use to write asynchronously.
+     * @param key Key.
+     * @param value Binary data to write.
+     * @param vsize Size of the data (in bytes).
+     *
+     * @return a valid ProductID.
+     */
     virtual ProductID storeRawData(AsyncEngine& async, const std::string& key, const char* value, size_t vsize) = 0;
 
     /**
@@ -103,10 +122,45 @@ class KeyValueContainer {
      */
     virtual bool loadRawData(const std::string& key, std::string& buffer) const = 0;
 
+    /**
+     * @brief Loads binary data associated with a particular key from the container.
+     * This function will return true if the key exists and the read succeeded.
+     * It will return false otherwise.
+     *
+     * @param key Key.
+     * @param value Buffer in which to put the binary data.
+     * @param vsize in: size of the buffer, out: actual size of the data.
+     *
+     * @return true if the key exists and the read succeeded, false otherwise.
+     */
     virtual bool loadRawData(const std::string& key, char* value, size_t* vsize) const = 0;
 
+    /**
+     * @brief Loads binary data associated with a particular key from the container.
+     * This function will look in the prefetcher if the object has been prefetched
+     * (or scheduled to be prefetched) and fall back to looking up in the underlying
+     * DataStore if it hasn't.
+     *
+     * @param prefetcher Prefetcher to look into first.
+     * @param key Key.
+     * @param buffer Buffer in which to put the binary data.
+     *
+     * @return true if the key exists and the read succeeded, false otherwise.
+     */
     virtual bool loadRawData(const Prefetcher& prefetcher, const std::string& key, std::string& buffer) const = 0;
 
+    /**
+     * @brief Loads binary data associated with a particular key from the container.
+     * This function will look in the prefetcher if the object has been prefetched
+     * (or scheduled to be prefetched) and fall back to looking up in the underlying
+     * DataStore if it hasn't.
+     *
+     * @param key Key.
+     * @param value Buffer in which to put the binary data.
+     * @param vsize in: size of the buffer, out: size of the actual data.
+     *
+     * @return true if the key exists and the read succeeded, false otherwise.
+     */
     virtual bool loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const = 0;
 
     /**
@@ -122,7 +176,7 @@ class KeyValueContainer {
      * @param key Key to store.
      * @param value Value to store.
      *
-     * @return true if the key was found. false otherwise.
+     * @return a valid ProductID if the key was found, an invalid one otherwise.
      */
     template<typename K, typename V>
     ProductID store(const K& key, const V& value) {
@@ -137,18 +191,41 @@ class KeyValueContainer {
      * string must not have the "/", or "%" characters. The
      * type of the value must be serializable using Boost.
      *
+     * Note that since the WriteBatch will delay the operation,
+     * the returned ProductID is valid even though the operation
+     * may not ultimately succeed.
+     *
      * @tparam K type of the key.
      * @tparam V type of the value.
      * @param key Key to store.
      * @param value Value to store.
      *
-     * @return true if the key was found. false otherwise.
+     * @return a valid ProductID.
      */
     template<typename K, typename V>
     ProductID store(WriteBatch& batch, const K& key, const V& value) {
         return storeImpl(batch, key, value, std::is_pod<V>());
     }
 
+    /**
+     * @brief Stores a key/value pair into the WriteBatch.
+     * The type of the key should have operator<< available
+     * to stream it into a std::stringstream for the purpose
+     * of converting it into an std::string. The resulting
+     * string must not have the "/", or "%" characters. The
+     * type of the value must be serializable using Boost.
+     *
+     * Note that since the WriteBatch will delay the operation,
+     * the returned ProductID is valid even though the operation
+     * may not ultimately succeed.
+     *
+     * @tparam K type of the key.
+     * @tparam V type of the value.
+     * @param key Key to store.
+     * @param value Value to store.
+     *
+     * @return a valid ProductID.
+     */
     template<typename K, typename V>
     ProductID store(AsyncEngine& async, const K& key, const V& value) {
         return storeImpl(async, key, value, std::is_pod<V>());
@@ -212,11 +289,19 @@ class KeyValueContainer {
         return loadVectorImpl(key, value, std::is_pod<V>());
     }
 
+    /**
+     * @brief Version of load that will first look into the Prefetcher
+     * argument for the requested key.
+     */
     template<typename K, typename V>
     bool load(const Prefetcher& prefetcher, const K& key, V& value) const {
         return loadImpl(prefetcher, key, value, std::is_pod<V>());
     }
 
+    /**
+     * @brief Version of load for vectors, looking first into the
+     * Prefetcher argument for the requested key.
+     */
     template<typename K, typename V>
     bool load(const Prefetcher& prefetcher, const K& key, std::vector<V>& value) const {
         return loadVectorImpl(prefetcher, key, value, std::is_pod<V>());
@@ -312,6 +397,9 @@ class KeyValueContainer {
         return vsize == sizeof(value);
     }
 
+    /**
+     * @brief Implementation of the load function with a prefetcher.
+     */
     template<typename K, typename V>
     bool loadImpl(const Prefetcher& prefetcher, const K& key, V& value,
             const std::integral_constant<bool, true>&) const {
@@ -347,6 +435,9 @@ class KeyValueContainer {
         return true;
     }
 
+    /**
+     * @brief Implementation of the load function with a prefetcher.
+     */
     template<typename K, typename V>
     bool loadImpl(const Prefetcher& prefetcher, const K& key, V& value,
             const std::integral_constant<bool, false>&) const {
@@ -391,6 +482,9 @@ class KeyValueContainer {
         return true;
     }
 
+    /**
+     * @brief Implementation of the load function with a prefetcher.
+     */
     template<typename K, typename V>
     bool loadVectorImpl(const Prefetcher& prefetcher, const K& key, std::vector<V>& value,
             const std::integral_constant<bool, true>&) const {
@@ -440,6 +534,9 @@ class KeyValueContainer {
         return true;
     }
 
+    /**
+     * @brief Implementation of the load function with a prefetcher.
+     */
     template<typename K, typename V>
     bool loadVectorImpl(const Prefetcher& prefetcher, const K& key, std::vector<V>& value,
             const std::integral_constant<bool, false>&) const {

@@ -11,12 +11,23 @@
 
 namespace hepnos {
 
+/**
+ * @brief Returns the name of a type.
+ *
+ * @tparam T Type from which to return the name.
+ *
+ * @return Name of type T.
+ */
 template<typename T>
 std::string demangle() {
     char const * name = typeid(T).name();    
     return boost::core::demangle(name);
 }
 
+/**
+ * @brief Returns the name of type, which example
+ * instance provided for type deduction.
+ */
 template<typename T>
 std::string demangle(T&&) {
     return demangle<T>();

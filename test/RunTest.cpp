@@ -258,7 +258,7 @@ void RunTest::testAsyncPrefetcher() {
     // test begin/end
     {
         AsyncEngine async(*datastore, 1);
-        Prefetcher prefetcher(*datastore, async);
+        Prefetcher prefetcher(async);
         unsigned i=0;
         for(auto it = r.begin(prefetcher); it != r.end(); it++) {
             CPPUNIT_ASSERT(it->valid());
@@ -270,7 +270,7 @@ void RunTest::testAsyncPrefetcher() {
     // test lower_bound
     {
         AsyncEngine async(*datastore, 1);
-        Prefetcher prefetcher(*datastore, async);
+        Prefetcher prefetcher(async);
         unsigned i=5;
         auto it = r.lower_bound(5, prefetcher);
         for(; it != r.end(); it++) {
@@ -283,7 +283,7 @@ void RunTest::testAsyncPrefetcher() {
     // test upper_bound
     {
         AsyncEngine async(*datastore, 1);
-        Prefetcher prefetcher(*datastore, async);
+        Prefetcher prefetcher(async);
         unsigned i=6;
         auto it = r.upper_bound(5, prefetcher);
         for(; it != r.end(); it++) {

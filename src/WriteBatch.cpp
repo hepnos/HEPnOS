@@ -12,9 +12,13 @@ namespace hepnos {
 WriteBatch::WriteBatch(DataStore& datastore, unsigned max_batch_size)
 : m_impl(std::make_unique<WriteBatchImpl>(datastore.m_impl, max_batch_size)) {}
 
-WriteBatch::WriteBatch(DataStore& datastore, AsyncEngine& async, unsigned max_batch_size)
-: m_impl(std::make_unique<WriteBatchImpl>(datastore.m_impl, max_batch_size, async.m_impl)) {}
+WriteBatch::WriteBatch(AsyncEngine& async, unsigned max_batch_size)
+: m_impl(std::make_unique<WriteBatchImpl>(async.m_impl->m_datastore, max_batch_size, async.m_impl)) {}
 
 WriteBatch::~WriteBatch() {}
+
+void WriteBatch::flush() {
+    m_impl->flush();
+}
 
 }

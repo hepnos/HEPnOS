@@ -18,12 +18,25 @@ namespace hepnos {
 
 class Prefetcher;
 
+/**
+ * @brief Size of the SubRunDescriptor.
+ */
 constexpr const int SubRunDescriptorLength = 32;
 
+/**
+ * @brief The SubRunDescriptor structure can be used to
+ * serialize the representation of a SubRun for
+ * the purpose of sending it to another process, where
+ * the corresponding SubRun can be reconstructed without
+ * involving the DataStore.
+ */
 struct SubRunDescriptor {
     char data[SubRunDescriptorLength];
 };
 
+/**
+ * @brief SubRuns can contain Events.
+ */
 class SubRun : public KeyValueContainer {
 
     private:
@@ -109,28 +122,38 @@ class SubRun : public KeyValueContainer {
     bool valid() const;
 
     /**
-     * @brief Stores raw key/value data in this SubRun.
-     *
-     * @param key Key
-     * @param buffer Value
-     *
-     * @return a valid ProductID if the key did not already exist, an invalid one otherwise.
+     * @see KeyValueContainer::storeRawData()
      */
     ProductID storeRawData(const std::string& key, const char* value, size_t vsize) override;
+
+    /**
+     * @see KeyValueContainer::storeRawData()
+     */
     ProductID storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) override;
+
+    /**
+     * @see KeyValueContainer::storeRawData()
+     */
     ProductID storeRawData(AsyncEngine& async, const std::string& key, const char* value, size_t vsize) override;
 
     /**
-     * @brief Loads raw key/value data from this SubRun.
-     *
-     * @param key Key
-     * @param buffer Buffer used to hold the value.
-     *
-     * @return true if the key exists, false otherwise.
+     * @brief KeyValueContainer::loadRawData()
      */
     bool loadRawData(const std::string& key, std::string& buffer) const override;
+
+    /**
+     * @brief KeyValueContainer::loadRawData()
+     */
     bool loadRawData(const std::string& key, char* value, size_t* vsize) const override;
+
+    /**
+     * @brief KeyValueContainer::loadRawData()
+     */
     bool loadRawData(const Prefetcher& prefetcher, const std::string& key, std::string& buffer) const override;
+
+    /**
+     * @brief KeyValueContainer::loadRawData()
+     */
     bool loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const override;
 
     /**
@@ -179,6 +202,11 @@ class SubRun : public KeyValueContainer {
      * SubRun::end() otherwise.
      */
     iterator find(const EventNumber& en);
+
+    /**
+     * @brief Same as find() but associates a Prefetcher object
+     * to the resulting iterator to prefetch the next items.
+     */
     iterator find(const EventNumber& en, const Prefetcher& prefetcher);
 
     /**
@@ -192,6 +220,11 @@ class SubRun : public KeyValueContainer {
      * SubRun::cend() otherwise.
      */
     const_iterator find(const EventNumber& en) const;
+
+    /**
+     * @brief Same as find() but associates a Prefetcher object
+     * to the resulting iterator to prefetch the next items.
+     */
     const_iterator find(const EventNumber& en, const Prefetcher& prefetcher) const;
 
     /**
@@ -201,6 +234,11 @@ class SubRun : public KeyValueContainer {
      * @return an iterator referring to the first Event in this SubRun.
      */
     iterator begin();
+
+    /**
+     * @brief Same as begin() but associates a Prefetcher object
+     * to the resulting iterator to prefetch the next items.
+     */
     iterator begin(const Prefetcher& prefetcher);
 
     /**
@@ -219,6 +257,11 @@ class SubRun : public KeyValueContainer {
      * @return a const_iterator referring to the first Event in this SubRun.
      */
     const_iterator begin() const;
+
+    /**
+     * @brief Same as begin() but associates a Prefetcher object
+     * to the resulting iterator to prefetch the next items.
+     */
     const_iterator begin(const Prefetcher& prefetcher) const;
 
     /**
@@ -237,6 +280,11 @@ class SubRun : public KeyValueContainer {
      * @return a const_iterator referring to the first Event in this SubRun.
      */
     const_iterator cbegin() const;
+
+    /**
+     * @brief Same as cbegin() but associates a Prefetcher object
+     * to the resulting iterator to prefetch the next items.
+     */
     const_iterator cbegin(const Prefetcher& prefetcher) const;
 
     /**
@@ -259,6 +307,11 @@ class SubRun : public KeyValueContainer {
      * if all event numbers are lower.
      */
     iterator lower_bound(const EventNumber&);
+
+    /**
+     * @brief Same as lower_bound() but associates a Prefetcher object
+     * to the resulting iterator to prefetch the next items.
+     */
     iterator lower_bound(const EventNumber&, const Prefetcher&);
 
     /**
@@ -272,6 +325,11 @@ class SubRun : public KeyValueContainer {
      * if all event numbers are lower.
      */
     const_iterator lower_bound(const SubRunNumber&) const;
+
+    /**
+     * @brief Same as lower_bound() but associates a Prefetcher object
+     * to the resulting iterator to prefetch the next items.
+     */
     const_iterator lower_bound(const SubRunNumber&, const Prefetcher&) const;
 
     /**
@@ -285,6 +343,11 @@ class SubRun : public KeyValueContainer {
      * no such Event exists.
      */
     iterator upper_bound(const EventNumber&);
+
+    /**
+     * @brief Same as upper_bound() but associates a Prefetcher object
+     * to the resulting iterator to prefetch the next items.
+     */
     iterator upper_bound(const EventNumber&, const Prefetcher&);
 
     /**
@@ -298,6 +361,11 @@ class SubRun : public KeyValueContainer {
      * no such Event exists.
      */
     const_iterator upper_bound(const SubRunNumber&) const;
+
+    /**
+     * @brief Same as upper_bound() but associates a Prefetcher object
+     * to the resulting iterator to prefetch the next items.
+     */
     const_iterator upper_bound(const SubRunNumber&, const Prefetcher&) const;
 
     /**
@@ -323,8 +391,32 @@ class SubRun : public KeyValueContainer {
      * @return a handle to the created or existing Event.
      */
     Event createEvent(const EventNumber& eventNumber);
+
+    /**
+     * @brief Creates an Event by pushing the creation operation into
+     * a WriteBatch. Note that even though the returned Event object is valid,
+     * since the actual creation is delayed until the WriteBatch is flushed,
+     * there is no guarantee that this operation will ultimately succeed.
+     *
+     * @param batch WriteBatch in which to append the operation.
+     * @param eventNumber Event number.
+     *
+     * @return a valid Event object.
+     */
     Event createEvent(WriteBatch& batch, const EventNumber& eventNumber);
-    Event createEvent(AsyncEngine& batch, const EventNumber& eventNumber);
+
+    /**
+     * @brief Creates an Event asynchronously.
+     * Note that even though the returned Event object is valid, since
+     * the actual creation operation will happen in the background,
+     * there is no guarantee that this operation will succeed.
+     *
+     * @param async AsyncEngine to use to make the operation happen in the background.
+     * @param eventNumber Event number.
+     *
+     * @return a valid Event object.
+     */
+    Event createEvent(AsyncEngine& async, const EventNumber& eventNumber);
 
     /**
      * @brief Fills a SubRunDescriptor with the information from this SubRun object.

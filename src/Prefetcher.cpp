@@ -11,8 +11,8 @@ Prefetcher::Prefetcher(const DataStore& ds, unsigned int cache_size, unsigned in
     m_impl->m_batch_size = batch_size;
 }
 
-Prefetcher::Prefetcher(const DataStore& ds, const AsyncEngine& async, unsigned int cache_size, unsigned int batch_size)
-: m_impl(std::make_shared<AsyncPrefetcherImpl>(ds.m_impl, async.m_impl)) {
+Prefetcher::Prefetcher(const AsyncEngine& async, unsigned int cache_size, unsigned int batch_size)
+: m_impl(std::make_shared<AsyncPrefetcherImpl>(async.m_impl->m_datastore, async.m_impl)) {
     m_impl->m_cache_size = cache_size;
     m_impl->m_batch_size = batch_size;
 }

@@ -182,9 +182,6 @@ class DataStore {
 
     private:
 
-    /**
-     * @brief Implementation of the class (using Pimpl idiom)
-     */
     std::shared_ptr<DataStoreImpl> m_impl; /*!< Pointer to implementation */
 
     /**

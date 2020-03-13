@@ -32,9 +32,6 @@ class DataSet : public KeyValueContainer {
 
     private:
 
-    /**
-     * @brief Implementation class (used for the Pimpl idiom).
-     */
     std::shared_ptr<DataSetImpl> m_impl; /*!< Pointer to implementation. */
 
     /**
@@ -137,34 +134,38 @@ class DataSet : public KeyValueContainer {
     bool valid() const;
 
     /**
-     * @brief Stores binary data associated with a particular key into this DataSet.
-     * This function will return true if the key did not already exist and the
-     * write succeeded. It will return false otherwise.
-     *
-     * @param key Key.
-     * @param buffer Binary data to insert.
-     *
-     * @return a valid ProductID if the key did not already exist and the write succeeded,
-     *      an invalid one otherwise.
+     * @see KeyValueContainer::storeRawData()
      */
     ProductID storeRawData(const std::string& key, const char* value, size_t vsize) override;
+
+    /**
+     * @see KeyValueContainer::storeRawData()
+     */
     ProductID storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) override;
+
+    /**
+     * @see KeyValueContainer::storeRawData()
+     */
     ProductID storeRawData(AsyncEngine& engine, const std::string& key, const char* value, size_t vsize) override;
 
     /**
-     * @brief Loads binary data associated with a particular key from the DataSet.
-     * This function will return true if the key exists and the read succeeded.
-     * It will return false otherwise.
-     * 
-     * @param key Key.
-     * @param buffer Buffer in which to put the binary data.
-     *
-     * @return true if the key exists and the read succeeded,
-     *      false otherwise.
+     * @see KeyValueContainer::loadRawData()
      */
     bool loadRawData(const std::string& key, std::string& value) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
     bool loadRawData(const std::string& key, char* value, size_t* vsize) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
     bool loadRawData(const Prefetcher& prefetcher, const std::string& key, std::string& value) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
     bool loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const override;
 
     /**
@@ -213,7 +214,31 @@ class DataSet : public KeyValueContainer {
      * @return A Run instance pointing to the created run.
      */
     Run createRun(const RunNumber& runNumber);
+
+    /**
+     * @brief Creates a Run asynchronously.
+     * Note that even though the returned Run object is valid, since
+     * the actual creation operation will happen in the background,
+     * there is no guarantee that this operation will succeed.
+     *
+     * @param async AsyncEngine to use to make the operation happen in the background.
+     * @param runNumber Run number.
+     *
+     * @return a valid Run object.
+     */
     Run createRun(AsyncEngine& async, const RunNumber& runNumber);
+
+    /**
+     * @brief Creates a Run by pushing the creation operation into
+     * a WriteBatch. Note that even though the returned Run object is valid,
+     * since the actual creation is delayed until the WriteBatch is flushed,
+     * there is no guarantee that this operation will ultimately succeed.
+     *
+     * @param batch WriteBatch in which to append the operation.
+     * @param runNumber Run number.
+     *
+     * @return a valid Run object.
+     */
     Run createRun(WriteBatch& batch, const RunNumber& runNumber);
 
     /**

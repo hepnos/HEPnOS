@@ -16,15 +16,28 @@
 
 namespace hepnos {
 
-constexpr const int RunDescriptorLength = 24;
-
 class Prefetcher;
 class RunSet;
 
+/**
+ * @brief Size of the data (in bytes) in a RunDescriptor.
+ */
+constexpr const int RunDescriptorLength = 24;
+
+/**
+ * @brief The RunDescriptor structure can be used to
+ * serialize the representation of a Run for
+ * the purpose of sending it to another process, where
+ * the corresponding Run can be reconstructed without
+ * involving the DataStore. 
+ */
 struct RunDescriptor {
     char data[RunDescriptorLength];
 };
 
+/**
+ * @brief Run class, contains SubRuns.
+ */
 class Run : public KeyValueContainer {
 
     private:
@@ -111,28 +124,38 @@ class Run : public KeyValueContainer {
     bool valid() const;
 
     /**
-     * @brief Stores raw key/value data in this Run.
-     *
-     * @param key Key
-     * @param buffer Value
-     *
-     * @return a valid ProductID if the key did not already exist, an invalid one otherwise.
+     * @see KeyValueContainer::storeRawData()
      */
     ProductID storeRawData(const std::string& key, const char* value, size_t vsize) override;
+
+    /**
+     * @see KeyValueContainer::storeRawData()
+     */
     ProductID storeRawData(AsyncEngine& async, const std::string& key, const char* value, size_t vsize) override;
+
+    /**
+     * @see KeyValueContainer::storeRawData()
+     */
     ProductID storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) override;
 
     /**
-     * @brief Loads raw key/value data from this Run.
-     *
-     * @param key Key
-     * @param buffer Buffer used to hold the value.
-     *
-     * @return true if the key exists, false otherwise.
+     * @see KeyValueContainer::loadRawData() 
      */
     bool loadRawData(const std::string& key, std::string& buffer) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData() 
+     */
     bool loadRawData(const std::string& key, char* value, size_t* vsize) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData() 
+     */
     bool loadRawData(const Prefetcher& prefetcher, const std::string& key, std::string& buffer) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData() 
+     */
     bool loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const override;
 
     /**
@@ -176,6 +199,18 @@ class Run : public KeyValueContainer {
      * Run::end() otherwise.
      */
     iterator find(const SubRunNumber& srn);
+
+    /**
+     * @brief Searches this Run for a SubRun with the
+     * provided number. The provided Prefetcher will be used to
+     * prefetch the next objects when using the iterator.
+     *
+     * @param srn SubRun number to search.
+     * @param prefetcher Prefetcher to use when iterating.
+     *
+     * @return an iterator pointing to the SubRun if found,
+     * Run::end() otherwise.
+     */
     iterator find(const SubRunNumber& srn, const Prefetcher& prefetcher);
 
     /**
@@ -189,6 +224,18 @@ class Run : public KeyValueContainer {
      * Run::cend() otherwise.
      */
     const_iterator find(const SubRunNumber&) const;
+
+    /**
+     * @brief Searches this Run for a SubRun with the
+     * provided number. The provided prefetcher will be used to
+     * prefetch the next items when using the iterator.
+     *
+     * @param srn SubRun number to search.
+     * @param prefetcher Prefetcher to use when iterating.
+     *
+     * @return a const_iterator pointing to the SubRun if found,
+     * Run::cend() otherwise.
+     */
     const_iterator find(const SubRunNumber&, const Prefetcher&) const;
 
     /**
@@ -198,6 +245,15 @@ class Run : public KeyValueContainer {
      * @return an iterator referring to the first SubRun in this Run.
      */
     iterator begin();
+
+    /**
+     * @brief Returns an iterator referring to the first SubRun in
+     * this Run and using the given 
+     *
+     * @param Prefetcher
+     *
+     * @return 
+     */
     iterator begin(const Prefetcher&);
 
     /**
@@ -216,6 +272,16 @@ class Run : public KeyValueContainer {
      * @return a const_iterator referring to the first SubRun in this Run.
      */
     const_iterator begin() const;
+
+    /**
+     * @brief Returns a const_iterator referring to the first SubRun
+     * in this Run. The provided Prefetcher instance will be used
+     * to prefetch the next items when using the iterator.
+     *
+     * @param Prefetcher Prefetcher to use to prefetch items.
+     *
+     * @return const_iterator.
+     */
     const_iterator begin(const Prefetcher&) const;
 
     /**
@@ -234,6 +300,11 @@ class Run : public KeyValueContainer {
      * @return a const_iterator referring to the first SubRun in this Run.
      */
     const_iterator cbegin() const;
+
+
+    /**
+     * @see const_iterator begin(const Prefercher&)
+     */
     const_iterator cbegin(const Prefetcher&) const;
 
     /**
@@ -256,6 +327,11 @@ class Run : public KeyValueContainer {
      * if all subrun numbers are lower.
      */
     iterator lower_bound(const SubRunNumber&);
+
+    /**
+     * @brief Same as lower_bound but associates a Prefetcher to
+     * the resulting iterator to prefetch the next items.
+     */
     iterator lower_bound(const SubRunNumber&, const Prefetcher&);
 
     /**
@@ -269,6 +345,11 @@ class Run : public KeyValueContainer {
      * if all subrun numbers are lower.
      */
     const_iterator lower_bound(const SubRunNumber&) const;
+
+    /**
+     * @brief Same as lower_bound but associates a Prefetcher to
+     * the resulting iterator to prefetch the next items.
+     */
     const_iterator lower_bound(const SubRunNumber&, const Prefetcher&) const;
 
     /**
@@ -282,6 +363,11 @@ class Run : public KeyValueContainer {
      * no such SubRun exists.
      */
     iterator upper_bound(const SubRunNumber&);
+
+    /**
+     * @brief Same as upper_bound but associates a Prefetcher to
+     * the resulting iterator to prefetch the next items.
+     */
     iterator upper_bound(const SubRunNumber&, const Prefetcher&);
 
     /**
@@ -295,6 +381,11 @@ class Run : public KeyValueContainer {
      * no such SubRun exists.
      */
     const_iterator upper_bound(const SubRunNumber&) const;
+
+    /**
+     * @brief Same as upper_bound but associates a Prefetcher to
+     * the resulting iterator to prefetch the next items.
+     */
     const_iterator upper_bound(const SubRunNumber&, const Prefetcher&) const;
 
     /**
@@ -320,7 +411,31 @@ class Run : public KeyValueContainer {
      * @return a handle to the created or existing SubRun.
      */
     SubRun createSubRun(const SubRunNumber& subRunNumber);
+
+    /**
+     * @brief Creates a SubRun asynchronously.
+     * Note that even though the returned SubRun object is valid, since
+     * the actual creation operation will happen in the background,
+     * there is no guarantee that this operation will succeed.
+     *
+     * @param async AsyncEngine to use to make the operation happen in the background.
+     * @param subRunNumber SubRun number.
+     *
+     * @return a valid SubRun object.
+     */
     SubRun createSubRun(AsyncEngine& async, const SubRunNumber& subRunNumber);
+
+    /**
+     * @brief Creates a SubRun by pushing the creation operation into
+     * a WriteBatch. Note that even though the returned SubRun object is valid,
+     * since the actual creation is delayed until the WriteBatch is flushed,
+     * there is no guarantee that this operation will ultimately succeed.
+     *
+     * @param batch WriteBatch in which to append the operation.
+     * @param subRunNumber SubRun number.
+     *
+     * @return a valid SubRun object.
+     */
     SubRun createSubRun(WriteBatch& batch, const SubRunNumber& subRunNumber);
 
     /**

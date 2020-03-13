@@ -112,6 +112,12 @@ class RunSet {
      * RunSet::end() otherwise.
      */
     iterator find(const RunNumber& runNumber);
+
+
+    /**
+     * @brief Same as find() but enables a Prefetcher object to be
+     * associated with the resulting iterator, to prefetch the next items.
+     */
     iterator find(const RunNumber& runNumber, const Prefetcher& prefetcher);
 
     /**
@@ -126,6 +132,11 @@ class RunSet {
      * RunSet::cend() otherwise.
      */
     const_iterator find(const RunNumber& runNumber) const;
+
+    /**
+     * @brief Same as find() but enables a Prefetcher object to be
+     * associated with the resulting iterator, to prefetch the next items.
+     */
     const_iterator find(const RunNumber& runNumber, const Prefetcher& prefetcher) const;
 
 
@@ -136,6 +147,11 @@ class RunSet {
      * @return an iterator referring to the first Run in this RunSet.
      */
     iterator begin();
+
+    /**
+     * @brief Same as begin() but enables a Prefetcher object to be
+     * associated with the resulting iterator, to prefetch the next items.
+     */
     iterator begin(const Prefetcher& prefetcher);
 
     /**
@@ -154,6 +170,11 @@ class RunSet {
      * @return an iterator referring to the first Run in this RunSet.
      */
     const_iterator begin() const;
+
+    /**
+     * @brief Same as begin() but enables a Prefetcher object to be
+     * associated with the resulting iterator, to prefetch the next items.
+     */
     const_iterator begin(const Prefetcher& prefetcher) const;
 
     /**
@@ -172,6 +193,11 @@ class RunSet {
      * @return a const_iterator referring to the first Run in this RunSet.
      */
     const_iterator cbegin() const;
+
+    /**
+     * @brief Same as cbegin() but enables a Prefetcher object to be
+     * associated with the resulting iterator, to prefetch the next items.
+     */
     const_iterator cbegin(const Prefetcher& prefetcher) const;
 
     /**
@@ -194,6 +220,11 @@ class RunSet {
      * if such a Run does not exist.
      */
     iterator lower_bound(const RunNumber& lb);
+
+    /**
+     * @brief Same as lower_bound() but enables a Prefetcher object to be
+     * associated with the resulting iterator, to prefetch the next items.
+     */
     iterator lower_bound(const RunNumber& lb, const Prefetcher& prefetcher);
 
     /**
@@ -207,6 +238,11 @@ class RunSet {
      * if such a Run does not exist.
      */
     const_iterator lower_bound(const RunNumber& lb) const;
+
+    /**
+     * @brief Same as lower_bound() but enables a Prefetcher object to be
+     * associated with the resulting iterator, to prefetch the next items.
+     */
     const_iterator lower_bound(const RunNumber& lb, const Prefetcher& prefetcher) const;
 
     /**
@@ -220,6 +256,11 @@ class RunSet {
      * no such a Run exist.
      */
     iterator upper_bound(const RunNumber& ub);
+
+    /**
+     * @brief Same as upper_bound() but enables a Prefetcher object to be
+     * associated with the resulting iterator, to prefetch the next items.
+     */
     iterator upper_bound(const RunNumber& ub,const Prefetcher& prefetcher);
 
     /**
@@ -233,6 +274,11 @@ class RunSet {
      * no such a Run exist.
      */
     const_iterator upper_bound(const RunNumber& ub) const;
+
+    /**
+     * @brief Same as upper_bound() but enables a Prefetcher object to be
+     * associated with the resulting iterator, to prefetch the next items.
+     */
     const_iterator upper_bound(const RunNumber& ub, const Prefetcher& prefetcher) const;
 };
 

@@ -14,6 +14,9 @@
 
 namespace hepnos {
 
+/**
+ * @brief Product identifier.
+ */
 class ProductID {
 
     friend class DataStore;

@@ -18,13 +18,13 @@ class AsyncEngineImpl {
     friend class AsyncEngine;
     friend class AsyncPrefetcherImpl;
 
+    public:
+
     std::shared_ptr<DataStoreImpl>        m_datastore;
     tl::pool                              m_pool;
     std::vector<tl::managed<tl::xstream>> m_xstreams;
     std::vector<std::string>              m_errors;
     tl::mutex                             m_errors_mtx;
-
-    public:
 
     AsyncEngineImpl(const std::shared_ptr<DataStoreImpl>& ds, size_t num_threads)
     : m_datastore(ds) {

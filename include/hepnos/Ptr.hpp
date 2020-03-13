@@ -22,6 +22,14 @@
 
 namespace hepnos {
 
+/**
+ * @brief The Ptr template class enables
+ * storing a reference to an already stored product,
+ * or to a particular element in a stored vector.
+ *
+ * @tparam T Type of product being pointed to.
+ * @tparam C Type of container (e.g. std::vector).
+ */
 template<typename T, typename C>
 class Ptr {
 
