@@ -22,7 +22,12 @@ void WriteBatch::flush() {
 }
 
 void WriteBatch::activateStatistics(bool activate) {
-    m_impl->m_stats_enabled = activate;
+    if(activate) {
+        if(m_impl->m_stats) return;
+        m_impl->m_stats = std::make_unique<WriteBatchStatistics>();
+    } else {
+        m_impl->m_stats.reset();
+    }
 }
 
 void WriteBatch::collectStatistics(WriteBatchStatistics& stats) const {

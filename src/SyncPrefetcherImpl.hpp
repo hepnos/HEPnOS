@@ -27,6 +27,7 @@ class SyncPrefetcherImpl : public PrefetcherImpl {
             std::string data;
             bool ok = m_datastore->loadRawProduct(product_id, data);
             if(ok) {
+                update_product_statistics(data.size());
                 m_product_cache[product_id.m_key] = std::move(data);
             }
         }
@@ -41,8 +42,10 @@ class SyncPrefetcherImpl : public PrefetcherImpl {
         while(m_item_cache.size() != m_cache_size) {
             std::vector<std::shared_ptr<ItemImpl>> items;
             size_t s = m_datastore->nextItems(item_type, prefix_type, last, items, m_batch_size, target);
-            if(s != 0)
+            if(s != 0) {
+                update_batch_statistics(s);
                 last = items[items.size()-1];
+            }
             for(auto& item : items) {
                 fetchRequestedProducts(item);
                 m_item_cache.insert(std::move(item));
@@ -85,8 +88,10 @@ class SyncPrefetcherImpl : public PrefetcherImpl {
         auto product_id = DataStoreImpl::buildProductID(id, productName);
         auto it = m_product_cache.find(product_id.m_key);
         if(it == m_product_cache.end()) {
+            m_stats->product_cache_miss += 1;
             return m_datastore->loadRawProduct(product_id, data);
         } else {
+            m_stats->product_cache_hit += 1;
             data = std::move(it->second);
             m_product_cache.erase(it);
             return true;
@@ -99,9 +104,11 @@ class SyncPrefetcherImpl : public PrefetcherImpl {
         auto product_id = DataStoreImpl::buildProductID(id, productName);
         auto it = m_product_cache.find(product_id.m_key);
         if(it == m_product_cache.end()) {
+            if(m_stats) m_stats->product_cache_miss += 1;
             return m_datastore->loadRawProduct(id, productName, value, vsize);
         } else {
             *vsize = it->second.size();
+            if(m_stats) m_stats->product_cache_hit += 1;
             std::memcpy(value, it->second.data(), *vsize);
             return true;
         }

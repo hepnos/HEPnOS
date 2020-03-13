@@ -47,4 +47,17 @@ void Prefetcher::fetchProductImpl(const std::string& label, bool fetch=true) con
     }
 }
 
+void Prefetcher::activateStatistics(bool activate) {
+    if(activate) {
+        if(m_impl->m_stats) return;
+        m_impl->m_stats = std::make_unique<PrefetcherStatistics>();
+    } else {
+        m_impl->m_stats.reset();
+    }
+}
+
+void Prefetcher::collectStatistics(PrefetcherStatistics& stats) const {
+    m_impl->collectStatistics(stats);
+}
+
 }

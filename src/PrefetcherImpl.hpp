@@ -20,6 +20,9 @@ class PrefetcherImpl {
         }
     };
 
+    mutable std::unique_ptr<PrefetcherStatistics> m_stats;
+    mutable tl::mutex                             m_stats_mtx;
+
     std::shared_ptr<DataStoreImpl>   m_datastore;
     unsigned int                     m_cache_size = 16;
     unsigned int                     m_batch_size = 1;
@@ -32,6 +35,16 @@ class PrefetcherImpl {
     : m_datastore(ds) {}
 
     virtual ~PrefetcherImpl() = default;
+
+    void update_batch_statistics(size_t batch_size) const {
+        if(!m_stats) return;
+        m_stats->batch_sizes.updateWith(batch_size);
+    }
+
+    void update_product_statistics(size_t psize) const {
+        if(!m_stats) return;
+        m_stats->product_sizes.updateWith(psize);
+    }
 
     virtual void fetchRequestedProducts(const std::shared_ptr<ItemImpl>& itemImpl) const = 0;
 
@@ -55,6 +68,12 @@ class PrefetcherImpl {
     virtual bool loadRawProduct(const ItemDescriptor& id,
                         const std::string& productName,
                         char* value, size_t* vsize) const = 0;
+
+    void collectStatistics(PrefetcherStatistics& stats) const {
+        std::unique_lock<tl::mutex> lock(m_stats_mtx);
+        if(m_stats)
+            stats = *m_stats;
+    }
 };
 
 }

@@ -31,8 +31,7 @@ class WriteBatchImpl {
 
     typedef std::unordered_map<const sdskv::database*, keyvals> entries_type;
 
-    WriteBatchStatistics                  m_stats;
-    bool                                  m_stats_enabled;
+    std::unique_ptr<WriteBatchStatistics> m_stats;
     mutable tl::mutex                     m_stats_mtx;
 
     std::shared_ptr<DataStoreImpl>        m_datastore;
@@ -45,15 +44,15 @@ class WriteBatchImpl {
     bool                                  m_async_thread_should_stop = false;
 
     void update_keyval_statistics(size_t ksize, size_t vsize) {
-        if(!m_stats_enabled) return;
-        m_stats.key_sizes.updateWith(ksize);
+        if(!m_stats) return;
+        m_stats->key_sizes.updateWith(ksize);
         if(vsize)
-            m_stats.value_sizes.updateWith(vsize);
+            m_stats->value_sizes.updateWith(vsize);
     }
 
     void update_operation_statistics(size_t batch_size) {
-        if(!m_stats_enabled) return;
-        m_stats.batch_sizes.updateWith(batch_size);
+        if(!m_stats) return;
+        m_stats->batch_sizes.updateWith(batch_size);
     }
 
     static void writer_thread(WriteBatchImpl& wb,
@@ -229,7 +228,8 @@ class WriteBatchImpl {
 
     void collectStatistics(WriteBatchStatistics& stats) const {
         std::unique_lock<tl::mutex> lock(m_stats_mtx);
-        stats = m_stats;
+        if(m_stats)
+            stats = *m_stats;
     }
 };
 

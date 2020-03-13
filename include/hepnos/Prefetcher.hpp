@@ -9,6 +9,7 @@
 #include <memory>
 #include <hepnos/Demangle.hpp>
 #include <hepnos/Prefetchable.hpp>
+#include <hepnos/Statistics.hpp>
 
 namespace hepnos {
 
@@ -20,6 +21,13 @@ class EventSet;
 class Run;
 class SubRun;
 class Event;
+
+struct PrefetcherStatistics {
+    Statistics<size_t,double> batch_sizes;
+    Statistics<size_t,double> product_sizes;
+    size_t                    product_cache_hit  = 0;
+    size_t                    product_cache_miss = 0;
+};
 
 /**
  * @brief The Prefetcher object will actively try to prefetch
@@ -133,6 +141,20 @@ class Prefetcher {
     void fetchProduct(const std::string& label, bool fetch=true) const {
         fetchProductImpl(label + "#" + demangle<V>(), fetch);
     }
+
+    /**
+     * @brief Activate statistics collection.
+     *
+     * @param activate Whether to activate statistics.
+     */
+    void activateStatistics(bool activate=true);
+
+    /**
+     * @brief Collects the usage statistics.
+     *
+     * @param stats PrefetcherStatistics object to fill.
+     */
+    void collectStatistics(PrefetcherStatistics& stats) const;
 
     private:
 
