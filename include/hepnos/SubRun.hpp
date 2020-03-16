@@ -8,6 +8,7 @@
 
 #include <memory>
 #include <string>
+#include <boost/serialization/binary_object.hpp>
 #include <hepnos/DataStore.hpp>
 #include <hepnos/Event.hpp>
 #include <hepnos/SubRunNumber.hpp>
@@ -32,6 +33,12 @@ constexpr const int SubRunDescriptorLength = 32;
  */
 struct SubRunDescriptor {
     char data[SubRunDescriptorLength];
+
+    template<typename Archive>
+    void serialize(Archive& ar, const unsigned int version) {
+        ar & boost::serialization::make_binary_object(
+                static_cast<void*>(this), sizeof(*this));
+    }
 };
 
 /**

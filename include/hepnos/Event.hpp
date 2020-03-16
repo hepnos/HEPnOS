@@ -8,6 +8,7 @@
 
 #include <memory>
 #include <string>
+#include <boost/serialization/binary_object.hpp>
 #include <hepnos/DataStore.hpp>
 #include <hepnos/EventNumber.hpp>
 #include <hepnos/Exception.hpp>
@@ -22,6 +23,12 @@ class EventSet;
 
 struct EventDescriptor {
     char data[EventDescriptorLength];
+
+    template<typename Archive>
+    void serialize(Archive& ar, const unsigned int version) {
+        ar & boost::serialization::make_binary_object(
+                static_cast<void*>(this), sizeof(*this));
+    }
 };
 
 /**

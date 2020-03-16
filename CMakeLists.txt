@@ -59,6 +59,10 @@ endif (CPPUNIT_FOUND)
 
 add_subdirectory (src)
 add_subdirectory (bin)
+if(ENABLE_EXAMPLES)
+    message(STATUS "Examples will be built")
+    add_subdirectory (examples)
+endif(ENABLE_EXAMPLES)
 
 if(CPPUNIT_FOUND AND ENABLE_TESTS)
     message(STATUS "Unit tests are enabled, will be built")
