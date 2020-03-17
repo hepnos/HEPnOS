@@ -19,17 +19,22 @@ set(hepnos-service-src service/HEPnOSService.cpp
 # load package helper for generating cmake CONFIG packages
 include (CMakePackageConfigHelpers)
 
-# where to install files for "find_package"
-set (hepnos-pkg "share/cmake/hepnos")
-
 #
 # library version set here (e.g. for shared libs).
 #
 set (HEPNOS_VERSION_MAJOR 0)
-set (HEPNOS_VERSION_MINOR 1)
-set (HEPNOS_VERSION_PATCH 2)
+set (HEPNOS_VERSION_MINOR 3)
+set (HEPNOS_VERSION_PATCH 0)
 set (hepnos-vers "${HEPNOS_VERSION_MAJOR}.${HEPNOS_VERSION_MINOR}")
 set (HEPNOS_VERSION "${hepnos-vers}.${HEPNOS_VERSION_PATCH}")
+
+# where to install files for "find_package"
+set (hepnos-pkg "share/cmake/hepnos")
+
+# some bits for the pkg-config file
+set (DEST_DIR "${CMAKE_INSTALL_PREFIX}")
+set (PRIVATE_LIBS "-lhepnos")
+configure_file ("hepnos.pc.in" "hepnos.pc" @ONLY)
 
 add_library(hepnos ${hepnos-src})
 target_link_libraries (hepnos uuid thallium mercury margo yaml-cpp sdskv-client ch-placement)
@@ -94,3 +99,5 @@ install (FILES ../include/hepnos.hpp
 		DESTINATION include)
 install (FILES ../include/hepnos-service.h
 		DESTINATION include)
+install (FILES "${CMAKE_CURRENT_BINARY_DIR}/hepnos.pc"
+		DESTINATION "lib/pkgconfig/")

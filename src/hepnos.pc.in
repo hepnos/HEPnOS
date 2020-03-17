@@ -1,0 +1,13 @@
+prefix=@DEST_DIR@
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: HEPnOS
+Description: A distributed storage system for high energy physics applications.
+Version: @HEPNOS_VERSION@
+
+Requires: uuid yaml-cpp thallium sdskv-client ch-placement
+Libs: -L${libdir} @PRIVATE_LIBS@
+Cflags: -I${includedir}
+
