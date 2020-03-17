@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
 
     std::string configFile(argv[1]);
 
-    DataStore datastore = DataStore::connect(configFile);
+    DataStore datastore = DataStore::connect(configFile, true);
     // Get the root of the DataStore
     DataSet root = datastore.root();
     // Create a DataSet

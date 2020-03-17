@@ -19,6 +19,7 @@ int main(int argc, char** argv) {
     // Create a DataSet
     DataSet example7 = root.createDataSet("example7");
     // Create 5 Runs with 5 SubRuns with 5 Events
+    std::cout << "Creating Runs, SubRuns, and Events" << std::endl;
     for(unsigned i=0; i < 5; i++) {
         auto run = example7.createRun(i);
         for(unsigned j=0; j < 5; j++) {
@@ -29,6 +30,7 @@ int main(int argc, char** argv) {
         }
     }
     // Iterate over the events directly from the example7 DataSet
+    std::cout << "Iterating over all Events" << std::endl;
     for(auto& event : example7.events()) {
         SubRun subrun = event.subrun();
         Run run = subrun.run();
@@ -38,9 +40,11 @@ int main(int argc, char** argv) {
                   << std::endl;
     }
     // Iterate target by target
+    std::cout << "Iterating over all Events target by target" << std::endl;
     unsigned numTargets = datastore.numTargets(ItemType::EVENT);
     for(unsigned target = 0; target < numTargets; target++) {
-        for(auto& event : example7.events()) {
+        std::cout << "Target " << target << std::endl;
+        for(auto& event : example7.events(target)) {
             SubRun subrun = event.subrun();
             Run run = subrun.run();
             std::cout << "Run " << run.number() 
