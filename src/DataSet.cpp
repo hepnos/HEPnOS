@@ -164,7 +164,10 @@ DataSet DataSet::createDataSet(const std::string& name) {
     auto new_dataset_impl = std::make_shared<DataSetImpl>(
             m_impl->m_datastore, m_impl->m_level+1,
             std::make_shared<std::string>(parent), name);
-    m_impl->m_datastore->createDataSet(m_impl->m_level+1, parent, name, new_dataset_impl->m_uuid);
+    bool b = m_impl->m_datastore->createDataSet(m_impl->m_level+1, parent, name, new_dataset_impl->m_uuid);
+    if(!b) {
+        return *find(name);
+    }
     return DataSet(new_dataset_impl);
 }
 
