@@ -88,10 +88,10 @@ class SyncPrefetcherImpl : public PrefetcherImpl {
         auto product_id = DataStoreImpl::buildProductID(id, productName);
         auto it = m_product_cache.find(product_id.m_key);
         if(it == m_product_cache.end()) {
-            m_stats->product_cache_miss += 1;
+            if(m_stats) m_stats->product_cache_miss += 1;
             return m_datastore->loadRawProduct(product_id, data);
         } else {
-            m_stats->product_cache_hit += 1;
+            if(m_stats) m_stats->product_cache_hit += 1;
             data = std::move(it->second);
             m_product_cache.erase(it);
             return true;
