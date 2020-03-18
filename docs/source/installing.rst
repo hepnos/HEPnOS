@@ -79,4 +79,9 @@ You can now link targets as follows.
 Using the HEPnOS client libraries with pkg-config
 -------------------------------------------------
 
-pkg-config is not yet supported.
+Support for pkg-config is still preliminary and not completely supported.
+Once loaded into your working environment, :code:`pkg-config --libs --cflags hepnos`
+will give you the CFLAGS and LDFLAGS you need to link your code against
+HEPnOS. However this command will not give you CFLAGS or LDFLAGS for the
+Boost serialization library, which does not itself support pkg-config.
+You will have to add these manually.
