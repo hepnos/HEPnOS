@@ -11,6 +11,15 @@ namespace hepnos {
 
 WriteBatch::WriteBatch() {}
 
+WriteBatch::WriteBatch(WriteBatch&& other) 
+: m_impl(std::move(other.m_impl)) {}
+
+WriteBatch& WriteBatch::operator=(WriteBatch&& other) {
+    if(&other == this) return *this;
+    m_impl = std::move(other.m_impl);
+    return *this;
+}
+
 WriteBatch::WriteBatch(DataStore& datastore, unsigned max_batch_size)
 : m_impl(std::make_unique<WriteBatchImpl>(datastore.m_impl, max_batch_size)) {}
 

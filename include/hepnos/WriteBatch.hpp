@@ -100,12 +100,12 @@ class WriteBatch {
     /**
      * @brief Deleted copy-assignment operator.
      */
-    WriteBatch(WriteBatch&&) = default;
+    WriteBatch(WriteBatch&&);
     
     /**
      * @brief Deleted move-assignment operator.
      */
-    WriteBatch& operator=(WriteBatch&&) = default;
+    WriteBatch& operator=(WriteBatch&&);
     
     /**
      * @brief Flush the content of the WriteBatch, blocking until
