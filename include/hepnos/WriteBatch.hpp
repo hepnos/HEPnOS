@@ -53,6 +53,11 @@ class WriteBatch {
     public:
 
     /**
+     * @brief Default constructor.
+     */
+    WriteBatch() = default;
+
+    /**
      * @brief Constructor.
      *
      * Note: the max_batch_size is not the maximum capacity of the WriteBatch.

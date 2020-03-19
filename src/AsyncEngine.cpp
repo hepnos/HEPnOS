@@ -8,11 +8,16 @@ AsyncEngine::AsyncEngine(DataStore& ds, size_t num_threads)
 : m_impl(std::make_shared<AsyncEngineImpl>(ds.m_impl, num_threads)) {}
 
 void AsyncEngine::wait() {
-    m_impl->wait();
+    if(m_impl)
+        m_impl->wait();
 }
 
 const std::vector<std::string>& AsyncEngine::errors() const {
-    return m_impl->m_errors;
+    static std::vector<std::string> _default;
+    if(m_impl)
+        return m_impl->m_errors;
+    else
+        return _default;
 }
 
 }

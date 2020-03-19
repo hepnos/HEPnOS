@@ -18,10 +18,13 @@ WriteBatch::WriteBatch(AsyncEngine& async, unsigned max_batch_size)
 WriteBatch::~WriteBatch() {}
 
 void WriteBatch::flush() {
-    m_impl->flush();
+    if(m_impl)
+        m_impl->flush();
 }
 
 void WriteBatch::activateStatistics(bool activate) {
+    if(!m_impl)
+        throw Exception("Invalid WriteBatch");
     if(activate) {
         if(m_impl->m_stats) return;
         m_impl->m_stats = std::make_unique<WriteBatchStatistics>();
@@ -31,7 +34,8 @@ void WriteBatch::activateStatistics(bool activate) {
 }
 
 void WriteBatch::collectStatistics(WriteBatchStatistics& stats) const {
-    m_impl->collectStatistics(stats);
+    if(m_impl)
+        m_impl->collectStatistics(stats);
 }
 
 }

@@ -49,6 +49,8 @@ class AsyncEngine {
 
     public:
 
+    AsyncEngine() = default;
+
     /**
      * @brief Constructor.
      *
