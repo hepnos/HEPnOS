@@ -55,7 +55,7 @@ class WriteBatch {
     /**
      * @brief Default constructor.
      */
-    WriteBatch() = default;
+    WriteBatch();
 
     /**
      * @brief Constructor.

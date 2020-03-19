@@ -9,6 +9,8 @@
 
 namespace hepnos {
 
+WriteBatch::WriteBatch() {}
+
 WriteBatch::WriteBatch(DataStore& datastore, unsigned max_batch_size)
 : m_impl(std::make_unique<WriteBatchImpl>(datastore.m_impl, max_batch_size)) {}
 
