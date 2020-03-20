@@ -27,7 +27,7 @@ Now edit *~/.spack/cray/packages.yaml* with the following.
 
           packages.yaml (show/hide)
 
-    .. literalinclude:: ../../examples/theta/packages.yaml
+    .. literalinclude:: ../../theta/packages.yaml
        :language: yaml
 
 Those are system packages that Spack won't need to install.
