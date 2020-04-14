@@ -38,9 +38,6 @@ class AsyncEngineImpl {
             for(size_t i=0; i < num_threads; i++) {
                 m_xstreams.push_back(tl::xstream::create(tl::scheduler::predef::deflt, m_pool));
             }
-            for(auto& es : m_xstreams) {
-                es->start();
-            }
         } else {
             auto current_es = tl::xstream::self();
             auto pools = current_es.get_main_pools(1);
@@ -125,19 +122,14 @@ class AsyncEngineImpl {
     }
 
     void wait() {
-        // join the current set of ES
+        // join the set of ES
         for(auto& es : m_xstreams) {
             es->join();
         }
-        // create a new set of ES
-        std::vector<tl::managed<tl::xstream>> new_es;
-        for(unsigned i=0; i < m_xstreams.size(); i++) {
-            new_es.push_back(tl::xstream::create(tl::scheduler::predef::deflt, m_pool));
-        }
-        // replace old es
-        m_xstreams = std::move(new_es);
-        // starting new ES
-        for(auto& es : m_xstreams) es->start();
+        // revive the ES
+        for(auto& es : m_xstreams) {
+            es->revive();
+        } 
     }
 };
 

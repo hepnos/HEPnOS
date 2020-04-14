@@ -6,6 +6,7 @@
 #ifndef __HEPNOS_WRITE_BATCH_H
 #define __HEPNOS_WRITE_BATCH_H
 
+#include <ostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -129,5 +130,7 @@ class WriteBatch {
 };
 
 }
+
+std::ostream& operator<<(std::ostream& os, const hepnos::WriteBatchStatistics& stats);
 
 #endif

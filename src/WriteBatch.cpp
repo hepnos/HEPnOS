@@ -50,3 +50,11 @@ void WriteBatch::collectStatistics(WriteBatchStatistics& stats) const {
 }
 
 }
+
+std::ostream& operator<<(std::ostream& os, const hepnos::WriteBatchStatistics& stats)
+{
+    return os << "{ \"batch_size\" : " << stats.batch_sizes
+              << ", \"key_sizes\" : " << stats.key_sizes
+              << ", \"value_size\" : " << stats.value_sizes
+              << " }";
+}

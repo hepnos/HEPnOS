@@ -6,6 +6,8 @@
 #ifndef __HEPNOS_STATISTICS_H
 #define __HEPNOS_STATISTICS_H
 
+#include <ostream>
+
 namespace hepnos {
 
 /**
@@ -39,6 +41,17 @@ struct Statistics {
     }
 };
 
+}
+
+template<typename Number, typename Double=double>
+std::ostream& operator<<(std::ostream& os, const hepnos::Statistics<Number, Double>& stats)
+{
+    return os << "{ \"num\" : " << stats.num
+              << ", \"max\" : " << stats.max
+              << ", \"min\" : " << stats.min
+              << ", \"avg\" : " << stats.avg
+              << ", \"var\" : " << stats.var
+              << " }";
 }
 
 #endif
