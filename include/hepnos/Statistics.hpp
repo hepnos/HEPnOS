@@ -38,6 +38,7 @@ struct Statistics {
         var = wn*(var_n + avg_n*avg_n)
             + w1*value*value
             - avg*avg;
+        num += 1;
     }
 };
 

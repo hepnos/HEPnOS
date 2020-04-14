@@ -20,7 +20,7 @@ void AsyncWriteBatchTest::testAsyncWriteBatchRun() {
     std::string key1 = "mykey";
 
     auto dataset = datastore->root().createDataSet("testAsyncWriteBatchRun");
-    hepnos::AsyncEngine async_engine(*datastore, 2);
+    hepnos::AsyncEngine async_engine(*datastore, 1);
 
     {
         hepnos::WriteBatch batch(async_engine);
@@ -30,6 +30,7 @@ void AsyncWriteBatchTest::testAsyncWriteBatchRun() {
             CPPUNIT_ASSERT(run.store(batch, key1, out_obj_a));
             CPPUNIT_ASSERT(run.store(batch, key1, out_obj_b));
         }
+        batch.flush();
     }
     async_engine.wait(); // useless, but just to test
     {
