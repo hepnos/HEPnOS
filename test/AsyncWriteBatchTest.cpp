@@ -24,6 +24,7 @@ void AsyncWriteBatchTest::testAsyncWriteBatchRun() {
 
     {
         hepnos::WriteBatch batch(async_engine);
+        batch.activateStatistics();
 
         for(auto i = 0; i < 5; i++) {
             auto run = dataset.createRun(batch, i);
@@ -31,6 +32,9 @@ void AsyncWriteBatchTest::testAsyncWriteBatchRun() {
             CPPUNIT_ASSERT(run.store(batch, key1, out_obj_b));
         }
         batch.flush();
+        hepnos::WriteBatchStatistics stats;
+        batch.collectStatistics(stats);
+        std::cout << stats << std::endl;
     }
     async_engine.wait(); // useless, but just to test
     {

@@ -55,6 +55,7 @@ class WriteBatchImpl {
 
     void update_keyval_statistics(size_t ksize, size_t vsize) {
         if(!m_stats) return;
+        std::lock_guard<tl::mutex> g(m_stats_mtx);
         m_stats->key_sizes.updateWith(ksize);
         if(vsize)
             m_stats->value_sizes.updateWith(vsize);
@@ -62,6 +63,7 @@ class WriteBatchImpl {
 
     void update_operation_statistics(size_t batch_size) {
         if(!m_stats) return;
+        std::lock_guard<tl::mutex> g(m_stats_mtx);
         m_stats->batch_sizes.updateWith(batch_size);
     }
 
@@ -158,7 +160,7 @@ class WriteBatchImpl {
             // find the queue of batches
             std::queue<keyvals>& entry_queue = m_entries[&db];
             if(entry_queue.empty()
-            || entry_queue.back().m_packed_key_sizes.size() >= m_max_batch_size) {
+            || entry_queue.back().m_size >= m_max_batch_size) {
                 entry_queue.emplace();
             }
             auto& kv_batch = entry_queue.back();
@@ -207,7 +209,7 @@ class WriteBatchImpl {
             auto& kvs_queue = m_entries[&db];
 
             if(kvs_queue.empty()
-            || kvs_queue.back().m_packed_key_sizes.size() >= m_max_batch_size) {
+            || kvs_queue.back().m_size >= m_max_batch_size) {
                 kvs_queue.emplace();
             }
             auto& kv_batch = kvs_queue.back();
