@@ -65,6 +65,10 @@ class DataStoreImpl {
     : m_mid(MARGO_INSTANCE_NULL)
     {}
 
+    ~DataStoreImpl() {
+        cleanup();
+    }
+
     void populateDatabases(DistributedDBInfo& db_info, const YAML::Node& db_config) {
         int ret;
         hg_return_t hret;
