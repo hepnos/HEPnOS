@@ -113,8 +113,14 @@ class DataStoreImpl {
         checkConfig(config);
         // get protocol
         std::string proto = config["hepnos"]["client"]["protocol"].as<std::string>();
+        // get busy spin
+        bool busySpin = config["hepnos"]["client"]["busy-spin"].as<bool>();
         // initialize Margo
-        m_mid = margo_init(proto.c_str(), MARGO_CLIENT_MODE, use_progress_thread, 0);
+        hg_init_info hg_opt;
+        memset(&hg_opt, 0, sizeof(hg_opt));
+        if(busySpin)
+            hg_opt.na_init_info.progress_mode = NA_NO_BLOCK;
+        m_mid = margo_init_opt(proto.c_str(), MARGO_CLIENT_MODE, &hg_opt, use_progress_thread, 0);
         if(!m_mid) {
             cleanup();
             throw Exception("Could not initialized Margo");

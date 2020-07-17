@@ -62,6 +62,7 @@ void ConnectionInfoGenerator::generateFile(MPI_Comm comm, const std::string& fil
 
     YAML::Node config;
     config["hepnos"]["client"]["protocol"] = proto;
+    config["hepnos"]["client"]["busy-spin"] = serviceConfig.busySpin;
     YAML::Node databases = config["hepnos"]["databases"];
     YAML::Node datasets  = databases["datasets"];
     YAML::Node runs      = databases["runs"];
