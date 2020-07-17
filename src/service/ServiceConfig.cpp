@@ -28,6 +28,8 @@ ServiceConfig::ServiceConfig(const std::string& filename, int rank, int numRanks
     YAML::Node address   = config["address"];
     YAML::Node threads   = config["threads"];
     YAML::Node databases = config["databases"];
+    YAML::Node busySpin  = config["busy-spin"];
+    if(busySpin) this->busySpin = busySpin.as<bool>();
     if(threads) this->numThreads = threads.as<uint32_t>();
     this->address = address.as<std::string>();
     // Count the total number of providers and targets

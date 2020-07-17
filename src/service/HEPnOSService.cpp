@@ -45,12 +45,17 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
         return;
     }
 
-    std::unique_ptr<tl::engine> engine;
+    tl::engine engine;
     try {
-        engine = std::make_unique<tl::engine>(
+        hg_init_info hg_opt;
+        memset(&hg_opt, 0, sizeof(hg_opt));
+        if(config->busySpin)
+            hg_opt.na_init_info.progress_mode = NA_NO_BLOCK;
+        engine = tl::engine(
                     config->address,
                     THALLIUM_SERVER_MODE,
-                    false, config->numThreads-1);
+                    false, config->numThreads-1,
+                    &hg_opt);
 
     } catch(std::exception& ex) {
         std::cerr << "Error: unable to initialize thallium" << std::endl;
@@ -59,25 +64,25 @@ void hepnos_run_service(MPI_Comm comm, const char* config_file, const char* conn
         MPI_Abort(MPI_COMM_WORLD, -1);
         return;
     }
-    engine->enable_remote_shutdown();
-    auto self_addr_str  = static_cast<std::string>(engine->self());
+    engine.enable_remote_shutdown();
+    auto self_addr_str  = static_cast<std::string>(engine.self());
 
     /* SDSKV providers initialization */
     for(auto& provider_config : config->datasetProviders)
-        createProviderAndDatabases(*engine, provider_config);
+        createProviderAndDatabases(engine, provider_config);
     for(auto& provider_config : config->runProviders)
-        createProviderAndDatabases(*engine, provider_config, hepnosItemDescriptorCompare);
+        createProviderAndDatabases(engine, provider_config, hepnosItemDescriptorCompare);
     for(auto& provider_config : config->subrunProviders)
-        createProviderAndDatabases(*engine, provider_config, hepnosItemDescriptorCompare);
+        createProviderAndDatabases(engine, provider_config, hepnosItemDescriptorCompare);
     for(auto& provider_config : config->eventProviders)
-        createProviderAndDatabases(*engine, provider_config, hepnosItemDescriptorCompare);
+        createProviderAndDatabases(engine, provider_config, hepnosItemDescriptorCompare);
     for(auto& provider_config : config->productProviders)
-        createProviderAndDatabases(*engine, provider_config);
+        createProviderAndDatabases(engine, provider_config);
 
     hepnos::ConnectionInfoGenerator fileGen(self_addr_str, *config);
     fileGen.generateFile(MPI_COMM_WORLD, connection_file);
 
-    engine->wait_for_finalize();
+    engine.wait_for_finalize();
 }
 
 static void createProviderAndDatabases(tl::engine& engine, hepnos::ProviderConfig& provider_config, sdskv_compare_fn comp) {

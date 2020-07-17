@@ -27,6 +27,7 @@ public:
     std::string address;
     uint32_t    numRanks = 1;
     uint32_t    numThreads = 1;
+    bool        busySpin = false;
     std::vector<ProviderConfig> datasetProviders;
     std::vector<ProviderConfig> runProviders;
     std::vector<ProviderConfig> subrunProviders;
