@@ -37,7 +37,7 @@ set (PRIVATE_LIBS "-lhepnos")
 configure_file ("hepnos.pc.in" "hepnos.pc" @ONLY)
 
 add_library(hepnos ${hepnos-src})
-target_link_libraries (hepnos uuid thallium mercury margo yaml-cpp sdskv-client ch-placement)
+target_link_libraries (hepnos uuid mercury margo yaml-cpp sdskv-client ch-placement)
 target_include_directories (hepnos PUBLIC $<INSTALL_INTERFACE:include>)
 
 # local include's BEFORE, in case old incompatable .h files in prefix/include
@@ -51,7 +51,7 @@ set_target_properties (hepnos
     SOVERSION ${HEPNOS_VERSION_MAJOR})
 
 add_library(hepnos-service ${hepnos-service-src})
-target_link_libraries (hepnos-service ${MPI_CXX_LIBRARIES} uuid thallium mercury margo yaml-cpp sdskv-client sdskv-server ch-placement)
+target_link_libraries (hepnos-service ${MPI_CXX_LIBRARIES} uuid mercury margo yaml-cpp sdskv-client sdskv-server ch-placement)
 target_include_directories (hepnos-service PUBLIC $<INSTALL_INTERFACE:include>)
 
 # local include's BEFORE, in case old incompatable .h files in prefix/include
