@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #ifndef __HEPNOS_INPUT_ARCHIVE_H
@@ -30,7 +30,7 @@ class InputArchive : public iarchive {
 
     private:
 
-    DataStore m_datastore; 
+    DataStore m_datastore;
 
     public:
 

@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #ifndef __HEPNOS_KEYVAL_CONTAINER_H
@@ -262,10 +262,10 @@ class KeyValueContainer {
     }
 
     /**
-     * @brief Loads a value associated with a key from the 
-     * KeyValueContainer. The type of the key should have 
-     * operator<< available to stream it into a std::stringstream 
-     * for the purpose of converting it into an std::string. 
+     * @brief Loads a value associated with a key from the
+     * KeyValueContainer. The type of the key should have
+     * operator<< available to stream it into a std::stringstream
+     * for the purpose of converting it into an std::string.
      * The resulting string must not have the "/" or "%" characters.
      * The type of the value must be serializable using Boost.
      *

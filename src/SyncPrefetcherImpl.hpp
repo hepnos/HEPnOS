@@ -1,3 +1,8 @@
+/*
+ * (C) 2019 The University of Chicago
+ *
+ * See COPYRIGHT in top-level directory.
+ */
 #ifndef __HEPNOS_SYNC_PREFETCHER_IMPL_HPP
 #define __HEPNOS_SYNC_PREFETCHER_IMPL_HPP
 

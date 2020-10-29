@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #include "hepnos/DataSet.hpp"
@@ -45,7 +45,7 @@ DataSet DataSet::next() const {
 }
 
 bool DataSet::valid() const {
-    return m_impl && m_impl->m_datastore; 
+    return m_impl && m_impl->m_datastore;
 }
 
 ProductID DataSet::storeRawData(const std::string& key, const char* value, size_t vsize) {
@@ -112,7 +112,7 @@ bool DataSet::loadRawData(const Prefetcher& prefetcher, const std::string& key, 
     if(!valid()) {
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
-    (void)prefetcher; // prefetcher isn't usable with a DataSet 
+    (void)prefetcher; // prefetcher isn't usable with a DataSet
     ItemDescriptor id(m_impl->m_uuid);
     return m_impl->m_datastore->loadRawProduct(id, key, value, vsize);
 }
@@ -232,7 +232,7 @@ DataSet::iterator DataSet::find(const std::string& datasetPath) {
     if(datasetPath.find('%') != std::string::npos) {
         throw Exception("Invalid character '%' in dataset name");
     }
-    
+
     size_t slash_count = std::count(datasetPath.begin(), datasetPath.end(), '/');
     size_t level = m_impl->m_level + 1 + slash_count;
     std::string containerName;
@@ -277,7 +277,7 @@ DataSet::iterator DataSet::begin() {
     // (which represents runs) and is not going to be in a dataset name
     DataSet ds(
             std::make_shared<DataSetImpl>(
-                m_impl->m_datastore, 
+                m_impl->m_datastore,
                 m_impl->m_level+1,
                 std::make_shared<std::string>(fullname()),
                 "&"));
@@ -331,7 +331,7 @@ DataSet::iterator DataSet::lower_bound(const std::string& lb) {
     }
     DataSet ds(
             std::make_shared<DataSetImpl>(
-                m_impl->m_datastore, 
+                m_impl->m_datastore,
                 m_impl->m_level+1,
                 std::make_shared<std::string>(fullname()),
                 lb2));
@@ -380,11 +380,11 @@ EventSet DataSet::events(int target) const {
     auto numTargets = m_impl->m_datastore->numTargets(ItemType::EVENT);
     if(target >= (int)numTargets) {
         throw Exception(std::string("Invalid target number ")
-                        +std::to_string(target) 
+                        +std::to_string(target)
                         +" for EventSet (>= "
                         +std::to_string(numTargets)+")");
     }
-    if(target >= 0) 
+    if(target >= 0)
         return EventSet(std::make_shared<EventSetImpl>(*m_impl, target));
     else {
         return EventSet(std::make_shared<EventSetImpl>(*m_impl, 0, numTargets));

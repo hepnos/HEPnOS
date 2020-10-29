@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #ifndef __HEPNOS_PRIVATE_DATASET_IMPL_H
@@ -27,7 +27,7 @@ class DataSetImpl {
         static DataSet::iterator m_end;
 
         DataSetImpl(const std::shared_ptr<DataStoreImpl>& ds,
-             uint8_t level, 
+             uint8_t level,
              const std::shared_ptr<std::string>& container,
              const std::string& name,
              const UUID& uuid = UUID())

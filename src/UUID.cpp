@@ -1,3 +1,8 @@
+/*
+ * (C) 2018 The University of Chicago
+ *
+ * See COPYRIGHT in top-level directory.
+ */
 #include "hepnos/UUID.hpp"
 #include <uuid/uuid.h>
 #include <cstring>

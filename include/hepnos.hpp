@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #ifndef __HEPNOS_H
@@ -15,6 +15,7 @@
 #include <hepnos/EventSet.hpp>
 #include <hepnos/Exception.hpp>
 #include <hepnos/KeyValueContainer.hpp>
+#include <hepnos/ParallelEventProcessor.hpp>
 #include <hepnos/Prefetcher.hpp>
 #include <hepnos/Run.hpp>
 #include <hepnos/RunNumber.hpp>

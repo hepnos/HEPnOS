@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #ifndef __HEPNOS_DATA_STORE_H
@@ -27,6 +27,8 @@ class ItemImpl;
 template<typename T, typename C = std::vector<T>> class Ptr;
 class WriteBatch;
 class AsyncEngine;
+class ParallelEventProcessor;
+class ParallelEventProcessorImpl;
 class Prefetcher;
 
 /**
@@ -45,6 +47,8 @@ class DataStore {
     friend class DataStoreImpl;
     friend class AsyncEngine;
     friend class EventSet;
+    friend class ParallelEventProcessor;
+    friend class ParallelEventProcessorImpl;
     friend class Prefetcher;
 
     public:
@@ -98,7 +102,7 @@ class DataStore {
      * @return This DataStore.
      */
     DataStore& operator=(DataStore&& other) = default;
-    
+
     /**
      * @brief Destructor.
      */
@@ -236,7 +240,7 @@ class DataStore {
      * @param t Product.
      * @param std::integral_constant type trait indicating T is POD.
      *
-     * @return true if the data was loaded successfuly, false otherwise. 
+     * @return true if the data was loaded successfuly, false otherwise.
      */
     template<typename T>
     bool loadProductImpl(const ProductID& productID, T& t, const std::integral_constant<bool, true>&);

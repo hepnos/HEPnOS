@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #ifndef __HEPNOS_RUN_H
@@ -30,7 +30,7 @@ constexpr const int RunDescriptorLength = 24;
  * serialize the representation of a Run for
  * the purpose of sending it to another process, where
  * the corresponding Run can be reconstructed without
- * involving the DataStore. 
+ * involving the DataStore.
  */
 struct RunDescriptor {
     char data[RunDescriptorLength];
@@ -146,22 +146,22 @@ class Run : public KeyValueContainer {
     ProductID storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) override;
 
     /**
-     * @see KeyValueContainer::loadRawData() 
+     * @see KeyValueContainer::loadRawData()
      */
     bool loadRawData(const std::string& key, std::string& buffer) const override;
 
     /**
-     * @see KeyValueContainer::loadRawData() 
+     * @see KeyValueContainer::loadRawData()
      */
     bool loadRawData(const std::string& key, char* value, size_t* vsize) const override;
 
     /**
-     * @see KeyValueContainer::loadRawData() 
+     * @see KeyValueContainer::loadRawData()
      */
     bool loadRawData(const Prefetcher& prefetcher, const std::string& key, std::string& buffer) const override;
 
     /**
-     * @see KeyValueContainer::loadRawData() 
+     * @see KeyValueContainer::loadRawData()
      */
     bool loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const override;
 
@@ -196,7 +196,7 @@ class Run : public KeyValueContainer {
     class iterator;
 
     /**
-     * @brief Searches this Run for an SubRun with 
+     * @brief Searches this Run for an SubRun with
      * the provided number and returns an iterator to it if found,
      * otherwise it returns an iterator to Run::end().
      *
@@ -221,8 +221,8 @@ class Run : public KeyValueContainer {
     iterator find(const SubRunNumber& srn, const Prefetcher& prefetcher);
 
     /**
-     * @brief Searches this Run for a SubRun with 
-     * the provided number and returns a const_iterator to it 
+     * @brief Searches this Run for a SubRun with
+     * the provided number and returns a const_iterator to it
      * if found, otherwise it returns an iterator to Run::end().
      *
      * @param srn SubRunNumber of the SubRun to find.
@@ -255,11 +255,11 @@ class Run : public KeyValueContainer {
 
     /**
      * @brief Returns an iterator referring to the first SubRun in
-     * this Run and using the given 
+     * this Run and using the given
      *
      * @param Prefetcher
      *
-     * @return 
+     * @return
      */
     iterator begin(const Prefetcher&);
 
@@ -330,7 +330,7 @@ class Run : public KeyValueContainer {
      * @param lb SubRunNumber lower bound to search for.
      *
      * @return An iterator to the first SubRun in this Run
-     * whose whose SubRunNumber is not lower than lb, or Run::end() 
+     * whose whose SubRunNumber is not lower than lb, or Run::end()
      * if all subrun numbers are lower.
      */
     iterator lower_bound(const SubRunNumber&);
@@ -348,7 +348,7 @@ class Run : public KeyValueContainer {
      * @param lb SubRunNumber lower bound to search for.
      *
      * @return A const_iterator to the first SubRun in this Run
-     * whose whose SubRunNumber is not lower than lb, or Run::cend() 
+     * whose whose SubRunNumber is not lower than lb, or Run::cend()
      * if all subrun numbers are lower.
      */
     const_iterator lower_bound(const SubRunNumber&) const;
@@ -360,13 +360,13 @@ class Run : public KeyValueContainer {
     const_iterator lower_bound(const SubRunNumber&, const Prefetcher&) const;
 
     /**
-     * @brief Returns an iterator pointing to the first SubRun in the 
+     * @brief Returns an iterator pointing to the first SubRun in the
      * Run whose SubRunNumber is greater than ub.
      *
      * @param ub SubRunNumber upper bound to search for.
      *
      * @return An iterator to the first SubRun in this Run,
-     * whose SubRunNumber is greater than ub, or Run::end() if 
+     * whose SubRunNumber is greater than ub, or Run::end() if
      * no such SubRun exists.
      */
     iterator upper_bound(const SubRunNumber&);
@@ -378,13 +378,13 @@ class Run : public KeyValueContainer {
     iterator upper_bound(const SubRunNumber&, const Prefetcher&);
 
     /**
-     * @brief Returns a const_iterator pointing to the first SubRun in the 
+     * @brief Returns a const_iterator pointing to the first SubRun in the
      * Run whose SubRunNumber is greater than ub.
      *
      * @param ub SubRunNumber upper bound to search for.
      *
      * @return An const_iterator to the first SubRun in this Run,
-     * whose SubRunNumber is greater than ub, or Run::cend() if 
+     * whose SubRunNumber is greater than ub, or Run::cend() if
      * no such SubRun exists.
      */
     const_iterator upper_bound(const SubRunNumber&) const;
@@ -490,7 +490,7 @@ class Run::const_iterator {
 
     /**
      * @brief Constructor. Creates a const_iterator pointing
-     * to a given SubRun. The SubRun may or may not be valid. 
+     * to a given SubRun. The SubRun may or may not be valid.
      *
      * @param current SubRun to make the const_iterator point to.
      */
@@ -498,7 +498,7 @@ class Run::const_iterator {
 
     /**
      * @brief Constructor. Creates a const_iterator pointing
-     * to a given SubRun. The SubRun may or may not be valid. 
+     * to a given SubRun. The SubRun may or may not be valid.
      *
      * @param current SubRun to make the const_iterator point to.
      */
@@ -569,7 +569,7 @@ class Run::const_iterator {
      * @brief Dereference operator. Returns a const reference
      * to the SubRun this const_iterator points to.
      *
-     * @return a const reference to the DataSet this 
+     * @return a const reference to the DataSet this
      *      const_iterator points to.
      */
     const reference operator*();
@@ -578,7 +578,7 @@ class Run::const_iterator {
      * @brief Returns a const pointer to the SubRun this
      * const_iterator points to.
      *
-     * @return a const pointer to the SubRun this 
+     * @return a const pointer to the SubRun this
      *      const_iterator points to.
      */
     const pointer operator->();

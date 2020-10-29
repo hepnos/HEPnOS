@@ -1,6 +1,6 @@
 /*
  * (C) 2019 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #ifndef __HEPNOS_WRITE_BATCH_H
@@ -82,32 +82,32 @@ class WriteBatch {
      * @param max_batch_size Maximum batch size when issuing an operation.
      */
     WriteBatch(AsyncEngine& async, unsigned max_batch_size=128);
-    
+
     /**
      * @brief Destructor.
      */
     ~WriteBatch();
-    
+
     /**
      * @brief Deleted copy constructor.
      */
     WriteBatch(const WriteBatch&) = delete;
-    
+
     /**
      * @brief Deleted move constructor.
      */
     WriteBatch& operator=(const WriteBatch&) = delete;
-    
+
     /**
      * @brief Deleted copy-assignment operator.
      */
     WriteBatch(WriteBatch&&);
-    
+
     /**
      * @brief Deleted move-assignment operator.
      */
     WriteBatch& operator=(WriteBatch&&);
-    
+
     /**
      * @brief Flush the content of the WriteBatch, blocking until
      * everything is flushed.

@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #include "hepnos/Event.hpp"
@@ -47,11 +47,11 @@ Event Event::next() const {
     std::vector<std::shared_ptr<ItemImpl>> next_events;
     size_t s = m_impl->m_datastore->nextItems(ItemType::EVENT, ItemType::SUBRUN, m_impl, next_events, 1);
     if(s == 0) return Event();
-    return Event(std::move(next_events[0]));   
+    return Event(std::move(next_events[0]));
 }
 
 bool Event::valid() const {
-    return m_impl && m_impl->m_datastore; 
+    return m_impl && m_impl->m_datastore;
 
 }
 

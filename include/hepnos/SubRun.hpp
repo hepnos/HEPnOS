@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #ifndef __HEPNOS_SUBRUN_H
@@ -199,7 +199,7 @@ class SubRun : public KeyValueContainer {
     class iterator;
 
     /**
-     * @brief Searches this SubRun for an Event with 
+     * @brief Searches this SubRun for an Event with
      * the provided number and returns an iterator to it if found,
      * otherwise it returns an iterator to Run::end().
      *
@@ -217,8 +217,8 @@ class SubRun : public KeyValueContainer {
     iterator find(const EventNumber& en, const Prefetcher& prefetcher);
 
     /**
-     * @brief Searches this SubRun for an Event with 
-     * the provided number and returns a const_iterator to it 
+     * @brief Searches this SubRun for an Event with
+     * the provided number and returns a const_iterator to it
      * if found, otherwise it returns an iterator to SubRun::end().
      *
      * @param en EventNumber of the Event to find.
@@ -310,7 +310,7 @@ class SubRun : public KeyValueContainer {
      * @param lb EventNumber lower bound to search for.
      *
      * @return An iterator to the first Event in this SubRun
-     * whose whose EventNumber is not lower than lb, or SubRun::end() 
+     * whose whose EventNumber is not lower than lb, or SubRun::end()
      * if all event numbers are lower.
      */
     iterator lower_bound(const EventNumber&);
@@ -328,7 +328,7 @@ class SubRun : public KeyValueContainer {
      * @param lb EventNumber lower bound to search for.
      *
      * @return A const_iterator to the first Event in this SubRun
-     * whose whose EventNumber is not lower than lb, or SubRun::cend() 
+     * whose whose EventNumber is not lower than lb, or SubRun::cend()
      * if all event numbers are lower.
      */
     const_iterator lower_bound(const SubRunNumber&) const;
@@ -340,13 +340,13 @@ class SubRun : public KeyValueContainer {
     const_iterator lower_bound(const SubRunNumber&, const Prefetcher&) const;
 
     /**
-     * @brief Returns an iterator pointing to the first Event in the 
+     * @brief Returns an iterator pointing to the first Event in the
      * SubRun whose EventNumber is greater than ub.
      *
      * @param ub EventNumber upper bound to search for.
      *
      * @return An iterator to the first Event in this SubRun,
-     * whose EventNumber is greater than ub, or SubRun::end() if 
+     * whose EventNumber is greater than ub, or SubRun::end() if
      * no such Event exists.
      */
     iterator upper_bound(const EventNumber&);
@@ -358,13 +358,13 @@ class SubRun : public KeyValueContainer {
     iterator upper_bound(const EventNumber&, const Prefetcher&);
 
     /**
-     * @brief Returns a const_iterator pointing to the first Event in the 
+     * @brief Returns a const_iterator pointing to the first Event in the
      * SubRun whose EventNumber is greater than ub.
      *
      * @param ub EventNumber upper bound to search for.
      *
      * @return An const_iterator to the first Event in this SubRun,
-     * whose EventNumber is greater than ub, or SubRun::cend() if 
+     * whose EventNumber is greater than ub, or SubRun::cend() if
      * no such Event exists.
      */
     const_iterator upper_bound(const SubRunNumber&) const;
@@ -470,7 +470,7 @@ class SubRun::const_iterator {
 
     /**
      * @brief Constructor. Creates a const_iterator pointing
-     * to a given Event. The Event may or may not be valid. 
+     * to a given Event. The Event may or may not be valid.
      *
      * @param current Event to make the const_iterator point to.
      */
@@ -478,7 +478,7 @@ class SubRun::const_iterator {
 
     /**
      * @brief Constructor. Creates a const_iterator pointing
-     * to a given Event. The Event may or may not be valid. 
+     * to a given Event. The Event may or may not be valid.
      *
      * @param current Event to make the const_iterator point to.
      */
@@ -549,7 +549,7 @@ class SubRun::const_iterator {
      * @brief Dereference operator. Returns a const reference
      * to the Event this const_iterator points to.
      *
-     * @return a const reference to the DataSet this 
+     * @return a const reference to the DataSet this
      *      const_iterator points to.
      */
     const reference operator*();
@@ -558,7 +558,7 @@ class SubRun::const_iterator {
      * @brief Returns a const pointer to the Event this
      * const_iterator points to.
      *
-     * @return a const pointer to the Event this 
+     * @return a const pointer to the Event this
      *      const_iterator points to.
      */
     const pointer operator->();

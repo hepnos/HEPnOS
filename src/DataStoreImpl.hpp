@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #ifndef __HEPNOS_PRIVATE_DATASTORE_IMPL
@@ -387,7 +387,7 @@ class DataStoreImpl {
      * maxDataSets shared_ptr to DataSetImpl coming after the
      * current dataset. Returns the number of DataSets read.
      */
-    size_t nextDataSets(const std::shared_ptr<DataSetImpl>& current, 
+    size_t nextDataSets(const std::shared_ptr<DataSetImpl>& current,
             std::vector<std::shared_ptr<DataSetImpl>>& result,
             size_t maxDataSets) const {
         int ret;
@@ -453,7 +453,7 @@ class DataStoreImpl {
         }
         return false;
     }
-    
+
     /*
      * @brief Loads a dataset.
      */
@@ -465,7 +465,7 @@ class DataStoreImpl {
         auto& db = locateDataSetDb(containerName);
         try {
             size_t s = sizeof(uuid);
-            db.get(static_cast<const void*>(key.data()), 
+            db.get(static_cast<const void*>(key.data()),
                    key.size(),
                    static_cast<void*>(uuid.data),
                    &s);
@@ -532,38 +532,57 @@ class DataStoreImpl {
 
     /**
      * @brief Fills the result vector with a sequence of up to
+     * maxItems descriptors coming after provided current descriptor.
+     */
+    size_t nextItemDescriptors(
+            const ItemType& item_type,
+            const ItemType& prefix_type,
+            const ItemDescriptor& current,
+            std::vector<ItemDescriptor>& descriptors,
+            size_t maxItems,
+            int target=-1) const {
+        int ret;
+        const ItemDescriptor& start_key   = current;
+        auto& db = locateItemDb(item_type, start_key, target);
+        // ignore keys that don't have the same uuid
+        // issue an sdskv_list_keys
+        descriptors.resize(maxItems);
+        std::vector<void*> keys_addr(maxItems);
+        std::vector<hg_size_t> keys_sizes(maxItems, sizeof(ItemDescriptor));
+        for(auto i=0; i < maxItems; i++) {
+            keys_addr[i] = static_cast<void*>(&descriptors[i]);
+        }
+        size_t numItems = maxItems;
+        try {
+            db.list_keys(&start_key, sizeof(start_key),
+                         &start_key, ItemImpl::descriptorSize(prefix_type),
+                         keys_addr.data(), keys_sizes.data(), &numItems);
+        } catch(sdskv::exception& ex) {
+            throw Exception("Error occured when calling sdskv::database::list_keys (SDSKV error="+std::string(ex.what()) + ")");
+        }
+        descriptors.resize(numItems);
+        return numItems;
+    }
+
+    /**
+     * @brief Fills the result vector with a sequence of up to
      * maxRuns shared_ptr to RunImpl coming after the
      * current run. Returns the number of Runs read.
      */
     size_t nextItems(
             const ItemType& item_type,
             const ItemType& prefix_type,
-            const std::shared_ptr<ItemImpl>& current, 
+            const std::shared_ptr<ItemImpl>& current,
             std::vector<std::shared_ptr<ItemImpl>>& result,
             size_t maxItems,
             int target=-1) const {
-        int ret;
+        const ItemDescriptor& start_key = current->m_descriptor;
+        std::vector<ItemDescriptor> descriptors;
+        size_t numDescriptors = nextItemDescriptors(item_type, prefix_type,
+                start_key, descriptors, maxItems, target);
+        descriptors.resize(numDescriptors);
         result.resize(0);
-        const ItemDescriptor& start_key   = current->m_descriptor;
-        auto& db = locateItemDb(item_type, start_key, target);
-        // ignore keys that don't have the same uuid
-        // issue an sdskv_list_keys
-        std::vector<ItemDescriptor> descriptors(maxItems);
-        std::vector<void*> keys_addr(maxItems);
-        std::vector<hg_size_t> keys_sizes(maxItems, sizeof(ItemDescriptor));
-        for(auto i=0; i < maxItems; i++) {
-            keys_addr[i] = static_cast<void*>(&descriptors[i]);
-        }
-        try {
-            hg_size_t s = maxItems;
-            db.list_keys(&start_key, sizeof(start_key),
-                         &start_key, ItemImpl::descriptorSize(prefix_type),
-                         keys_addr.data(), keys_sizes.data(), &s);
-            maxItems = s;
-        } catch(sdskv::exception& ex) {
-            throw Exception("Error occured when calling sdskv::database::list_keys (SDSKV error="+std::string(ex.what()) + ")");
-        }
-        descriptors.resize(maxItems);
+        result.reserve(numDescriptors);
         for(const auto& key : descriptors) {
             result.push_back(std::make_shared<ItemImpl>(current->m_datastore, key));
         }
@@ -608,7 +627,7 @@ class DataStoreImpl {
         k.event   = event_number;
         return itemExists(k, target);
     }
-    
+
     /**
      * Creates a Run, SubRun, or Event
      */

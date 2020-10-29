@@ -6,29 +6,29 @@ databases:
     name: hepnos-datasets.$RANK.$PROVIDER.$TARGET
     path: XXX/$RANK
     type: bdb
-    targets: 2
-    providers: 2
+    targets: 1
+    providers: 1
   runs:
     name: hepnos-runs.$RANK.$PROVIDER.$TARGET
     path: XXX/$RANK
     type: bdb
-    targets: 2
-    providers: 2
+    targets: 1
+    providers: 1
   subruns:
     name: hepnos-subruns.$RANK.$PROVIDER.$TARGET
     path: XXX/$RANK
     type: bdb
-    targets: 2
-    providers: 2
+    targets: 1
+    providers: 1
   events:
     name: hepnos-events.$RANK.$PROVIDER.$TARGET
     path: XXX/$RANK
     type: bdb
-    targets: 2
-    providers: 2
+    targets: 1
+    providers: 1
   products: 
     name: hepnos-products.$RANK.$PROVIDER.$TARGET
     path: XXX/$RANK
     type: bdb
-    targets: 2
-    providers: 2
+    targets: 1
+    providers: 1

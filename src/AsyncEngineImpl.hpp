@@ -61,7 +61,7 @@ class AsyncEngineImpl {
         // make a thread that will store the data
         auto product_id = m_datastore->buildProductID(id, productName);
         m_pool.make_thread([this,
-                            product_id, id, productName,// passed by copy 
+                            product_id, id, productName,// passed by copy
                             ds=m_datastore, // shared pointer
                             data=std::string(value,vsize)]() { // create new string
             auto& db = ds->locateProductDb(product_id);
@@ -129,7 +129,7 @@ class AsyncEngineImpl {
         // revive the ES
         for(auto& es : m_xstreams) {
             es->revive();
-        } 
+        }
     }
 };
 

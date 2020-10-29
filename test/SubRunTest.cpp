@@ -284,7 +284,7 @@ void SubRunTest::testAsyncPrefetcher() {
     }
     // test upper_bound
     {
-        AsyncEngine async(*datastore, 1);
+        AsyncEngine async(*datastore, 2);
         Prefetcher prefetcher(async);
         unsigned i=6;
         auto it = sr.upper_bound(5, prefetcher);

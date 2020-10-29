@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #include <iomanip>
@@ -189,7 +189,7 @@ RunSet::iterator RunSet::lower_bound(const RunNumber& lb) {
             return it;
         } else {
             Run run(std::make_shared<ItemImpl>(
-                    m_impl->m_datastore, 
+                    m_impl->m_datastore,
                     m_impl->m_uuid, 0));
             run = run.next();
             if(!run.valid()) return end();
@@ -202,7 +202,7 @@ RunSet::iterator RunSet::lower_bound(const RunNumber& lb) {
             return it;
         }
         Run run(std::make_shared<ItemImpl>(
-                m_impl->m_datastore, 
+                m_impl->m_datastore,
                 m_impl->m_uuid, lb-1));
         run = run.next();
         if(!run.valid()) return end();
@@ -236,7 +236,7 @@ RunSet::const_iterator RunSet::lower_bound(const RunNumber& lb, const Prefetcher
 }
 
 RunSet::iterator RunSet::upper_bound(const RunNumber& ub) {
-    Run run(std::make_shared<ItemImpl>(m_impl->m_datastore, 
+    Run run(std::make_shared<ItemImpl>(m_impl->m_datastore,
                                       m_impl->m_uuid, ub));
     run = run.next();
     if(!run.valid()) return end();
@@ -311,7 +311,7 @@ RunSet::const_iterator::self_type RunSet::const_iterator::operator++() {
         m_impl->m_current_run = m_impl->m_current_run.next();
     else {
         std::vector<std::shared_ptr<ItemImpl>> next_runs;
-        size_t s = m_impl->m_prefetcher->nextItems(ItemType::RUN, 
+        size_t s = m_impl->m_prefetcher->nextItems(ItemType::RUN,
                 ItemType::DATASET, m_impl->m_current_run.m_impl, next_runs, 1);
         if(s == 1) {
             m_impl->m_current_run.m_impl = std::move(next_runs[0]);

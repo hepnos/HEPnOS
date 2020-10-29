@@ -1,6 +1,6 @@
 /*
  * (C) 2019 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #include "hepnos.hpp"
@@ -11,7 +11,7 @@ namespace hepnos {
 
 WriteBatch::WriteBatch() {}
 
-WriteBatch::WriteBatch(WriteBatch&& other) 
+WriteBatch::WriteBatch(WriteBatch&& other)
 : m_impl(std::move(other.m_impl)) {}
 
 WriteBatch& WriteBatch::operator=(WriteBatch&& other) {

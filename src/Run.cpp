@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #include "hepnos/Run.hpp"
@@ -66,7 +66,7 @@ class Run::const_iterator::Impl {
 static Run::iterator Run_end;
 
 Run::Run()
-: m_impl(std::make_shared<ItemImpl>(nullptr, UUID(), InvalidRunNumber)) {} 
+: m_impl(std::make_shared<ItemImpl>(nullptr, UUID(), InvalidRunNumber)) {}
 
 Run::Run(std::shared_ptr<ItemImpl>&& impl)
 : m_impl(std::move(impl)) { }
@@ -75,7 +75,7 @@ Run::Run(const std::shared_ptr<ItemImpl>& impl)
 : m_impl(impl) { }
 
 DataStore Run::datastore() const {
-    if(!valid()) { 
+    if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run object");
     }
     return DataStore(m_impl->m_datastore);
@@ -83,7 +83,7 @@ DataStore Run::datastore() const {
 
 Run Run::next() const {
     if(!valid()) return Run();
-   
+
     std::vector<std::shared_ptr<ItemImpl>> next_runs;
     size_t s = m_impl->m_datastore->nextItems(ItemType::RUN, ItemType::DATASET, m_impl, next_runs, 1);
     if(s == 0) return Run();
@@ -91,8 +91,7 @@ Run Run::next() const {
 }
 
 bool Run::valid() const {
-    return m_impl && m_impl->m_datastore; 
-
+    return m_impl && m_impl->m_datastore;
 }
 
 ProductID Run::storeRawData(const std::string& key, const char* value, size_t vsize) {
@@ -230,7 +229,7 @@ Run::iterator Run::find(const SubRunNumber& subRunNumber) {
         throw Exception("Calling Run member function on an invalid Run object");
     }
     auto& id = m_impl->m_descriptor;
-    bool b = m_impl->m_datastore->itemExists(id.dataset, 
+    bool b = m_impl->m_datastore->itemExists(id.dataset,
                                              id.run,
                                              subRunNumber);
     if(!b) {
@@ -423,7 +422,7 @@ Run::const_iterator::const_iterator(SubRun&& subrun)
 Run::const_iterator::~const_iterator() {}
 
 Run::const_iterator::const_iterator(const Run::const_iterator& other) {
-    if(other.m_impl) 
+    if(other.m_impl)
         m_impl = std::make_unique<Impl>(*other.m_impl);
 }
 
@@ -516,7 +515,7 @@ Run::iterator::iterator(Run::iterator&& other)
 
 Run::iterator& Run::iterator::operator=(const Run::iterator& other) {
     if(this == &other) return *this;
-    if(other.m_impl) 
+    if(other.m_impl)
         m_impl = std::make_unique<Impl>(*other.m_impl);
     else
         m_impl.reset();

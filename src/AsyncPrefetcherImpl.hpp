@@ -99,7 +99,7 @@ class AsyncPrefetcherImpl : public PrefetcherImpl {
                 last = items[items.size()-1];
             for(auto& item : items) {
                 // start prefetching products (asynchronously)
-                if(!m_active_product_keys.empty()) 
+                if(!m_active_product_keys.empty())
                     _spawn_product_prefetcher_threads(p, item);
                 // lock the item cache and insert the item into it
                 std::unique_lock<tl::mutex> lock(m_item_cache_mtx);
@@ -168,7 +168,7 @@ class AsyncPrefetcherImpl : public PrefetcherImpl {
             auto ub = m_item_cache.upper_bound(last);
             if(ub == m_item_cache.end() && m_item_prefetcher_active) {
                 // item not in cache but pefetcher is active
-                m_item_cache_cv.wait(lock, [&ub, this, &last](){ 
+                m_item_cache_cv.wait(lock, [&ub, this, &last](){
                     ub = m_item_cache.upper_bound(last);
                     return (ub != m_item_cache.end()) || (!m_item_prefetcher_active);
                 });

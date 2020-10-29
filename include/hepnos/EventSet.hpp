@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #ifndef __HEPNOS_EVENT_SET_H
@@ -231,7 +231,7 @@ class EventSet::const_iterator {
      * @brief Dereference operator. Returns a const reference
      * to the DataSet this const_iterator points to.
      *
-     * @return a const reference to the DataSet this 
+     * @return a const reference to the DataSet this
      *      const_iterator points to.
      */
     const reference operator*();
@@ -240,7 +240,7 @@ class EventSet::const_iterator {
      * @brief Returns a const pointer to the DataSet this
      * const_iterator points to.
      *
-     * @return a const pointer to the DataSet this 
+     * @return a const pointer to the DataSet this
      *      const_iterator points to.
      */
     const pointer operator->();

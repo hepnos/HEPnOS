@@ -1,6 +1,6 @@
 spack:
   specs:
-  - mercury@2.0.0rc1
+  - mercury@2.0.0a1
   - mpich
   - boost+serialization
   - yaml-cpp@develop

@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #include <vector>
@@ -34,9 +34,9 @@ DataSet DataStore::root() const {
     return DataSet(std::make_shared<DataSetImpl>(m_impl, 0, std::make_shared<std::string>(""), ""));
 }
 
-DataStore DataStore::connect(bool use_progress_thread) { 
+DataStore DataStore::connect(bool use_progress_thread) {
     char* file = getenv("HEPNOS_CONFIG_FILE");
-    if(file == nullptr) 
+    if(file == nullptr)
         throw Exception("HEPNOS_CONFIG_FILE environment variable not set");
     std::string configFile(file);
     auto impl = std::make_shared<DataStoreImpl>();

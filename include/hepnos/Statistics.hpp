@@ -1,6 +1,6 @@
 /*
  * (C) 2019 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #ifndef __HEPNOS_STATISTICS_H
@@ -18,7 +18,7 @@ namespace hepnos {
  */
 template<typename Number, typename Double=double>
 struct Statistics {
-    
+
     size_t num = 0;
     Number max = 0;
     Number min = 0;

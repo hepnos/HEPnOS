@@ -1,6 +1,6 @@
 /*
  * (C) 2019 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #ifndef __HEPNOS_PRIVATE_WRITEBATCH_IMPL_H
@@ -138,7 +138,7 @@ class WriteBatchImpl {
         if(m_async_engine) {
             m_async_thread.push_back(
                     m_async_engine->m_pool.make_thread([batch=this](){
-                        async_writer_thread(*batch);       
+                        async_writer_thread(*batch);
                     })
                 );
         }
@@ -154,7 +154,7 @@ class WriteBatchImpl {
         auto& db = m_datastore->locateProductDb(product_id);
         // insert in the map of entries
         bool was_empty;
-        { 
+        {
             std::lock_guard<tl::mutex> g(m_mutex);
             was_empty = m_entries.empty();
             // find the queue of batches
@@ -221,7 +221,7 @@ class WriteBatchImpl {
             kv_batch.m_packed_val_sizes.push_back(0);
             kv_batch.m_size += 1;
             update_keyval_statistics(sizeof(id), 0);
-        } 
+        }
         if(was_empty) {
             m_cond.notify_one();
         }

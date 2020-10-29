@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #ifndef __HEPNOS_DATA_SET_H
@@ -115,7 +115,7 @@ class DataSet : public KeyValueContainer {
     std::string fullname() const;
 
     /**
-     * @brief Gets the next DataSet from this DataSet in 
+     * @brief Gets the next DataSet from this DataSet in
      * alphabetical order within the same container.
      * If no such dataset exists, this function returns
      * a DataSet instance such that valid() == false.
@@ -192,8 +192,8 @@ class DataSet : public KeyValueContainer {
      * @brief Creates a dataset with a given name inside the
      * DataSet. This name must not have the '/' and '%' characters.
      * A DataSet object pointing to the created dataset is returned.
-     * If a dataset with this name already exists in the DataStore, 
-     * it is not created, but a DataSet object pointing to the 
+     * If a dataset with this name already exists in the DataStore,
+     * it is not created, but a DataSet object pointing to the
      * existing one is returned instead.
      *
      * @param name Name of DataSet.
@@ -268,7 +268,7 @@ class DataSet : public KeyValueContainer {
     class const_iterator;
 
     /**
-     * @brief Searches this DataSet for a DataSet with 
+     * @brief Searches this DataSet for a DataSet with
      * the provided path and returns an iterator to it if found,
      * otherwise it returns an iterator to DataStore::end().
      *
@@ -280,8 +280,8 @@ class DataSet : public KeyValueContainer {
     iterator find(const std::string& datasetPath);
 
     /**
-     * @brief Searches this DataSet for an DataSet with 
-     * the provided path and returns a const_iterator to it 
+     * @brief Searches this DataSet for an DataSet with
+     * the provided path and returns a const_iterator to it
      * if found, otherwise it returns an iterator to DataSet::end().
      *
      * @param datasetPath Path of the DataSet to find.
@@ -345,38 +345,38 @@ class DataSet : public KeyValueContainer {
 
     /**
      * @brief Returns an iterator pointing to the first DataSet in this
-     * DataSet, whose name is not considered to go before lb 
+     * DataSet, whose name is not considered to go before lb
      * (i.e., either it is equal or goes after, alphabetically).
      *
      * @param lb DataSet name to search for.
      *
-     * @return An iterator to the the first DataSet in this DataSet 
-     * whose name is not considered to go before lb, or DataStore::end() 
+     * @return An iterator to the the first DataSet in this DataSet
+     * whose name is not considered to go before lb, or DataStore::end()
      * if all keys are considered to go before it.
      */
     iterator lower_bound(const std::string& lb);
 
     /**
      * @brief Returns a const_iterator pointing to the first DataSet in this
-     * DataSet whose name is not considered to go before lb 
+     * DataSet whose name is not considered to go before lb
      * (i.e., either it is equal or goes after, alphabetically).
      *
      * @param lb DataSet name to search for.
      *
-     * @return A const_iterator to the the first DataSet in the DataSet 
-     * whose name is not considered to go before lb, or DataSet::cend() 
+     * @return A const_iterator to the the first DataSet in the DataSet
+     * whose name is not considered to go before lb, or DataSet::cend()
      * if all DataSet names are considered to go before it.
      */
     const_iterator lower_bound(const std::string& lb) const;
 
     /**
-     * @brief Returns an iterator pointing to the first DataSet in the 
+     * @brief Returns an iterator pointing to the first DataSet in the
      * DataStore whose key is considered to go after ub.
      *
      * @param ub DataSet name to search for.
      *
      * @return An iterator to the the first DataSet in this DataSet,
-     * whose name is considered to go after ub, or DataSet::end() if 
+     * whose name is considered to go after ub, or DataSet::end() if
      * no DataSet names are considered to go after it.
      */
     iterator upper_bound(const std::string& ub);
@@ -387,8 +387,8 @@ class DataSet : public KeyValueContainer {
      *
      * @param ub DataSet name to search for.
      *
-     * @return A const_iterator to the the first DataSet in this DataSet 
-     * whose name is considered to go after ub, or DataSet::end() if 
+     * @return A const_iterator to the the first DataSet in this DataSet
+     * whose name is considered to go after ub, or DataSet::end() if
      * no DataSet names are considered to go after it.
      */
     const_iterator upper_bound(const std::string& ub) const;
@@ -443,7 +443,7 @@ class DataSet::const_iterator {
 
     /**
      * @brief Constructor. Creates a const_iterator pointing
-     * to a given DataSet. The DataSet may or may not be valid. 
+     * to a given DataSet. The DataSet may or may not be valid.
      *
      * @param current DataSet to make the const_iterator point to.
      */

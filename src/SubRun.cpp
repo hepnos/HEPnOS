@@ -1,9 +1,8 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
-
 #include <memory>
 #include "hepnos/SubRun.hpp"
 #include "hepnos/AsyncEngine.hpp"
@@ -69,7 +68,7 @@ static SubRun::iterator SubRun_end;
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 SubRun::SubRun()
-: m_impl(std::make_shared<ItemImpl>(nullptr, UUID(), InvalidRunNumber)) {} 
+: m_impl(std::make_shared<ItemImpl>(nullptr, UUID(), InvalidRunNumber)) {}
 
 SubRun::SubRun(std::shared_ptr<ItemImpl>&& impl)
 : m_impl(std::move(impl)) { }
@@ -96,15 +95,15 @@ Run SubRun::run() const {
 
 SubRun SubRun::next() const {
     if(!valid()) return SubRun();
-  
-    std::vector<std::shared_ptr<ItemImpl>> next_subruns; 
+
+    std::vector<std::shared_ptr<ItemImpl>> next_subruns;
     size_t s = m_impl->m_datastore->nextItems(ItemType::SUBRUN, ItemType::RUN, m_impl, next_subruns, 1);
     if(s == 0) return SubRun();
     return SubRun(std::move(next_subruns[0]));
 }
 
 bool SubRun::valid() const {
-    return m_impl && m_impl->m_datastore; 
+    return m_impl && m_impl->m_datastore;
 }
 
 ProductID SubRun::storeRawData(const std::string& key, const char* value, size_t vsize) {

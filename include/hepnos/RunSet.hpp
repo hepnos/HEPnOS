@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #ifndef __HEPNOS_RUN_SET_H
@@ -101,9 +101,9 @@ class RunSet {
     Run operator[](const RunNumber& runNumber);
 
     /**
-     * @brief Searches this RunSet for a Run with 
-     * the provided run number and returns an iterator to 
-     * it if found, otherwise it returns an iterator pointing 
+     * @brief Searches this RunSet for a Run with
+     * the provided run number and returns an iterator to
+     * it if found, otherwise it returns an iterator pointing
      * to RunSet::end().
      *
      * @param runNumber Run number of the Run to find.
@@ -121,9 +121,9 @@ class RunSet {
     iterator find(const RunNumber& runNumber, const Prefetcher& prefetcher);
 
     /**
-     * @brief Searches this RunSet for a Run with 
-     * the provided run number and returns an const_iterator to 
-     * it if found, otherwise it returns an iterator pointing 
+     * @brief Searches this RunSet for a Run with
+     * the provided run number and returns an const_iterator to
+     * it if found, otherwise it returns an iterator pointing
      * to RunSet::cend().
      *
      * @param runNumber Run number of the Run to find.
@@ -215,8 +215,8 @@ class RunSet {
      *
      * @param lb Run number to search for.
      *
-     * @return An iterator to the the first Run in this RunSet 
-     * whose number is equal or greater than, lb or RunSet::end() 
+     * @return An iterator to the the first Run in this RunSet
+     * whose number is equal or greater than, lb or RunSet::end()
      * if such a Run does not exist.
      */
     iterator lower_bound(const RunNumber& lb);
@@ -233,8 +233,8 @@ class RunSet {
      *
      * @param lb Run number to search for.
      *
-     * @return A const_iterator to the the first Run in this RunSet 
-     * whose number is equal or greater than, lb or RunSet::end() 
+     * @return A const_iterator to the the first Run in this RunSet
+     * whose number is equal or greater than, lb or RunSet::end()
      * if such a Run does not exist.
      */
     const_iterator lower_bound(const RunNumber& lb) const;
@@ -246,13 +246,13 @@ class RunSet {
     const_iterator lower_bound(const RunNumber& lb, const Prefetcher& prefetcher) const;
 
     /**
-     * @brief Returns an iterator pointing to the first Run in the 
+     * @brief Returns an iterator pointing to the first Run in the
      * RunSet whose number is strictly greater than ub.
      *
      * @param ub Run number to search for.
      *
      * @return An iterator to the the first Run in this RunSet,
-     * whose number is stricly greater than ub, or RunSet::end() if 
+     * whose number is stricly greater than ub, or RunSet::end() if
      * no such a Run exist.
      */
     iterator upper_bound(const RunNumber& ub);
@@ -264,13 +264,13 @@ class RunSet {
     iterator upper_bound(const RunNumber& ub,const Prefetcher& prefetcher);
 
     /**
-     * @brief Returns a const_iterator pointing to the first Run in the 
+     * @brief Returns a const_iterator pointing to the first Run in the
      * RunSet whose number is strictly greater than ub.
      *
      * @param ub Run number to search for.
      *
      * @return A const_iterator to the the first Run in this RunSet,
-     * whose number is stricly greater than ub, or RunSet::end() if 
+     * whose number is stricly greater than ub, or RunSet::end() if
      * no such a Run exist.
      */
     const_iterator upper_bound(const RunNumber& ub) const;
@@ -303,7 +303,7 @@ class RunSet::const_iterator {
 
     /**
      * @brief Constructor. Creates a const_iterator pointing
-     * to a given Run. The Run may or may not be valid. 
+     * to a given Run. The Run may or may not be valid.
      *
      * @param current Run to make the const_iterator point to.
      */
@@ -311,7 +311,7 @@ class RunSet::const_iterator {
 
     /**
      * @brief Constructor. Creates a const_iterator pointing
-     * to a given Run. The Run may or may not be valid. 
+     * to a given Run. The Run may or may not be valid.
      *
      * @param current Run to make the const_iterator point to.
      */
@@ -382,7 +382,7 @@ class RunSet::const_iterator {
      * @brief Dereference operator. Returns a const reference
      * to the DataSet this const_iterator points to.
      *
-     * @return a const reference to the DataSet this 
+     * @return a const reference to the DataSet this
      *      const_iterator points to.
      */
     const reference operator*();
@@ -391,7 +391,7 @@ class RunSet::const_iterator {
      * @brief Returns a const pointer to the DataSet this
      * const_iterator points to.
      *
-     * @return a const pointer to the DataSet this 
+     * @return a const pointer to the DataSet this
      *      const_iterator points to.
      */
     const pointer operator->();

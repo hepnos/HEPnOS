@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #ifndef __HEPNOS_PREFETCHER_HPP
@@ -61,7 +61,7 @@ class Prefetcher {
      * @param cache_size maximum number of items that can be stored in the cache.
      * @param batch_size how many items to prefetch at once.
      */
-    Prefetcher(const AsyncEngine& async, 
+    Prefetcher(const AsyncEngine& async,
                unsigned int cache_size=16,
                unsigned int batch_size=16);
 
@@ -73,12 +73,12 @@ class Prefetcher {
     /**
      * @brief Deleted copy constructor.
      */
-    Prefetcher(const Prefetcher&) = delete;
+    Prefetcher(const Prefetcher&) = default;
 
     /**
      * @brief Deleted move constructor.
      */
-    Prefetcher(Prefetcher&&) = delete;
+    Prefetcher(Prefetcher&&) = default;
 
     /**
      * @brief Deleted copy-assignment operator.
@@ -94,7 +94,7 @@ class Prefetcher {
      * @return Cache size.
      */
     unsigned int getCacheSize() const;
-    
+
     /**
      * @brief Set the cache size.
      *

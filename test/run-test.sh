@@ -5,21 +5,21 @@ if [ -z "$MKTEMP" ] ; then
     exit 1
 fi
 
-timeout_sec=${2:-10}
+timeout_sec=${2:-60}
 
 source test-util.sh
 
-TEST_DIR=`$MKTEMP -d /tmp/hepnos-XXXXXX`
+TEST_DIR=`$MKTEMP -d ./hepnos-XXXXXX`
 CON_FILE=$TEST_DIR/connection.yaml
 cp config.yaml $TEST_DIR/config.yaml
 CFG_FILE=$TEST_DIR/config.yaml
 sed -i -e "s|XXX|${TEST_DIR}/database|g" $CFG_FILE
 
-hepnos_test_start_servers 2 2 20 $CFG_FILE $CON_FILE
+hepnos_test_start_servers 2 2 60 $CFG_FILE $CON_FILE
 
 export HEPNOS_CONFIG_FILE=$CON_FILE
 
-sleep 1
+sleep 3
 # run a connect test client
 run_to ${timeout_sec} $1 $CON_FILE $1.xml
 if [ $? -ne 0 ]; then

@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #ifndef __HEPNOS_DEMANGLE_H
@@ -20,7 +20,7 @@ namespace hepnos {
  */
 template<typename T>
 std::string demangle() {
-    char const * name = typeid(T).name();    
+    char const * name = typeid(T).name();
     return boost::core::demangle(name);
 }
 

@@ -1,3 +1,8 @@
+/*
+ * (C) 2018 The University of Chicago
+ *
+ * See COPYRIGHT in top-level directory.
+ */
 #ifndef __HEPNOS_STRING_HASH_HPP
 #define __HEPNOS_STRING_HASH_HPP
 

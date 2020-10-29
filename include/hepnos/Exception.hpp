@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #ifndef __HEPNOS_EXCEPTION_H
@@ -31,7 +31,7 @@ class Exception : public std::exception
      * @param msg Error message.
      */
     Exception(const std::string& msg) : m_msg(msg){}
-    
+
     /**
      * @brief Copy constructor.
      */

@@ -1,6 +1,6 @@
 /*
  * (C) 2018 The University of Chicago
- * 
+ *
  * See COPYRIGHT in top-level directory.
  */
 #include <iomanip>
@@ -166,7 +166,7 @@ EventSet::const_iterator::self_type EventSet::const_iterator::operator++() {
                 // there exists an item 0,0,0; make the iterator point to it
                 m_impl->m_current_event.m_impl = std::move(event_impl000);
                 return *this;
-            } 
+            }
             // if event (0,0,0) does not exist, then try to get the next one
             size_t s = 0;
             if(!m_impl->m_prefetcher) {
@@ -288,7 +288,7 @@ EventSet::iterator EventSet::begin() {
             auto iterator_impl = std::unique_ptr<EventSet::const_iterator::Impl>(
                     new EventSet::const_iterator::Impl(
                         std::move(event), target, num_targets));
-            return iterator(std::move(iterator_impl)); 
+            return iterator(std::move(iterator_impl));
         }
         // if event (0,0,0) does not exist, then try to get the next one
         std::vector<std::shared_ptr<ItemImpl>> nextItems;
@@ -312,7 +312,7 @@ EventSet::iterator EventSet::begin(const Prefetcher& prefetcher) {
     auto it = begin();
     if(it != end()) {
         it.m_impl->setPrefetcher(prefetcher.m_impl);
-        prefetcher.m_impl->prefetchFrom(ItemType::EVENT, ItemType::DATASET, 
+        prefetcher.m_impl->prefetchFrom(ItemType::EVENT, ItemType::DATASET,
                 it.m_impl->m_current_event.m_impl, it.m_impl->m_target);
     }
     return it;

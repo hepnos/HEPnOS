@@ -1,3 +1,8 @@
+/*
+ * (C) 2019 The University of Chicago
+ *
+ * See COPYRIGHT in top-level directory.
+ */
 #include "hepnos/Prefetcher.hpp"
 #include "hepnos/AsyncEngine.hpp"
 #include "SyncPrefetcherImpl.hpp"
