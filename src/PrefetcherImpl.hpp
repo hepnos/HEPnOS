@@ -4,6 +4,7 @@
 #include <set>
 #include <unordered_set>
 #include <unordered_map>
+#include "hepnos/Prefetcher.hpp"
 #include "DataStoreImpl.hpp"
 #include "AsyncEngineImpl.hpp"
 

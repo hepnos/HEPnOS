@@ -16,14 +16,11 @@ namespace hepnos {
 
 namespace tl = thallium;
 
-typedef std::vector<EventDescriptor> DescriptorBatch;
-
 struct ParallelEventProcessorImpl {
 
     std::shared_ptr<DataStoreImpl> m_datastore;
     MPI_Comm                       m_comm;
-    Prefetcher                     m_prefetcher;
-    DispatchPolicy                 m_policy;
+    ParallelEventProcessorOptions  m_options;
     std::vector<int>               m_loader_ranks;
     std::vector<int>               m_targets;
 
@@ -40,18 +37,19 @@ struct ParallelEventProcessorImpl {
     ParallelEventProcessorImpl(
             std::shared_ptr<DataStoreImpl> ds,
             MPI_Comm comm,
-            const Prefetcher& prefetcher,
-            const DispatchPolicy& policy)
+            const ParallelEventProcessorOptions& options)
     : m_datastore(std::move(ds))
     , m_comm(comm)
-    , m_prefetcher(prefetcher)
-    , m_policy(policy) {
+    , m_options(options) {
         MPI_Comm_size(comm, &m_num_active_consumers);
         m_num_active_consumers -= 1;
     }
 
     ~ParallelEventProcessorImpl() {}
 
+    /**
+     * Main function to start processing events in parallel.
+     */
     void process(const std::vector<EventSet>& evsets,
                  const ParallelEventProcessor::EventProcessingFn& function,
                  ParallelEventProcessorStatistics* stats) {
@@ -65,6 +63,10 @@ struct ParallelEventProcessorImpl {
         m_stats = nullptr;
     }
 
+    /**
+     * Starts the ULT that loads events from HEPnOS. This ULT is posted
+     * on the first pool of the current ES.
+     */
     void startLoadingEventsFromTargets(const std::vector<EventSet>& evsets) {
         if(evsets.size() == 0) {
             return;
@@ -75,9 +77,20 @@ struct ParallelEventProcessorImpl {
         }, tl::anonymous());
     }
 
+    /**
+     * Content of the ULT that loads events from HEPnOS. This ULT
+     * will loop over the EventSets, and inside an EventSet over the
+     * Events, and push descriptors inside the event queue.
+     */
     void loadEventsFromTargets(const std::vector<EventSet>& evsets) {
         for(auto& evset : evsets) {
-            for(auto it = evset.begin(m_prefetcher); it != evset.end(); it++) {
+
+            Prefetcher prefetcher(
+                    DataStore(m_datastore),
+                    m_options.cacheSize,
+                    m_options.inputBatchSize);
+
+            for(auto it = evset.begin(prefetcher); it != evset.end(); it++) {
                 EventDescriptor descriptor;
                 it->toDescriptor(descriptor);
                 {
@@ -94,6 +107,10 @@ struct ParallelEventProcessorImpl {
         }
     }
 
+    /**
+     * Starts the ES that responds to MPI requests from other clients.
+     * This has to be done in a separate ES because MPI isn't Argobots-aware.
+     */
     void startRespondingToMPIrequests() {
         if(!m_loader_running)
             return;
@@ -103,60 +120,76 @@ struct ParallelEventProcessorImpl {
         }, tl::anonymous());
     }
 
+    /**
+     * Function called in the above ES. This ULT will wait for requests from
+     * clients that don't have local events to process anymore.
+     */
     void respondToMPIrequests() {
         int my_rank;
         MPI_Comm_rank(m_comm, &my_rank);
         while(m_num_active_consumers != 0) {
             MPI_Status status;
-            MPI_Recv(NULL, 0, MPI_BYTE, MPI_ANY_SOURCE, 1111, m_comm, &status);
+            size_t num_events_requested;
+            MPI_Recv(&num_events_requested, sizeof(num_events_requested),
+                     MPI_BYTE, MPI_ANY_SOURCE, 1111, m_comm, &status);
+            if(num_events_requested == 0) num_events_requested = 1;
             int consumer_rank = status.MPI_SOURCE;
-            bool shouldSendEvent;
-            EventDescriptor descriptorToSend;
+            std::vector<EventDescriptor> descriptorsToSend;
+            descriptorsToSend.reserve(num_events_requested);
             {
                 std::unique_lock<tl::mutex> lock(m_event_queue_mtx);
-                while(m_loader_running && m_event_queue.size() == 0)
+                while(m_loader_running && m_event_queue.empty())
                      m_event_queue_cv.wait(lock);
-                if(m_event_queue.size() > 0) {
-                    descriptorToSend = m_event_queue.front();
+                for(unsigned i = 0; i < num_events_requested && !m_event_queue.empty(); i++) {
+                    descriptorsToSend.push_back(m_event_queue.front());
                     m_event_queue.pop();
-                    shouldSendEvent = true;
-                } else {
-                    shouldSendEvent = false;
                 }
             }
-            if(shouldSendEvent) {
-                MPI_Send(&descriptorToSend, sizeof(descriptorToSend), MPI_BYTE, consumer_rank, 1112, m_comm);
-            } else {
-                MPI_Send(NULL, 0, MPI_BYTE, consumer_rank, 1112, m_comm);
+            MPI_Send(descriptorsToSend.data(),
+                     descriptorsToSend.size()*sizeof(descriptorsToSend[0]),
+                     MPI_BYTE, consumer_rank, 1112, m_comm);
+            if(descriptorsToSend.empty()) {
                 m_num_active_consumers -= 1;
             }
         }
     }
 
-    bool requestEvents(EventDescriptor& descriptor) {
+    bool requestEvents(std::vector<EventDescriptor>& descriptors) {
         int my_rank;
         MPI_Comm_rank(m_comm, &my_rank);
         while(m_loader_ranks.size() != 0) {
             int loader_rank = m_loader_ranks[0];
             if(loader_rank == my_rank) {
                 std::unique_lock<tl::mutex> lock(m_event_queue_mtx);
-                while(m_event_queue.size() == 0 && m_loader_running)
+                while(m_event_queue.empty() && m_loader_running)
                      m_event_queue_cv.wait(lock);
-                if(m_event_queue.size() > 0) {
-                    descriptor = m_event_queue.front();
+                size_t num_events_requested = m_options.outputBatchSize;
+                descriptors.resize(num_events_requested);
+                size_t num_actual_events = 0;
+                for(unsigned i = 0; i < num_events_requested && !m_event_queue.empty(); i++) {
+                    descriptors[i] = m_event_queue.front();
                     m_event_queue.pop();
+                    num_actual_events += 1;
                     if(m_stats) m_stats->local_events_processed += 1;
+                }
+                if(num_actual_events != 0) {
+                    descriptors.resize(num_actual_events);
                     return true;
                 } else {
                     m_loader_ranks.erase(m_loader_ranks.begin());
                 }
             } else {
-                MPI_Send(NULL, 0, MPI_BYTE, loader_rank, 1111, m_comm);
+                size_t num_events_requested = m_options.outputBatchSize;
+                MPI_Send(&num_events_requested, sizeof(num_events_requested), MPI_BYTE, loader_rank, 1111, m_comm);
                 MPI_Status status;
-                MPI_Recv(&descriptor, sizeof(descriptor), MPI_BYTE, loader_rank, 1112, m_comm, &status);
+                descriptors.resize(num_events_requested);
+                MPI_Recv(descriptors.data(), sizeof(descriptors[0])*descriptors.size(),
+                         MPI_BYTE, loader_rank, 1112, m_comm, &status);
                 int count;
                 MPI_Get_count(&status, MPI_BYTE, &count);
-                if(count == sizeof(descriptor)) {
+                size_t num_actual_events = count/sizeof(descriptors[0]);
+                if(num_actual_events != 0) {
+                    descriptors.resize(num_actual_events);
                     return true;
                 } else {
                     m_loader_ranks.erase(m_loader_ranks.begin());
@@ -169,19 +202,21 @@ struct ParallelEventProcessorImpl {
     void processEvents(const ParallelEventProcessor::EventProcessingFn& user_function) {
         if(m_stats) *m_stats = ParallelEventProcessorStatistics();
         double t_start = tl::timer::wtime();
-        EventDescriptor descriptor;
+        std::vector<EventDescriptor> descriptors;
         double t1;
         double t2 = tl::timer::wtime();
-        while(requestEvents(descriptor)) {
-            Event event = Event::fromDescriptor(DataStore(m_datastore), descriptor, false);
-            t1 = tl::timer::wtime();
-            if(m_stats) m_stats->waiting_time_stats.updateWith(t1-t2);
-            user_function(event);
-            t2 = tl::timer::wtime();
-            if(m_stats) {
-                m_stats->processing_time_stats.updateWith(t2 - t1);
-                m_stats->total_processing_time += t2 - t1;
-                m_stats->total_events_processed += 1;
+        while(requestEvents(descriptors)) {
+            for(auto& d : descriptors) {
+                Event event = Event::fromDescriptor(DataStore(m_datastore), d, false);
+                t1 = tl::timer::wtime();
+                if(m_stats) m_stats->waiting_time_stats.updateWith(t1-t2);
+                user_function(event);
+                t2 = tl::timer::wtime();
+                if(m_stats) {
+                    m_stats->processing_time_stats.updateWith(t2 - t1);
+                    m_stats->total_processing_time += t2 - t1;
+                    m_stats->total_events_processed += 1;
+                }
             }
         }
         double t_end = tl::timer::wtime();

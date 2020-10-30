@@ -11,9 +11,8 @@ namespace hepnos {
 ParallelEventProcessor::ParallelEventProcessor(
         const DataStore& datastore,
         MPI_Comm comm,
-        const Prefetcher& prefetcher,
-        const DispatchPolicy& policy)
-: m_impl(std::make_shared<ParallelEventProcessorImpl>(datastore.m_impl, comm, prefetcher, policy))
+        const ParallelEventProcessorOptions& options)
+: m_impl(std::make_shared<ParallelEventProcessorImpl>(datastore.m_impl, comm, options))
 {
     int num_procs;
     int my_rank;

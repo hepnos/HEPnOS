@@ -59,9 +59,7 @@ void ParallelMPITest::testParallelEventProcessor() {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     ParallelEventProcessorStatistics stats;
-
-    Prefetcher prefetcher(*datastore);
-    ParallelEventProcessor parallel_processor(*datastore, MPI_COMM_WORLD, prefetcher);
+    ParallelEventProcessor parallel_processor(*datastore, MPI_COMM_WORLD);
     std::vector<item> items;
     parallel_processor.process(mds,
         [&items, rank](const Event& ev) {

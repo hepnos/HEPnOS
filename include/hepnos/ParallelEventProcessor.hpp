@@ -6,16 +6,21 @@
 #ifndef __HEPNOS_PARALLEL_EVENT_PROCESSOR_HPP
 #define __HEPNOS_PARALLEL_EVENT_PROCESSOR_HPP
 
+#include <limits>
 #include <mpi.h>
-#include <hepnos/Prefetcher.hpp>
+#include <hepnos/Demangle.hpp>
+#include <hepnos/AsyncEngine.hpp>
+#include <hepnos/Statistics.hpp>
 #include <hepnos/DataStore.hpp>
 
 namespace hepnos {
 
 struct ParallelEventProcessorImpl;
 
-struct DispatchPolicy {
-    size_t eventsPerBlock = 16;
+struct ParallelEventProcessorOptions {
+    unsigned cacheSize       = std::numeric_limits<unsigned>::max(); // cache size of internal prefetcher
+    unsigned inputBatchSize  = 16;                                   // size of batches loaded from HEPnOS
+    unsigned outputBatchSize = 16;                                   // size of batches sent over MPI to workers
 };
 
 struct ParallelEventProcessorStatistics {
@@ -48,13 +53,24 @@ class ParallelEventProcessor {
      *
      * @param datastore Datastore
      * @param comm Communicator gathering participating processes
-     * @param prefetcher Prefetcher to use when reading events from storage
-     * @param policy Dispatch policy to use when sending events to workers
+     * @param options Options on how to carry out batching and dispatch
      */
     ParallelEventProcessor(const DataStore& datastore,
                            MPI_Comm comm,
-                           const Prefetcher& prefetcher,
-                           const DispatchPolicy& policy = DispatchPolicy());
+                           const ParallelEventProcessorOptions& options = ParallelEventProcessorOptions());
+
+    /**
+     * @brief Constructor. Builds a ParallelEventProcessor to navigate a dataset.
+     * This constructor involves collective communications across members of the
+     * provided communicator.
+     *
+     * @param async AsyncEngine to use to access the storage in the background
+     * @param comm Communicator gathering participating processes
+     * @param options Options on how to carry out batching and dispatch
+     */
+    ParallelEventProcessor(const AsyncEngine& async,
+                           MPI_Comm comm,
+                           const ParallelEventProcessorOptions& options = ParallelEventProcessorOptions());
 
     /**
      * @brief Destructor. This destructor involves collective comunications
