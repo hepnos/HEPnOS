@@ -9,6 +9,7 @@
 #include <queue>
 #include <thallium.hpp>
 #include "PrefetcherImpl.hpp"
+#include "ProductCacheImpl.hpp"
 #include "hepnos/EventSet.hpp"
 #include "hepnos/ParallelEventProcessor.hpp"
 
@@ -18,19 +19,20 @@ namespace tl = thallium;
 
 struct ParallelEventProcessorImpl {
 
-    std::shared_ptr<DataStoreImpl> m_datastore;
-    MPI_Comm                       m_comm;
-    ParallelEventProcessorOptions  m_options;
-    std::vector<int>               m_loader_ranks;
-    std::vector<int>               m_targets;
+    std::shared_ptr<DataStoreImpl>  m_datastore;
+    MPI_Comm                        m_comm;
+    ParallelEventProcessorOptions   m_options;
+    std::vector<int>                m_loader_ranks;
+    std::vector<int>                m_targets;
+    std::unordered_set<std::string> m_product_keys;
 
-    bool                           m_loader_running = false;
-    std::queue<EventDescriptor>    m_event_queue;
-    tl::mutex                      m_event_queue_mtx;
-    tl::condition_variable         m_event_queue_cv;
+    bool                            m_loader_running = false;
+    std::queue<EventDescriptor>     m_event_queue;
+    tl::mutex                       m_event_queue_mtx;
+    tl::condition_variable          m_event_queue_cv;
 
-    int                            m_num_active_consumers;
-    tl::managed<tl::xstream>       m_mpi_xstream;
+    int                             m_num_active_consumers;
+    tl::managed<tl::xstream>        m_mpi_xstream;
 
     ParallelEventProcessorStatistics* m_stats = nullptr;
 
@@ -51,7 +53,7 @@ struct ParallelEventProcessorImpl {
      * Main function to start processing events in parallel.
      */
     void process(const std::vector<EventSet>& evsets,
-                 const ParallelEventProcessor::EventProcessingFn& function,
+                 const ParallelEventProcessor::EventProcessingWithCacheFn& function,
                  ParallelEventProcessorStatistics* stats) {
         m_stats = stats;
         startLoadingEventsFromTargets(evsets);
@@ -154,6 +156,12 @@ struct ParallelEventProcessorImpl {
         }
     }
 
+    /**
+     * This function tries to fill out the provided vector with a batch of
+     * Event descriptors taken locally or from loader processes.
+     * It returns true if new EventDescriptors were put in the vector,
+     * false otherwise.
+     */
     bool requestEvents(std::vector<EventDescriptor>& descriptors) {
         int my_rank;
         MPI_Comm_rank(m_comm, &my_rank);
@@ -199,18 +207,35 @@ struct ParallelEventProcessorImpl {
         return false;
     }
 
-    void processEvents(const ParallelEventProcessor::EventProcessingFn& user_function) {
+    void preloadProductsFor(const ItemDescriptor& descriptor, ProductCache& cache) {
+        for(auto& product_key : m_product_keys) {
+            auto product_id = DataStoreImpl::buildProductID(descriptor, product_key);
+            std::string data;
+            bool ok = m_datastore->loadRawProduct(product_id, data);
+            if(ok) {
+                cache.m_impl->addRawProduct(descriptor, product_key, std::move(data));
+            }
+        }
+    }
+
+    /**
+     * This function keeps requesting new events and call the user-provided callback.
+     */
+    void processEvents(const ParallelEventProcessor::EventProcessingWithCacheFn& user_function) {
         if(m_stats) *m_stats = ParallelEventProcessorStatistics();
         double t_start = tl::timer::wtime();
         std::vector<EventDescriptor> descriptors;
         double t1;
         double t2 = tl::timer::wtime();
+        ProductCache cache;
         while(requestEvents(descriptors)) {
             for(auto& d : descriptors) {
+                cache.clear();
                 Event event = Event::fromDescriptor(DataStore(m_datastore), d, false);
+                preloadProductsFor(d, cache);
                 t1 = tl::timer::wtime();
                 if(m_stats) m_stats->waiting_time_stats.updateWith(t1-t2);
-                user_function(event);
+                user_function(event, cache);
                 t2 = tl::timer::wtime();
                 if(m_stats) {
                     m_stats->processing_time_stats.updateWith(t2 - t1);

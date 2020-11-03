@@ -42,7 +42,7 @@ class AsyncPrefetcherImpl : public PrefetcherImpl {
         {
             std::unique_lock<tl::mutex> lock(m_product_cache_mtx);
             if(ok) {
-                m_product_cache[product_id.m_key] = std::move(data);
+                m_product_cache.m_impl->addRawProduct(product_id, std::move(data));
             }
             m_products_loading.erase(product_id.m_key);
         }
@@ -193,12 +193,9 @@ class AsyncPrefetcherImpl : public PrefetcherImpl {
                         std::string& data) const override {
         auto product_id = DataStoreImpl::buildProductID(id, productName);
         std::unique_lock<tl::mutex> lock(m_product_cache_mtx);
-        auto it = m_product_cache.find(product_id.m_key);
-        if(it != m_product_cache.end()) {
+        if(m_product_cache.m_impl->loadRawProduct(product_id, data)) {
             // product found right away
-            auto& product = it->second;
-            data = std::move(product);
-            m_product_cache.erase(it);
+            m_product_cache.m_impl->removeRawProduct(product_id);
         } else {
             // product not found, check if prefetching is pending
             if(m_products_loading.count(product_id.m_key) == 0) {
@@ -211,15 +208,14 @@ class AsyncPrefetcherImpl : public PrefetcherImpl {
                 m_product_cache_cv.wait(lock, [this, &product_id]() {
                            return m_products_loading.count(product_id.m_key) == 0; });
                 // check again if the product is available
-                it = m_product_cache.find(product_id.m_key);
-                if(it == m_product_cache.end()) {
-                    // product is not available
+                if(m_product_cache.m_impl->loadRawProduct(product_id, data)) {
+                    // product found
+                    m_product_cache.m_impl->removeRawProduct(product_id);
+                    return true;
+                } else{
+                    // product not found
                     return false;
                 }
-                // product is available
-                auto& product = it->second;
-                data = std::move(product);
-                m_product_cache.erase(it);
             }
         }
         return true;
@@ -230,13 +226,12 @@ class AsyncPrefetcherImpl : public PrefetcherImpl {
                         char* value, size_t* vsize) const override {
         auto product_id = DataStoreImpl::buildProductID(id, productName);
         std::unique_lock<tl::mutex> lock(m_product_cache_mtx);
-        auto it = m_product_cache.find(product_id.m_key);
-        if(it != m_product_cache.end()) {
+        std::string data;
+        if(m_product_cache.m_impl->loadRawProduct(product_id, data)) {
             // product found right away
-            auto& product = it->second;
-            *vsize = product.size();
-            std::memcpy(value, product.data(), *vsize);
-            m_product_cache.erase(it);
+            m_product_cache.m_impl->removeRawProduct(product_id);
+            *vsize = data.size();
+            std::memcpy(value, data.data(), *vsize);
         } else {
             // product not found, check if prefetching is pending
             if(m_products_loading.count(product_id.m_key) == 0) {
@@ -249,16 +244,16 @@ class AsyncPrefetcherImpl : public PrefetcherImpl {
                 m_product_cache_cv.wait(lock, [this, &product_id]() {
                            return m_products_loading.count(product_id.m_key) == 0; });
                 // check again if the product is available
-                it = m_product_cache.find(product_id.m_key);
-                if(it == m_product_cache.end()) {
-                    // product is not available
+                if(m_product_cache.m_impl->loadRawProduct(product_id, data)) {
+                    // product found
+                    m_product_cache.m_impl->removeRawProduct(product_id);
+                    *vsize = data.size();
+                    std::memcpy(value, data.data(), *vsize);
+                    return true;
+                } else{
+                    // product not found
                     return false;
                 }
-                // product is available
-                auto& product = it->second;
-                *vsize = product.size();
-                std::memcpy(value, product.data(), *vsize);
-                m_product_cache.erase(it);
             }
         }
         return true;

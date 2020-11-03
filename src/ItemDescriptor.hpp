@@ -1,6 +1,9 @@
 #ifndef __HEPNOS_ITEM_DESCRIPTOR_HPP
 #define __HEPNOS_ITEM_DESCRIPTOR_HPP
 
+#include "hepnos/Event.hpp"
+#include "hepnos/SubRun.hpp"
+#include "hepnos/Run.hpp"
 #include "hepnos/RunNumber.hpp"
 #include "hepnos/SubRunNumber.hpp"
 #include "hepnos/EventNumber.hpp"
@@ -19,6 +22,21 @@ struct ItemDescriptor {
     , subrun(InvalidSubRunNumber)
     , event(InvalidEventNumber) {
         std::memset(dataset.data, '\0', sizeof(dataset.data));
+    }
+
+    ItemDescriptor(const EventDescriptor& ed) {
+        std::memcpy(this, &ed, EventDescriptorLength);
+    }
+
+    ItemDescriptor(const SubRunDescriptor& srd) {
+        std::memcpy(this, &srd, SubRunDescriptorLength);
+        event = InvalidEventNumber;
+    }
+
+    ItemDescriptor(const RunDescriptor& rd) {
+        std::memcpy(this, &rd, RunDescriptorLength);
+        event = InvalidEventNumber;
+        subrun = InvalidSubRunNumber;
     }
 
     ItemDescriptor(const UUID& ds,

@@ -60,7 +60,7 @@ ParallelEventProcessor::~ParallelEventProcessor() {
 
 void ParallelEventProcessor::process(
         const DataSet& dataset,
-        const EventProcessingFn& function,
+        const EventProcessingWithCacheFn& function,
         ParallelEventProcessorStatistics* stats) {
     std::vector<EventSet> ev_sets;
     for(auto t : m_impl->m_targets) {
@@ -70,7 +70,7 @@ void ParallelEventProcessor::process(
 }
 
 void ParallelEventProcessor::preloadImpl(const std::string& productKey) {
-
+    m_impl->m_product_keys.insert(productKey);
 }
 
 }

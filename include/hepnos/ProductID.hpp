@@ -25,6 +25,7 @@ class ProductID {
     friend class WriteBatchImpl;
     friend class AsyncPrefetcherImpl;
     friend class SyncPrefetcherImpl;
+    friend struct ProductCacheImpl;
     friend class boost::serialization::access;
 
     public:

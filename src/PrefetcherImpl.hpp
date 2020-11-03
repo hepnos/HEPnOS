@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include "hepnos/Prefetcher.hpp"
+#include "hepnos/ProductCache.hpp"
 #include "DataStoreImpl.hpp"
 #include "AsyncEngineImpl.hpp"
 
@@ -30,7 +31,7 @@ class PrefetcherImpl {
     bool                             m_associated = false;
     std::vector<std::string>         m_active_product_keys;
     mutable std::set<std::shared_ptr<ItemImpl>, ItemPtrComparator> m_item_cache;
-    mutable std::unordered_map<std::string, std::string> m_product_cache;
+    mutable ProductCache m_product_cache;
 
     PrefetcherImpl(const std::shared_ptr<DataStoreImpl>& ds)
     : m_datastore(ds) {}

@@ -12,6 +12,7 @@
 #include <hepnos/AsyncEngine.hpp>
 #include <hepnos/Statistics.hpp>
 #include <hepnos/DataStore.hpp>
+#include <hepnos/ProductCache.hpp>
 
 namespace hepnos {
 
@@ -45,6 +46,7 @@ class ParallelEventProcessor {
     public:
 
     typedef std::function<void(const Event&)> EventProcessingFn;
+    typedef std::function<void(const Event&, const ProductCache& cache)> EventProcessingWithCacheFn;
 
     /**
      * @brief Constructor. Builds a ParallelEventProcessor to navigate a dataset.
@@ -100,8 +102,18 @@ class ParallelEventProcessor {
      * @param stats Pointer to a statistics object to fill
      */
     void process(const DataSet& dataset,
-                 const EventProcessingFn& function,
+                 const EventProcessingWithCacheFn& function,
                  ParallelEventProcessorStatistics* stats = nullptr);
+
+    void process(const DataSet& dataset,
+                 const EventProcessingFn& function,
+                 ParallelEventProcessorStatistics* stats = nullptr) {
+        process(dataset,
+                [&function](const Event& ev, const ProductCache&) {
+                    function(ev);
+                },
+                stats);
+    }
 
 private:
 

@@ -17,6 +17,7 @@
 #include <hepnos/KeyValueContainer.hpp>
 #include <hepnos/ParallelEventProcessor.hpp>
 #include <hepnos/Prefetcher.hpp>
+#include <hepnos/ProductCache.hpp>
 #include <hepnos/Run.hpp>
 #include <hepnos/RunNumber.hpp>
 #include <hepnos/RunSet.hpp>

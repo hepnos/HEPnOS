@@ -9,6 +9,7 @@ set(hepnos-src DataStore.cpp
 	       WriteBatch.cpp
 	       ParallelEventProcessor.cpp
 	       Prefetcher.cpp
+	       ProductCache.cpp
 	       AsyncEngine.cpp
 	       EventSet.cpp)
 
