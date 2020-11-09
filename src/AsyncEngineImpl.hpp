@@ -11,12 +11,14 @@ namespace hepnos {
 
 class WriteBatchImpl;
 class AsyncPrefetcherImpl;
+class ParallelEventProcessor;
 
 class AsyncEngineImpl {
 
     friend class WriteBatchImpl;
     friend class AsyncEngine;
     friend class AsyncPrefetcherImpl;
+    friend class ParallelEventProcessor;
 
     public:
 

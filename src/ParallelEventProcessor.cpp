@@ -4,7 +4,9 @@
  * See COPYRIGHT in top-level directory.
  */
 #include "hepnos/ParallelEventProcessor.hpp"
+#include "hepnos/AsyncEngine.hpp"
 #include "ParallelEventProcessorImpl.hpp"
+#include "AsyncEngineImpl.hpp"
 
 namespace hepnos {
 
@@ -52,6 +54,14 @@ ParallelEventProcessor::ParallelEventProcessor(
     m_impl->m_targets = std::move(my_targets);
 }
 
+ParallelEventProcessor::ParallelEventProcessor(
+        const AsyncEngine& async,
+        MPI_Comm comm,
+        const ParallelEventProcessorOptions& options)
+: ParallelEventProcessor(DataStore(async.m_impl->m_datastore), comm, options) {
+    m_impl->m_async = async.m_impl;
+}
+
 ParallelEventProcessor::~ParallelEventProcessor() {
     if(m_impl) {
         MPI_Barrier(m_impl->m_comm);
@@ -62,6 +72,17 @@ void ParallelEventProcessor::process(
         const DataSet& dataset,
         const EventProcessingWithCacheFn& function,
         ParallelEventProcessorStatistics* stats) {
+    // make sure this function is called on the same dataset by all the processes
+    UUID dsetid = dataset.m_impl->m_uuid;
+    UUID uuid;
+    MPI_Allreduce(&dsetid, &uuid, sizeof(uuid), MPI_BYTE, MPI_BAND, m_impl->m_comm);
+    char c = dsetid == uuid ? 1 : 0;
+    char c2;
+    MPI_Allreduce(&c, &c2, 1, MPI_BYTE, MPI_BAND, m_impl->m_comm);
+    if(!c2) {
+        throw Exception("ParallelEventProcessor::process called on different DataSets by distinct processes");
+    }
+    // get the event sets
     std::vector<EventSet> ev_sets;
     for(auto t : m_impl->m_targets) {
         ev_sets.push_back(dataset.events(t));

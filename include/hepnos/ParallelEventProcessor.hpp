@@ -25,12 +25,14 @@ struct ParallelEventProcessorOptions {
 };
 
 struct ParallelEventProcessorStatistics {
-    size_t                    total_events_processed = 0;
-    size_t                    local_events_processed = 0;
+    size_t                    total_events_processed = 0;   // total number of events processed by this process
+    size_t                    local_events_processed = 0;   // total number of events that were loaded locally (not using MPI)
     double                    total_time             = 0.0; // total time in the process function, in seconds
-    double                    total_processing_time  = 0.0; // total processing time, in seconds
+    double                    acc_event_processing_time = 0.0; // accumulated time, in the user callback function, in seconds
+    double                    acc_product_loading_time  = 0.0; // accumulated product loading time, in seconds
     Statistics<double,double> processing_time_stats; // statistics on single-event processing times
-    Statistics<double,double> waiting_time_stats; // statictics on time between calls to user-provided function
+    Statistics<double,double> product_loading_time_stats; // statistics on single-event product loading times
+    Statistics<double,double> waiting_time_stats; // statictics on time spent waiting for new events to be in the queue
 };
 
 /**

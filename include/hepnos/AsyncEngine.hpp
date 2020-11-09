@@ -21,6 +21,8 @@ class WriteBatchImpl;
 class Prefetcher;
 class PrefetcherImpl;
 class AsyncEngineImpl;
+class ParallelEventProcessor;
+class ParallelEventProcessorImpl;
 
 /**
  * @brief The AsyncEngine class uses Argobots to provide a set
@@ -42,6 +44,8 @@ class AsyncEngine {
     friend class KeyValueContainer;
     friend class WriteBatch;
     friend class Prefetcher;
+    friend class ParallelEventProcessor;
+    friend class ParallelEventProcessorImpl;
 
     private:
 

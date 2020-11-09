@@ -17,6 +17,7 @@ namespace hepnos {
 
 class RunSet;
 class Run;
+class ParallelEventProcessor;
 
 /**
  * @brief The DataSet class represents a handle to a named dataset
@@ -29,6 +30,7 @@ class DataSet : public KeyValueContainer {
     friend class DataStore;
     friend class RunSet;
     friend class DataSetImpl;
+    friend class ParallelEventProcessor;
 
     private:
 

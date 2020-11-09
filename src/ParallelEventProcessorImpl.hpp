@@ -19,21 +19,27 @@ namespace tl = thallium;
 
 struct ParallelEventProcessorImpl {
 
-    std::shared_ptr<DataStoreImpl>  m_datastore;
-    MPI_Comm                        m_comm;
-    ParallelEventProcessorOptions   m_options;
-    std::vector<int>                m_loader_ranks;
-    std::vector<int>                m_targets;
-    std::unordered_set<std::string> m_product_keys;
+    std::shared_ptr<DataStoreImpl>    m_datastore;
+    std::shared_ptr<AsyncEngineImpl>  m_async;
+    MPI_Comm                          m_comm;
+    ParallelEventProcessorOptions     m_options;
+    std::vector<int>                  m_loader_ranks;
+    std::vector<int>                  m_targets;
+    std::unordered_set<std::string>   m_product_keys;
 
-    bool                            m_loader_running = false;
-    std::queue<EventDescriptor>     m_event_queue;
-    tl::mutex                       m_event_queue_mtx;
-    tl::condition_variable          m_event_queue_cv;
+    bool                              m_loader_running = false;
+    std::queue<EventDescriptor>       m_event_queue;
+    tl::mutex                         m_event_queue_mtx;
+    tl::condition_variable            m_event_queue_cv;
 
-    int                             m_num_active_consumers;
-    tl::managed<tl::xstream>        m_mpi_xstream;
+    int                               m_num_active_consumers;
+    tl::managed<tl::xstream>          m_mpi_xstream;
 
+    size_t                            m_num_processing_ults = 0;
+    tl::mutex                         m_processing_ults_mtx;
+    tl::condition_variable            m_processing_ults_cv;
+
+    tl::mutex                         m_stats_mtx;
     ParallelEventProcessorStatistics* m_stats = nullptr;
 
     ParallelEventProcessorImpl(
@@ -163,6 +169,8 @@ struct ParallelEventProcessorImpl {
      * false otherwise.
      */
     bool requestEvents(std::vector<EventDescriptor>& descriptors) {
+        double t1 = tl::timer::wtime();
+        double t2;
         int my_rank;
         MPI_Comm_rank(m_comm, &my_rank);
         while(m_loader_ranks.size() != 0) {
@@ -178,10 +186,17 @@ struct ParallelEventProcessorImpl {
                     descriptors[i] = m_event_queue.front();
                     m_event_queue.pop();
                     num_actual_events += 1;
-                    if(m_stats) m_stats->local_events_processed += 1;
+                    // no need to lock m_stats_mtx, this is the only ULT modifying local_events_processed
+                    if(m_stats) {
+                        m_stats->total_events_processed += 1;
+                        m_stats->local_events_processed += 1;
+                    }
                 }
                 if(num_actual_events != 0) {
                     descriptors.resize(num_actual_events);
+                    t2 = tl::timer::wtime();
+                    // no need to lock m_stats_mtx, this is the only ULT modifying waiting_time_stats
+                    if(m_stats) m_stats->waiting_time_stats.updateWith(t2-t1);
                     return true;
                 } else {
                     m_loader_ranks.erase(m_loader_ranks.begin());
@@ -198,12 +213,21 @@ struct ParallelEventProcessorImpl {
                 size_t num_actual_events = count/sizeof(descriptors[0]);
                 if(num_actual_events != 0) {
                     descriptors.resize(num_actual_events);
+                    t2 = tl::timer::wtime();
+                    // no need to lock m_stats_mtx, this is the only ULT modifying waiting_time_stats
+                    if(m_stats) {
+                        m_stats->total_events_processed += num_actual_events;
+                        m_stats->waiting_time_stats.updateWith(t2-t1);
+                    }
                     return true;
                 } else {
                     m_loader_ranks.erase(m_loader_ranks.begin());
                 }
             }
         }
+        t2 = tl::timer::wtime();
+        // no need to lock m_stats_mtx, this is the only ULT modifying waiting_time_stats
+        if(m_stats) m_stats->waiting_time_stats.updateWith(t2-t1);
         return false;
     }
 
@@ -218,6 +242,31 @@ struct ParallelEventProcessorImpl {
         }
     }
 
+    void processSingleEvent(const EventDescriptor& d, const ParallelEventProcessor::EventProcessingWithCacheFn& user_function) {
+        ProductCache cache;
+        double t1, t2, t3;
+        t1 = tl::timer::wtime();
+        Event event = Event::fromDescriptor(DataStore(m_datastore), d, false);
+        preloadProductsFor(d, cache);
+        t2 = tl::timer::wtime();
+        user_function(event, cache);
+        t3 = tl::timer::wtime();
+        if(m_stats) {
+            std::lock_guard<tl::mutex> lock(m_stats_mtx);
+            m_stats->product_loading_time_stats.updateWith(t2-t1);
+            m_stats->acc_product_loading_time += t2-t1;
+            m_stats->processing_time_stats.updateWith(t3-t2);
+            m_stats->acc_event_processing_time += t3-t2;
+        }
+        if(m_async) {
+            {
+                std::unique_lock<tl::mutex> lock(m_processing_ults_mtx);
+                m_num_processing_ults -= 1;
+            }
+            m_processing_ults_cv.notify_all();
+        }
+    }
+
     /**
      * This function keeps requesting new events and call the user-provided callback.
      */
@@ -225,23 +274,29 @@ struct ParallelEventProcessorImpl {
         if(m_stats) *m_stats = ParallelEventProcessorStatistics();
         double t_start = tl::timer::wtime();
         std::vector<EventDescriptor> descriptors;
-        double t1;
-        double t2 = tl::timer::wtime();
-        ProductCache cache;
+        auto max_ults = m_async ? m_async->m_xstreams.size()*2 : 0;
         while(requestEvents(descriptors)) {
             for(auto& d : descriptors) {
-                cache.clear();
-                Event event = Event::fromDescriptor(DataStore(m_datastore), d, false);
-                preloadProductsFor(d, cache);
-                t1 = tl::timer::wtime();
-                if(m_stats) m_stats->waiting_time_stats.updateWith(t1-t2);
-                user_function(event, cache);
-                t2 = tl::timer::wtime();
-                if(m_stats) {
-                    m_stats->processing_time_stats.updateWith(t2 - t1);
-                    m_stats->total_processing_time += t2 - t1;
-                    m_stats->total_events_processed += 1;
+                if(m_async) {
+                    {   // don't submit more ULTs than twice the number of ES
+                        std::unique_lock<tl::mutex> lock(m_processing_ults_mtx);
+                        while(m_num_processing_ults >= max_ults) {
+                            m_processing_ults_cv.wait(lock);
+                        }
+                        m_num_processing_ults += 1;
+                    }
+                    m_async->m_pool.make_thread([this, d, &user_function]() {
+                        processSingleEvent(d, user_function);
+                    }, tl::anonymous());
+                } else {
+                    processSingleEvent(d, user_function);
                 }
+            }
+        }
+        {   // wait until all ULTs completed
+            std::unique_lock<tl::mutex> lock(m_processing_ults_mtx);
+            while(m_num_processing_ults != 0) {
+                m_processing_ults_cv.wait(lock);
             }
         }
         double t_end = tl::timer::wtime();
