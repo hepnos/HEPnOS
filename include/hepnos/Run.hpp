@@ -166,6 +166,16 @@ class Run : public KeyValueContainer {
     bool loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const override;
 
     /**
+     * @see KeyValueContainer::loadRawData()
+     */
+    bool loadRawData(const ProductCache& cache, const std::string& key, std::string& buffer) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
+    bool loadRawData(const ProductCache& cache, const std::string& key, char* value, size_t* vsize) const override;
+
+    /**
      * @brief Compares this Run with another Run. The Runs must point to
      * the same run number within the same container.
      *

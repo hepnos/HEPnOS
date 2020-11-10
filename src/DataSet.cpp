@@ -15,6 +15,7 @@
 #include "AsyncEngineImpl.hpp"
 #include "WriteBatchImpl.hpp"
 #include "PrefetcherImpl.hpp"
+#include "ProductCacheImpl.hpp"
 
 namespace hepnos {
 
@@ -115,6 +116,22 @@ bool DataSet::loadRawData(const Prefetcher& prefetcher, const std::string& key, 
     (void)prefetcher; // prefetcher isn't usable with a DataSet
     ItemDescriptor id(m_impl->m_uuid);
     return m_impl->m_datastore->loadRawProduct(id, key, value, vsize);
+}
+
+bool DataSet::loadRawData(const ProductCache& cache, const std::string& key, std::string& buffer) const {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
+    ItemDescriptor id(m_impl->m_uuid);
+    return cache.m_impl->loadRawProduct(id, key, buffer);
+}
+
+bool DataSet::loadRawData(const ProductCache& cache, const std::string& key, char* value, size_t* vsize) const {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
+    ItemDescriptor id(m_impl->m_uuid);
+    return cache.m_impl->loadRawProduct(id, key, value, vsize);
 }
 
 bool DataSet::operator==(const DataSet& other) const {

@@ -29,11 +29,31 @@ struct ProductCacheImpl {
         return found;
     }
 
+    bool loadRawProduct(const ProductID& product_id, char* value, size_t* vsize) const {
+        m_lock.rdlock();
+        auto it = m_map.find(product_id.m_key);
+        auto found = it != m_map.end();
+        if(found) {
+            auto& data = it->second;
+            *vsize = data.size();
+            if(*vsize) std::memcpy(value, data.data(), *vsize);
+        }
+        m_lock.unlock();
+        return found;
+    }
+
     bool loadRawProduct(const ItemDescriptor& id,
                         const std::string& productName,
                         std::string& data) const {
         auto product_id = DataStoreImpl::buildProductID(id, productName);
         return loadRawProduct(product_id, data);
+    }
+
+    bool loadRawProduct(const ItemDescriptor& id,
+                        const std::string& productName,
+                        char* value, size_t* vsize) const {
+        auto product_id = DataStoreImpl::buildProductID(id, productName);
+        return loadRawProduct(product_id, value, vsize);
     }
 
     bool hasProduct(const ProductID& product_id) const {

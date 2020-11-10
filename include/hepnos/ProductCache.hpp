@@ -10,13 +10,25 @@
 
 namespace hepnos {
 
+class Event;
+class SubRun;
+class Run;
+class DataSet;
 struct ProductCacheImpl;
 struct ParallelEventProcessorImpl;
 struct SyncPrefetcherImpl;
 struct AsyncPrefetcherImpl;
 
+/**
+ * @brief The ProductCache is used in ParallelEventProcessor to
+ * cache products associated with events.
+ */
 class ProductCache {
 
+    friend class DataSet;
+    friend class Run;
+    friend class SubRun;
+    friend class Event;
     friend struct ParallelEventProcessorImpl;
     friend struct SyncPrefetcherImpl;
     friend struct AsyncPrefetcherImpl;

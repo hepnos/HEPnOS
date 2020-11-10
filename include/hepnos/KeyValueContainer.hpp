@@ -23,6 +23,7 @@ namespace hepnos {
 class WriteBatch;
 class AsyncEngine;
 class Prefetcher;
+class ProductCache;
 
 class KeyValueContainer {
 
@@ -155,6 +156,7 @@ class KeyValueContainer {
      * (or scheduled to be prefetched) and fall back to looking up in the underlying
      * DataStore if it hasn't.
      *
+     * @param prefetcher Prefetcher to look into first.
      * @param key Key.
      * @param value Buffer in which to put the binary data.
      * @param vsize in: size of the buffer, out: size of the actual data.
@@ -162,6 +164,35 @@ class KeyValueContainer {
      * @return true if the key exists and the read succeeded, false otherwise.
      */
     virtual bool loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const = 0;
+
+    /**
+     * @brief Loads binary data associated with a particular key from the container.
+     * This function will look in the product cache for the requested object.
+     * Note that contrary to the Prefetcher, this function will NOT fall back to looking
+     * up into the DataStore.
+     *
+     * @param cache ProductCache to look into first.
+     * @param key Key.
+     * @param buffer Buffer in which to put the binary data.
+     *
+     * @return true if the key exists and the read succeeded, false otherwise.
+     */
+    virtual bool loadRawData(const ProductCache& cache, const std::string& key, std::string& buffer) const = 0;
+
+    /**
+     * @brief Loads binary data associated with a particular key from the container.
+     * This function will look in the product cache for the requested object.
+     * Note that contrary to the Prefetcher, this function will NOT fall back to looking
+     * up into the DataStore.
+     *
+     * @param cache ProductCache to look into first.
+     * @param key Key.
+     * @param value Buffer in which to put the binary data.
+     * @param vsize in: size of the buffer, out: size of the actual data.
+     *
+     * @return true if the key exists and the read succeeded, false otherwise.
+     */
+    virtual bool loadRawData(const ProductCache& cache, const std::string& key, char* value, size_t* vsize) const = 0;
 
     /**
      * @brief Stores a key/value pair into the KeyValueContainer.
@@ -307,6 +338,24 @@ class KeyValueContainer {
         return loadVectorImpl(prefetcher, key, value, std::is_pod<V>());
     }
 
+    /**
+     * @brief Version of load that will first look into the Prefetcher
+     * argument for the requested key.
+     */
+    template<typename K, typename V>
+    bool load(const ProductCache& cache, const K& key, V& value) const {
+        return loadImpl(cache, key, value, std::is_pod<V>());
+    }
+
+    /**
+     * @brief Version of load for vectors, looking first into the
+     * Prefetcher argument for the requested key.
+     */
+    template<typename K, typename V>
+    bool load(const ProductCache& cache, const K& key, std::vector<V>& value) const {
+        return loadVectorImpl(cache, key, value, std::is_pod<V>());
+    }
+
     private:
 
     /**
@@ -414,6 +463,22 @@ class KeyValueContainer {
     }
 
     /**
+     * @brief Implementation of the load function with a cache.
+     */
+    template<typename K, typename V>
+    bool loadImpl(const ProductCache& cache, const K& key, V& value,
+            const std::integral_constant<bool, true>&) const {
+        std::string buffer;
+        std::stringstream ss_key;
+        ss_key << key << "#" << demangle<V>();
+        size_t vsize = sizeof(value);
+        if(!loadRawData(cache, ss_key.str(), reinterpret_cast<char*>(&value), &vsize)) {
+            return false;
+        }
+        return vsize == sizeof(value);
+    }
+
+    /**
      * @brief Implementation of the load function when the value type is not a POD.
      */
     template<typename K, typename V>
@@ -445,6 +510,28 @@ class KeyValueContainer {
         std::stringstream ss_key;
         ss_key << key << "#" << demangle<V>();
         if(!loadRawData(prefetcher, ss_key.str(), buffer)) {
+            return false;
+        }
+        try {
+            std::stringstream ss(buffer);
+            InputArchive ia(datastore(), ss);
+            ia >> value;
+        } catch(...) {
+            throw Exception("Exception occured during serialization");
+        }
+        return true;
+    }
+
+    /**
+     * @brief Implementation of the load function with a prefetcher.
+     */
+    template<typename K, typename V>
+    bool loadImpl(const ProductCache& cache, const K& key, V& value,
+            const std::integral_constant<bool, false>&) const {
+        std::string buffer;
+        std::stringstream ss_key;
+        ss_key << key << "#" << demangle<V>();
+        if(!loadRawData(cache, ss_key.str(), buffer)) {
             return false;
         }
         try {
@@ -508,6 +595,31 @@ class KeyValueContainer {
     }
 
     /**
+     * @brief Implementation of the load function with a cache.
+     */
+    template<typename K, typename V>
+    bool loadVectorImpl(const ProductCache& cache, const K& key, std::vector<V>& value,
+            const std::integral_constant<bool, true>&) const {
+        std::string buffer;
+        std::stringstream ss_key;
+        ss_key << key << "#" << demangle<std::vector<V>>();
+        if(!loadRawData(cache, ss_key.str(), buffer)) {
+            return false;
+        }
+        size_t count = 0;
+        if(buffer.size() < sizeof(count)) {
+            return false;
+        }
+        std::memcpy(&count, buffer.data(), sizeof(count));
+        if(buffer.size() != sizeof(count) + count*sizeof(V)) {
+            return false;
+        }
+        value.resize(count);
+        std::memcpy(value.data(), buffer.data()+sizeof(count), count*sizeof(V));
+        return true;
+    }
+
+    /**
      * @brief Implementation of the load function when the value type is a vector of non-POD.
      */
     template<typename K, typename V>
@@ -544,6 +656,33 @@ class KeyValueContainer {
         std::stringstream ss_key;
         ss_key << key << "#" << demangle<std::vector<V>>();
         if(!loadRawData(prefetcher, ss_key.str(), buffer)) {
+            return false;
+        }
+        try {
+            std::stringstream ss(buffer);
+            InputArchive ia(datastore(), ss);
+            size_t count = 0;
+            ia >> count;
+            value.resize(count);
+            for(unsigned i=0; i<count; i++) {
+                ia >> value[i];
+            }
+        } catch(...) {
+            throw Exception("Exception occured during serialization");
+        }
+        return true;
+    }
+
+    /**
+     * @brief Implementation of the load function with a prefetcher.
+     */
+    template<typename K, typename V>
+    bool loadVectorImpl(const ProductCache& cache, const K& key, std::vector<V>& value,
+            const std::integral_constant<bool, false>&) const {
+        std::string buffer;
+        std::stringstream ss_key;
+        ss_key << key << "#" << demangle<std::vector<V>>();
+        if(!loadRawData(cache, ss_key.str(), buffer)) {
             return false;
         }
         try {

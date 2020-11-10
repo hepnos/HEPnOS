@@ -11,6 +11,7 @@
 #include "WriteBatchImpl.hpp"
 #include "AsyncEngineImpl.hpp"
 #include "PrefetcherImpl.hpp"
+#include "ProductCacheImpl.hpp"
 
 namespace hepnos {
 
@@ -116,10 +117,26 @@ bool Event::loadRawData(const Prefetcher& prefetcher, const std::string& key, st
 
 bool Event::loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const {
     if(!valid()) {
-        throw Exception("Calling DataSet member function on an invalid DataSet");
+        throw Exception("Calling Event member function on an invalid Event");
     }
     auto& id = m_impl->m_descriptor;
     return prefetcher.m_impl->loadRawProduct(id, key, value, vsize);
+}
+
+bool Event::loadRawData(const ProductCache& cache, const std::string& key, std::string& buffer) const {
+    if(!valid()) {
+        throw Exception("Calling Event member function on an invalid Event object");
+    }
+    auto& id = m_impl->m_descriptor;
+    return cache.m_impl->loadRawProduct(id, key, buffer);
+}
+
+bool Event::loadRawData(const ProductCache& cache, const std::string& key, char* value, size_t* vsize) const {
+    if(!valid()) {
+        throw Exception("Calling Event member function on an invalid Event");
+    }
+    auto& id = m_impl->m_descriptor;
+    return cache.m_impl->loadRawProduct(id, key, value, vsize);
 }
 
 bool Event::operator==(const Event& other) const {

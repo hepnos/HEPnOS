@@ -10,8 +10,9 @@ extern hepnos::DataStore* datastore;
 class ParallelMPITest : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE( ParallelMPITest );
-//    CPPUNIT_TEST( testParallelEventProcessor );
+    CPPUNIT_TEST( testParallelEventProcessor );
     CPPUNIT_TEST( testParallelEventProcessorAsync );
+    CPPUNIT_TEST( testParallelEventProcessorWithProducts );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -21,6 +22,7 @@ class ParallelMPITest : public CppUnit::TestFixture
 
     void testParallelEventProcessor();
     void testParallelEventProcessorAsync();
+    void testParallelEventProcessorWithProducts();
 };
 
 #endif

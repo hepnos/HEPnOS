@@ -12,6 +12,7 @@
 #include "DataStoreImpl.hpp"
 #include "WriteBatchImpl.hpp"
 #include "AsyncEngineImpl.hpp"
+#include "ProductCacheImpl.hpp"
 
 namespace hepnos {
 
@@ -159,6 +160,22 @@ bool Run::loadRawData(const Prefetcher& prefetcher, const std::string& key, char
     }
     const ItemDescriptor& id = m_impl->m_descriptor;
     return prefetcher.m_impl->loadRawProduct(id, key, value, vsize);
+}
+
+bool Run::loadRawData(const ProductCache& cache, const std::string& key, std::string& buffer) const {
+    if(!valid()) {
+        throw Exception("Calling Run member function on an invalid Run object");
+    }
+    auto& id = m_impl->m_descriptor;
+    return cache.m_impl->loadRawProduct(id, key, buffer);
+}
+
+bool Run::loadRawData(const ProductCache& cache, const std::string& key, char* value, size_t* vsize) const {
+    if(!valid()) {
+        throw Exception("Calling Run member function on an invalid Run");
+    }
+    auto& id = m_impl->m_descriptor;
+    return cache.m_impl->loadRawProduct(id, key, value, vsize);
 }
 
 bool Run::operator==(const Run& other) const {
