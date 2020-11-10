@@ -25,8 +25,8 @@ include (CMakePackageConfigHelpers)
 # library version set here (e.g. for shared libs).
 #
 set (HEPNOS_VERSION_MAJOR 0)
-set (HEPNOS_VERSION_MINOR 3)
-set (HEPNOS_VERSION_PATCH 2)
+set (HEPNOS_VERSION_MINOR 4)
+set (HEPNOS_VERSION_PATCH 0)
 set (hepnos-vers "${HEPNOS_VERSION_MAJOR}.${HEPNOS_VERSION_MINOR}")
 set (HEPNOS_VERSION "${hepnos-vers}.${HEPNOS_VERSION_PATCH}")
 
