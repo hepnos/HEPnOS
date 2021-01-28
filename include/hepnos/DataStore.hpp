@@ -311,8 +311,8 @@ bool DataStore::loadProductImpl(const ProductID& productID, T& t, const std::int
     InputArchive ia(*this, ss);
     try {
         ia >> t;
-    } catch(...) {
-        throw Exception("Exception occured during serialization");
+    } catch(const std::exception& e) {
+        throw Exception(std::string("Exception occured during serialization: ") + e.what());
     }
     return true;
 }
@@ -342,8 +342,8 @@ bool DataStore::loadProductImpl(const ProductID& productID, std::vector<T>& t, c
         for(unsigned i=0; i < count; i++) {
             ia >> t[i];
         }
-    } catch(...) {
-        throw Exception("Exception occured during serialization");
+    } catch(const std::exception& e) {
+        throw Exception(std::string("Exception occured during serialization: ") + e.what());
     }
     return true;
 }

@@ -494,8 +494,8 @@ class KeyValueContainer {
             std::stringstream ss(buffer);
             InputArchive ia(datastore(), ss);
             ia >> value;
-        } catch(...) {
-            throw Exception("Exception occured during serialization");
+        } catch(const std::exception& e) {
+            throw Exception(std::string("Exception occured during serialization: ") + e.what());
         }
         return true;
     }
@@ -516,8 +516,8 @@ class KeyValueContainer {
             std::stringstream ss(buffer);
             InputArchive ia(datastore(), ss);
             ia >> value;
-        } catch(...) {
-            throw Exception("Exception occured during serialization");
+        } catch(const std::exception& e) {
+            throw Exception(std::string("Exception occured during serialization: ") + e.what());
         }
         return true;
     }
@@ -538,8 +538,8 @@ class KeyValueContainer {
             std::stringstream ss(buffer);
             InputArchive ia(datastore(), ss);
             ia >> value;
-        } catch(...) {
-            throw Exception("Exception occured during serialization");
+        } catch(const std::exception& e) {
+            throw Exception(std::string("Exception occured during serialization: ") + e.what());
         }
         return true;
     }
@@ -640,8 +640,8 @@ class KeyValueContainer {
             for(unsigned i=0; i<count; i++) {
                 ia >> value[i];
             }
-        } catch(...) {
-            throw Exception("Exception occured during serialization");
+        } catch(const std::exception& e) {
+            throw Exception(std::string("Exception occured during serialization: ") + e.what());
         }
         return true;
     }
@@ -667,8 +667,8 @@ class KeyValueContainer {
             for(unsigned i=0; i<count; i++) {
                 ia >> value[i];
             }
-        } catch(...) {
-            throw Exception("Exception occured during serialization");
+        } catch(const std::exception& e) {
+            throw Exception(std::string("Exception occured during serialization: ") + e.what());
         }
         return true;
     }
@@ -694,8 +694,8 @@ class KeyValueContainer {
             for(unsigned i=0; i<count; i++) {
                 ia >> value[i];
             }
-        } catch(...) {
-            throw Exception("Exception occured during serialization");
+        } catch(const std::exception& e) {
+            throw Exception(std::string("Exception occured during serialization: ") + e.what());
         }
         return true;
     }
@@ -712,8 +712,8 @@ class KeyValueContainer {
         boost::archive::binary_oarchive oa(ss_value, boost::archive::archive_flags::no_header);
         try {
             oa << value;
-        } catch(...) {
-            throw Exception("Exception occured during serialization");
+        } catch(const std::exception& e) {
+            throw Exception(std::string("Exception occured during serialization: ") + e.what());
         }
         value_str = ss_value.str();
     }
@@ -749,8 +749,8 @@ class KeyValueContainer {
             oa << count;
             for(auto i = start; i < end; i++)
                 oa << value[i];
-        } catch(...) {
-            throw Exception("Exception occured during serialization");
+        } catch(const std::exception& e) {
+            throw Exception(std::string("Exception occured during serialization: ") + e.what());
         }
         value_str = ss_value.str();
     }

@@ -20,7 +20,7 @@ void AsyncWriteBatchTest::testAsyncWriteBatchRun() {
     std::string key1 = "mykey";
 
     auto dataset = datastore->root().createDataSet("testAsyncWriteBatchRun");
-    hepnos::AsyncEngine async_engine(*datastore, 1);
+    hepnos::AsyncEngine async_engine(*datastore, 4);
 
     {
         hepnos::WriteBatch batch(async_engine);

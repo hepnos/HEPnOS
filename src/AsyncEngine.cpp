@@ -22,4 +22,13 @@ const std::vector<std::string>& AsyncEngine::errors() const {
         return _default;
 }
 
+std::vector<int> AsyncEngine::getXstreamRanks() const {
+    std::vector<int> result;
+    if(!m_impl) return result;
+    for(auto& es : m_impl->m_xstreams) {
+        result.push_back(es->get_rank());
+    }
+    return result;
+}
+
 }

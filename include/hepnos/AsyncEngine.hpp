@@ -122,6 +122,13 @@ class AsyncEngine {
      * @return List of error messages.
      */
     const std::vector<std::string>& errors() const;
+
+    /**
+     * @brief Get the ranks of the ES that this AsyncEngine uses.
+     *
+     * @return a vector of ranks.
+     */
+    std::vector<int> getXstreamRanks() const;
 };
 
 }
