@@ -44,7 +44,9 @@ class InputArchive : public iarchive {
     template<typename ... Args>
     InputArchive(DataStore&& datastore, Args&& ... args)
     : iarchive(std::forward<Args>(args)..., boost::archive::archive_flags::no_header)
-    , m_datastore(std::move(datastore)) {}
+    , m_datastore(std::move(datastore)) {
+        init(boost::archive::archive_flags::no_header);
+    }
 
     /**
      * @brief Constructor.
@@ -56,7 +58,9 @@ class InputArchive : public iarchive {
     template<typename ... Args>
     InputArchive(const DataStore& datastore, Args&& ... args)
     : iarchive(std::forward<Args>(args)..., boost::archive::archive_flags::no_header)
-    , m_datastore(datastore) {}
+    , m_datastore(datastore) {
+        init(boost::archive::archive_flags::no_header);
+    }
 
     /**
      * @brief Returns the DataStore used when creating the InputArchive.
@@ -68,5 +72,8 @@ class InputArchive : public iarchive {
 };
 
 }
+
+BOOST_SERIALIZATION_USE_ARRAY_OPTIMIZATION(hepnos::InputArchive)
+BOOST_SERIALIZATION_REGISTER_ARCHIVE(hepnos::InputArchive)
 
 #endif

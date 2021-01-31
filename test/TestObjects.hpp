@@ -37,20 +37,23 @@ class TestObjectB {
 
     int& a() { return _a; }
     std::string& b() { return _b; }
+    std::vector<char>& c() { return _c; }
 
     bool operator==(const TestObjectB& other) const {
-        return _a == other._a && _b == other._b;
+        return _a == other._a && _b == other._b && _c == other._c;
     }
 
     private:
 
-    int         _a;
-    std::string _b;
+    int               _a;
+    std::string       _b;
+    std::vector<char> _c;
 
     template<typename Archive>
     void serialize(Archive& ar, const unsigned int version) {
         ar & _a;
         ar & _b;
+        ar & _c;
     }
 };
 
