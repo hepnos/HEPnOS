@@ -17,7 +17,7 @@ namespace hepnos {
 
 namespace tl = thallium;
 
-struct ParallelEventProcessorImpl {
+struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorImpl> {
 
     std::shared_ptr<DataStoreImpl>    m_datastore;
     std::shared_ptr<AsyncEngineImpl>  m_async;
@@ -26,6 +26,8 @@ struct ParallelEventProcessorImpl {
     std::vector<int>                  m_loader_ranks;
     std::vector<int>                  m_targets;
     std::unordered_set<std::string>   m_product_keys;
+
+    tl::remote_procedure              m_req_events_rpc;
 
     bool                              m_loader_running = false;
     std::queue<EventDescriptor>       m_event_queue;
@@ -46,14 +48,18 @@ struct ParallelEventProcessorImpl {
             std::shared_ptr<DataStoreImpl> ds,
             MPI_Comm comm,
             const ParallelEventProcessorOptions& options)
-    : m_datastore(std::move(ds))
+    : tl::provider<ParallelEventProcessorImpl>(ds->m_engine, options.providerID)
+    , m_datastore(std::move(ds))
     , m_comm(comm)
-    , m_options(options) {
+    , m_options(options)
+    , m_req_events_rpc(define("hepnos_pep_req_events", &ParallelEventProcessorImpl::requestEventsRPC)) {
         MPI_Comm_size(comm, &m_num_active_consumers);
         m_num_active_consumers -= 1;
     }
 
-    ~ParallelEventProcessorImpl() {}
+    ~ParallelEventProcessorImpl() {
+        m_req_events_rpc.deregister();
+    }
 
     /**
      * Main function to start processing events in parallel.
@@ -160,6 +166,10 @@ struct ParallelEventProcessorImpl {
                 m_num_active_consumers -= 1;
             }
         }
+    }
+
+    void requestEventsRPC(const tl::request& req, size_t max, tl::bulk& remote_mem) {
+        // TODO
     }
 
     /**
