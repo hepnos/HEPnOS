@@ -52,6 +52,7 @@ ParallelEventProcessor::ParallelEventProcessor(
 
     m_impl->m_loader_ranks = std::move(loader_ranks);
     m_impl->m_targets = std::move(my_targets);
+    MPI_Barrier(comm);
 }
 
 ParallelEventProcessor::ParallelEventProcessor(
@@ -62,11 +63,7 @@ ParallelEventProcessor::ParallelEventProcessor(
     m_impl->m_async = async.m_impl;
 }
 
-ParallelEventProcessor::~ParallelEventProcessor() {
-    if(m_impl) {
-        MPI_Barrier(m_impl->m_comm);
-    }
-}
+ParallelEventProcessor::~ParallelEventProcessor() = default;
 
 void ParallelEventProcessor::process(
         const DataSet& dataset,
