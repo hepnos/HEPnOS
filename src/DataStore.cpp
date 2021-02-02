@@ -55,7 +55,7 @@ void DataStore::shutdown() {
         throw Exception("Calling DataStore member function on an invalid DataStore object");
     }
     for(auto addr : m_impl->m_addrs) {
-        margo_shutdown_remote_instance(m_impl->m_mid, addr.second);
+        m_impl->m_engine.shutdown_remote_engine(addr.second);
     }
 }
 
