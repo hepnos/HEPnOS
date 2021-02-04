@@ -22,6 +22,7 @@ struct ParallelEventProcessorOptions {
     unsigned cacheSize       = std::numeric_limits<unsigned>::max(); // cache size of internal prefetcher
     unsigned inputBatchSize  = 16;                                   // size of batches loaded from HEPnOS
     unsigned outputBatchSize = 16;                                   // size of batches sent over MPI to workers
+    uint16_t providerID      = 0;                                    // provider id to use (if multiple ParallelEventProcessor instances are used)
 };
 
 struct ParallelEventProcessorStatistics {

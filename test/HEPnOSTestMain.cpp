@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 
     sleep(1);
     // Create the datastore
-    hepnos::DataStore ds = hepnos::DataStore::connect(argv[1]);
+    hepnos::DataStore ds = hepnos::DataStore::connect(argv[1], true);
     datastore = &ds;
 
     // Get the top level suite from the registry
