@@ -260,7 +260,7 @@ class DataStoreImpl {
         // hash the name to get the provider id
         long unsigned db_idx = 0;
         uint64_t hash;
-        hash = hashString(productID.m_key);
+        hash = hashString(productID.m_key.c_str(), sizeof(ItemDescriptor));
         ch_placement_find_closest(m_product_dbs.chi, hash, 1, &db_idx);
         return m_product_dbs.dbs[db_idx];
     }
@@ -386,7 +386,7 @@ class DataStoreImpl {
         // hash the name to get the provider id
         long unsigned db_idx = 0;
         uint64_t hash;
-        hash = hashString(containerName);
+        hash = hashString(containerName.c_str(), containerName.size());
         ch_placement_find_closest(m_dataset_dbs.chi, hash, 1, &db_idx);
         return m_dataset_dbs.dbs[db_idx];
     }

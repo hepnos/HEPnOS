@@ -8,10 +8,11 @@
 
 namespace hepnos {
 
-inline size_t hashString(const std::string& str) {
+inline size_t hashString(const char* str, size_t size) {
     size_t hash = 14695981039346656037ULL;
     size_t prime = 1099511628211ULL;
-    for(const auto& c : str) {
+    for(size_t i = 0; i < size; i++) {
+        char c = str[i];
         hash = hash ^ c;
         hash *= prime;
     }
