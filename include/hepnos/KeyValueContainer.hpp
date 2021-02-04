@@ -211,7 +211,7 @@ class KeyValueContainer {
      */
     template<typename K, typename V>
     ProductID store(const K& key, const V& value) {
-        return storeImpl(key, value, std::is_pod<V>());
+        return storeImpl(key, value, std::is_pod<std::remove_reference_t<V>>());
     }
 
     /**
@@ -235,7 +235,7 @@ class KeyValueContainer {
      */
     template<typename K, typename V>
     ProductID store(WriteBatch& batch, const K& key, const V& value) {
-        return storeImpl(batch, key, value, std::is_pod<V>());
+        return storeImpl(batch, key, value, std::is_pod<std::remove_reference_t<V>>());
     }
 
     /**
@@ -259,7 +259,7 @@ class KeyValueContainer {
      */
     template<typename K, typename V>
     ProductID store(AsyncEngine& async, const K& key, const V& value) {
-        return storeImpl(async, key, value, std::is_pod<V>());
+        return storeImpl(async, key, value, std::is_pod<std::remove_reference_t<V>>());
     }
 
     /**
@@ -268,7 +268,7 @@ class KeyValueContainer {
     template<typename K, typename V>
     ProductID store(const K& key, const std::vector<V>& value, int start=0, int end=-1) {
         std::string key_str, val_str;
-        serializeKeyValueVector(std::is_pod<V>(), key, value, key_str, val_str, start, end);
+        serializeKeyValueVector(std::is_pod<std::remove_reference_t<V>>(), key, value, key_str, val_str, start, end);
         return storeRawData(key_str, val_str.data(), val_str.size());
     }
 
@@ -278,7 +278,7 @@ class KeyValueContainer {
     template<typename K, typename V>
     ProductID store(WriteBatch& batch, const K& key, const std::vector<V>& value, int start=0, int end=-1) {
         std::string key_str, val_str;
-        serializeKeyValueVector(std::is_pod<V>(), key, value, key_str, val_str, start, end);
+        serializeKeyValueVector(std::is_pod<std::remove_reference_t<V>>(), key, value, key_str, val_str, start, end);
         return storeRawData(batch, key_str, val_str.data(), val_str.size());
     }
 
@@ -288,7 +288,7 @@ class KeyValueContainer {
     template<typename K, typename V>
     ProductID store(AsyncEngine& async, const K& key, const std::vector<V>& value, int start=0, int end=-1) {
         std::string key_str, val_str;
-        serializeKeyValueVector(std::is_pod<V>(), key, value, key_str, val_str, start, end);
+        serializeKeyValueVector(std::is_pod<std::remove_reference_t<V>>(), key, value, key_str, val_str, start, end);
         return storeRawData(async, key_str, val_str.data(), val_str.size());
     }
 
@@ -309,7 +309,7 @@ class KeyValueContainer {
      */
     template<typename K, typename V>
     bool load(const K& key, V& value) const {
-        return loadImpl(key, value, std::is_pod<V>());
+        return loadImpl(key, value, std::is_pod<std::remove_reference_t<V>>());
     }
 
     /**
@@ -317,7 +317,7 @@ class KeyValueContainer {
      */
     template<typename K, typename V>
     bool load(const K& key, std::vector<V>& value) const {
-        return loadVectorImpl(key, value, std::is_pod<V>());
+        return loadVectorImpl(key, value, std::is_pod<std::remove_reference_t<V>>());
     }
 
     /**
@@ -326,7 +326,7 @@ class KeyValueContainer {
      */
     template<typename K, typename V>
     bool load(const Prefetcher& prefetcher, const K& key, V& value) const {
-        return loadImpl(prefetcher, key, value, std::is_pod<V>());
+        return loadImpl(prefetcher, key, value, std::is_pod<std::remove_reference_t<V>>());
     }
 
     /**
@@ -335,7 +335,7 @@ class KeyValueContainer {
      */
     template<typename K, typename V>
     bool load(const Prefetcher& prefetcher, const K& key, std::vector<V>& value) const {
-        return loadVectorImpl(prefetcher, key, value, std::is_pod<V>());
+        return loadVectorImpl(prefetcher, key, value, std::is_pod<std::remove_reference_t<V>>());
     }
 
     /**
@@ -344,7 +344,7 @@ class KeyValueContainer {
      */
     template<typename K, typename V>
     bool load(const ProductCache& cache, const K& key, V& value) const {
-        return loadImpl(cache, key, value, std::is_pod<V>());
+        return loadImpl(cache, key, value, std::is_pod<std::remove_reference_t<V>>());
     }
 
     /**
@@ -353,7 +353,7 @@ class KeyValueContainer {
      */
     template<typename K, typename V>
     bool load(const ProductCache& cache, const K& key, std::vector<V>& value) const {
-        return loadVectorImpl(cache, key, value, std::is_pod<V>());
+        return loadVectorImpl(cache, key, value, std::is_pod<std::remove_reference_t<V>>());
     }
 
     private:
