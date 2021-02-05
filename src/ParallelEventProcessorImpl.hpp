@@ -386,6 +386,7 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
         std::vector<EventDescriptor> descriptors;
         auto max_ults = m_async ? m_async->m_xstreams.size()*2 : 0;
         ProductCache cache;
+        cache.m_impl->m_erase_on_load = true;
         while(requestEvents(descriptors)) {
             preloadProductsForDescriptors(descriptors, cache);
             for(auto& d : descriptors) {
