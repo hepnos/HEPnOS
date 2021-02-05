@@ -17,26 +17,36 @@ struct ProductCacheImpl {
 
     mutable tl::rwlock                           m_lock;
     std::unordered_map<std::string, std::string> m_map;
+    bool                                         m_erase_on_load = false;
 
-    bool loadRawProduct(const ProductID& product_id, std::string& data) const {
-        m_lock.rdlock();
+    bool loadRawProduct(const ProductID& product_id, std::string& data) {
+        if(!m_erase_on_load) m_lock.rdlock();
+        else                 m_lock.wrlock();
         auto it = m_map.find(product_id.m_key);
         auto found = it != m_map.end();
         if(found) {
-            data = it->second;
+            if(!m_erase_on_load) {
+                data = it->second;
+            } else {
+                data = std::move(it->second);
+                m_map.erase(it);
+            }
         }
         m_lock.unlock();
         return found;
     }
 
-    bool loadRawProduct(const ProductID& product_id, char* value, size_t* vsize) const {
-        m_lock.rdlock();
+    bool loadRawProduct(const ProductID& product_id, char* value, size_t* vsize) {
+        if(!m_erase_on_load) m_lock.rdlock();
+        else                 m_lock.wrlock();
         auto it = m_map.find(product_id.m_key);
         auto found = it != m_map.end();
         if(found) {
             auto& data = it->second;
             *vsize = data.size();
             if(*vsize) std::memcpy(value, data.data(), *vsize);
+            if(m_erase_on_load)
+                m_map.erase(it);
         }
         m_lock.unlock();
         return found;
@@ -44,14 +54,14 @@ struct ProductCacheImpl {
 
     bool loadRawProduct(const ItemDescriptor& id,
                         const std::string& productName,
-                        std::string& data) const {
+                        std::string& data) {
         auto product_id = DataStoreImpl::buildProductID(id, productName);
         return loadRawProduct(product_id, data);
     }
 
     bool loadRawProduct(const ItemDescriptor& id,
                         const std::string& productName,
-                        char* value, size_t* vsize) const {
+                        char* value, size_t* vsize) {
         auto product_id = DataStoreImpl::buildProductID(id, productName);
         return loadRawProduct(product_id, value, vsize);
     }
