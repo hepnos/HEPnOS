@@ -256,13 +256,22 @@ class DataStoreImpl {
         return result;
     }
 
-    const sdskv::database& locateProductDb(const ProductID& productID) const {
+    long unsigned computeProductDbIndex(const ProductID& productID) const {
         // hash the name to get the provider id
         long unsigned db_idx = 0;
         uint64_t hash;
-        hash = hashString(productID.m_key.c_str(), sizeof(ItemDescriptor));
+        // we are taking only the dataset+run+subrun part of the productID
+        hash = hashString(productID.m_key.c_str(), SubRunDescriptorLength);
         ch_placement_find_closest(m_product_dbs.chi, hash, 1, &db_idx);
-        return m_product_dbs.dbs[db_idx];
+        return db_idx;
+    }
+
+    const sdskv::database& locateProductDb(const ProductID& productID) const {
+        return m_product_dbs.dbs[computeProductDbIndex(productID)];
+    }
+
+    const sdskv::database& getProductDatabase(unsigned long index) const {
+        return m_product_dbs.dbs[index];
     }
 
     bool loadRawProduct(const ProductID& key,
@@ -343,7 +352,7 @@ class DataStoreImpl {
         auto key = buildProductID(id, productName);
         // find out which DB to access
         auto& db = locateProductDb(key);
-        // read the value
+        // store the value
         try {
             db.put(key.m_key, data);
         } catch(sdskv::exception& ex) {
