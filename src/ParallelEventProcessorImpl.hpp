@@ -245,6 +245,8 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                                        ProductCache& cache) {
         if(m_product_keys.size() == 0) return;
 
+        double t1 = tl::timer::wtime();
+
         size_t pks = 0;
         for(const auto& product_key : m_product_keys)
             pks += product_key.size() + sizeof(EventDescriptor);
@@ -353,12 +355,15 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                 offset += packed_value_sizes[i];
             }
         }
+
+        double t2 = tl::timer::wtime();
+        if(m_stats) m_stats->acc_product_loading_time += t2-t1;
     }
 
     void processSingleEvent(const EventDescriptor& d,
                             const ParallelEventProcessor::EventProcessingWithCacheFn& user_function,
                             ProductCache& cache) {
-        double t1, t2, t3;
+        double t1, t2;
         t1 = tl::timer::wtime();
         Event event = Event::fromDescriptor(DataStore(m_datastore), d, false);
         user_function(event, cache);

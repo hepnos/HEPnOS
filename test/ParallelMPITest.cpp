@@ -89,7 +89,6 @@ void ParallelMPITest::testParallelEventProcessor() {
         << "  acc_event_processing_time = " << stats.acc_event_processing_time << "\n"
         << "  acc_product_loading_time = " << stats.acc_product_loading_time << "\n"
         << "  processing_time_stats = " << stats.processing_time_stats << "\n"
-        << "  product_loading_time_stats = " << stats.product_loading_time_stats << "\n"
         << "  waiting_time_stats = " << stats.waiting_time_stats << std::endl;
 
     if(rank != 0) {
@@ -164,7 +163,6 @@ void ParallelMPITest::testParallelEventProcessorAsync() {
         << "  acc_event_processing_time = " << stats.acc_event_processing_time << "\n"
         << "  acc_product_loading_time = " << stats.acc_product_loading_time << "\n"
         << "  processing_time_stats = " << stats.processing_time_stats << "\n"
-        << "  product_loading_time_stats = " << stats.product_loading_time_stats << "\n"
         << "  waiting_time_stats = " << stats.waiting_time_stats << std::endl;
 
     if(rank != 0) {
@@ -236,7 +234,6 @@ void ParallelMPITest::testParallelEventProcessorWithProducts() {
         << "  acc_event_processing_time = " << stats.acc_event_processing_time << "\n"
         << "  acc_product_loading_time = " << stats.acc_product_loading_time << "\n"
         << "  processing_time_stats = " << stats.processing_time_stats << "\n"
-        << "  product_loading_time_stats = " << stats.product_loading_time_stats << "\n"
         << "  waiting_time_stats = " << stats.waiting_time_stats << std::endl;
 
     if(rank != 0) {
