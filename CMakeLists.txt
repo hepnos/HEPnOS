@@ -11,7 +11,9 @@ cmake_minimum_required (VERSION 3.12)
 project (hepnos C CXX)
 
 add_definitions (-g)
-set (CMAKE_CXX_STANDARD 14)
+if(NOT "${CMAKE_CXX_STANDARD}")
+  set (CMAKE_CXX_STANDARD 14)
+endif()
 
 # add our cmake module directory to the path
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
