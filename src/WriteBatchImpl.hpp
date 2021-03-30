@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 #include <thallium.hpp>
+#include <spdlog/spdlog.h>
 #include "hepnos/WriteBatch.hpp"
 #include "DataStoreImpl.hpp"
 #include "AsyncEngineImpl.hpp"
@@ -82,6 +83,7 @@ class WriteBatchImpl {
                 if(ex.error() != SDSKV_ERR_KEYEXISTS) {
                     *ok = 0;
                     *exception = Exception(std::string("SDSKV error: ")+ex.what());
+                    spdlog::error("SDSKV exception occured in WriteBatch's writer_thread: {}", ex.what());
                 }
             }
             wb.update_operation_statistics(batch.m_size);

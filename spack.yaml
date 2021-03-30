@@ -8,6 +8,7 @@ spack:
   - mochi-ch-placement
   - cmake
   - cppunit
-  - mochi-sdskv@master ~leveldb
+  - mochi-sdskv ~leveldb
   - mochi-thallium
+  - spdlog
   concretization: together
