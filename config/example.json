@@ -1,4 +1,12 @@
 {
+    "ssg" : [
+        {
+            "name" : "hepnos",
+            "bootstrap" : "mpi",
+            "group_file" : "hepnos.ssg",
+            "swim" : { "disable" : true }
+        }
+    ],
     "libraries" : {
         "sdskv" : "libsdskv-bedrock.so"
     },
