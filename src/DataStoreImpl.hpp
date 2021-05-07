@@ -12,7 +12,6 @@
 #include <functional>
 #include <iostream>
 #include <thallium.hpp>
-#include <yaml-cpp/yaml.h>
 #include <sdskv-client.hpp>
 #include <ch-placement.h>
 #include "hepnos/Exception.hpp"
@@ -73,6 +72,7 @@ class DataStoreImpl {
         cleanup();
     }
 
+#if 0
     void populateDatabases(DistributedDBInfo& db_info, const YAML::Node& db_config) {
         int ret;
         hg_return_t hret;
@@ -155,6 +155,7 @@ class DataStoreImpl {
         populateDatabases(m_event_dbs, event_db);
         populateDatabases(m_product_dbs, product_db);
     }
+#endif
 
     void cleanup() {
         m_dataset_dbs.dbs.clear();
@@ -190,7 +191,7 @@ class DataStoreImpl {
     }
 
     private:
-
+#if 0
     static void checkConfig(YAML::Node& config) {
         // config file starts with hepnos entry
         auto hepnosNode = config["hepnos"];
@@ -241,6 +242,7 @@ class DataStoreImpl {
             }
         }
     }
+#endif
 
     public:
 

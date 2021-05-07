@@ -40,13 +40,15 @@ DataStore DataStore::connect(bool use_progress_thread) {
         throw Exception("HEPNOS_CONFIG_FILE environment variable not set");
     std::string configFile(file);
     auto impl = std::make_shared<DataStoreImpl>();
-    impl->init(configFile, use_progress_thread);
+    // TODO
+    //impl->init(configFile, use_progress_thread);
     return DataStore(std::move(impl));
 }
 
 DataStore DataStore::connect(const std::string& configFile, bool use_progress_thread) {
     auto impl = std::make_shared<DataStoreImpl>();
-    impl->init(configFile, use_progress_thread);
+    // TODO
+    // impl->init(configFile, use_progress_thread);
     return DataStore(std::move(impl));
 }
 

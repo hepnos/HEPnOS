@@ -1,0 +1,47 @@
+{
+    "libraries" : {
+        "sdskv" : "libsdskv-bedrock.so"
+    },
+    "providers" : [
+        {
+            "name" : "hepnos",
+            "type" : "sdskv",
+            "config" : {
+                "comparators" : [
+                    { "name" : "hepnos_compare_item_descriptors",
+                      "library" : "libhepnos-service.so" }
+                ],
+                "databases" : [
+                    {
+                        "name" : "hepnos-datasets",
+                        "type" : "map",
+                        "no_overwrite" : true
+                    },
+                    {
+                        "name" : "hepnos-runs",
+                        "type" : "map",
+                        "comparator" : "hepnos_compare_item_descriptors",
+                        "no_overwrite" : true
+                    },
+                    {
+                        "name" : "hepnos-subruns",
+                        "type" : "map",
+                        "comparator" : "hepnos_compare_item_descriptors",
+                        "no_overwrite" : true
+                    },
+                    {
+                        "name" : "hepnos-events",
+                        "type" : "map",
+                        "comparator" : "hepnos_compare_item_descriptors",
+                        "no_overwrite" : true
+                    },
+                    {
+                        "name" : "hepnos-products",
+                        "type" : "map",
+                        "no_overwrite" : true
+                    }
+                ]
+            }
+        }
+    ]
+}
