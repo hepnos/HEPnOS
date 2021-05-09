@@ -4,7 +4,7 @@
             "name" : "hepnos",
             "bootstrap" : "mpi",
             "group_file" : "hepnos.ssg",
-            "swim" : { "disable" : true }
+            "swim" : { "disabled" : true }
         }
     ],
     "libraries" : {

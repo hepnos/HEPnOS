@@ -7,9 +7,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.yaml ${CMAKE_CURRENT_BINARY_DI
 
 set (BOOST_DEPS Boost::serialization)
 
-add_executable(example example.cpp)
-target_link_libraries(example hepnos ${BOOST_DEPS})
-
 set(CTEST_ENVIRONMENT "MKTEMP=mktemp" "TIMEOUT=timeout")
 
 add_library(HEPnOSTest HEPnOSTestMain.cpp)

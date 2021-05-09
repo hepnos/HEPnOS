@@ -157,6 +157,12 @@ class DataStoreImpl {
     }
 #endif
 
+    void init(const std::string& protocol,
+              const std::string& hepnosFile,
+              const std::string& margoFile) {
+        // TODO
+    }
+
     void cleanup() {
         m_dataset_dbs.dbs.clear();
         m_run_dbs.dbs.clear();
