@@ -34,7 +34,7 @@ jobs:
         export TIMEOUT=timeout MKTEMP=mktemp &&
         eval `/opt/spack/bin/spack env activate --sh .` &&
         mkdir build && cd build &&
-        cmake .. -DENABLE_TESTS=ON && make test
+        cmake .. -DENABLE_TESTS=ON && make && make test
     - name: Show test results
       if: ${{ always() }}
       run: |
