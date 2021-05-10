@@ -36,5 +36,6 @@ jobs:
         mkdir build && cd build &&
         cmake .. -DENABLE_TESTS=ON && make test
     - name: Show test results
+      if: ${{ always() }}
       run: |
         cat Testing/Temporary/LastTest.log
