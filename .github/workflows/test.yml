@@ -12,7 +12,7 @@ jobs:
       run: |
         sudo apt install libmpich-dev mpich &&
         mpicc --version &&
-        mpirun --verion
+        mpirun --version &&
     - name: Add latest Spack release
       run: |
         git clone https://github.com/spack/spack.git /opt/spack &&
@@ -21,6 +21,7 @@ jobs:
       run: |
         eval `/opt/spack/bin/spack env activate --sh .` &&
         /opt/spack/bin/spack external find --not-buildable cmake &&
+        /opt/spack/bin/spack external find --not-buildable mpich &&
         /opt/spack/bin/spack external find --not-buildable perl
     - name: Add mochi-spack-packages
       run: |
