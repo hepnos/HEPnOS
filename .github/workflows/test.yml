@@ -8,6 +8,11 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+    - name: Add mpich
+      run: |
+        apt install libmpich-dev mpich &&
+        mpicc --version &&
+        mpirun --verion
     - name: Add latest Spack release
       run: |
         git clone https://github.com/spack/spack.git /opt/spack &&
@@ -34,4 +39,7 @@ jobs:
         export TIMEOUT=timeout MKTEMP=mktemp &&
         eval `/opt/spack/bin/spack env activate --sh .` &&
         mkdir build && cd build &&
-        cmake .. -DENABLE_TESTS=ON && make test && cat Testing/Temporary/LastTest.log
+        cmake .. -DENABLE_TESTS=ON && make test
+    - name: Show test results
+      run: |
+        cat Testing/Temporary/LastTest.log
