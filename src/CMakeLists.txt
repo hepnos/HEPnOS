@@ -45,7 +45,7 @@ configure_file ("hepnos.pc.in" "hepnos.pc" @ONLY)
 # add hepnos library
 add_library(hepnos ${hepnos-src})
 target_link_libraries (hepnos
-    bedrock-client
+    nlohmann_json
     PkgConfig::uuid
     PkgConfig::sdskv-client
     PkgConfig::ch-placement)

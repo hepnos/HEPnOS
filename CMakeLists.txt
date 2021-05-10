@@ -31,7 +31,7 @@ find_package (MPI REQUIRED)
 find_package (thallium CONFIG REQUIRED)
 find_package (Boost REQUIRED COMPONENTS serialization)
 find_package (bedrock REQUIRED)
-#include_directories(${Boost_INCLUDE_DIRS})
+find_package (nlohmann_json REQUIRED)
 
 pkg_check_modules (uuid REQUIRED IMPORTED_TARGET uuid)
 pkg_check_modules (sdskv-client REQUIRED IMPORTED_TARGET sdskv-client)

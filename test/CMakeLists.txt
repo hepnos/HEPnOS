@@ -1,9 +1,8 @@
 # Move the configuration file used for the configuration test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/run-test.sh ${CMAKE_CURRENT_BINARY_DIR}/run-test.sh COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/run-two-tests.sh ${CMAKE_CURRENT_BINARY_DIR}/run-two-tests.sh COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/test-util.sh ${CMAKE_CURRENT_BINARY_DIR}/test-util.sh COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/test-util.sh ${CMAKE_CURRENT_BINARY_DIR}/test-util.sh COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.yaml ${CMAKE_CURRENT_BINARY_DIR}/config.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.json ${CMAKE_CURRENT_BINARY_DIR}/config.json COPYONLY)
 
 set (BOOST_DEPS Boost::serialization)
 
@@ -45,8 +44,8 @@ target_link_libraries(PtrTest HEPnOSTest ${BOOST_DEPS})
 add_executable(WriteAndRestartTest WriteAndRestartTest.cpp)
 target_link_libraries(WriteAndRestartTest HEPnOSTest ${BOOST_DEPS})
 
-add_executable(RestartAndReadTest RestartAndReadTest.cpp)
-target_link_libraries(RestartAndReadTest HEPnOSTest ${BOOST_DEPS})
+#add_executable(RestartAndReadTest RestartAndReadTest.cpp)
+#target_link_libraries(RestartAndReadTest HEPnOSTest ${BOOST_DEPS})
 
 add_executable(WriteBatchTest WriteBatchTest.cpp)
 target_link_libraries(WriteBatchTest HEPnOSTest ${BOOST_DEPS})
@@ -69,5 +68,5 @@ add_test(NAME LoadStoreVectorsTest COMMAND run-test.sh ./LoadStoreVectorsTest)
 add_test(NAME WriteBatchTest COMMAND run-test.sh ./WriteBatchTest)
 add_test(NAME AsyncWriteBatchTest COMMAND run-test.sh ./AsyncWriteBatchTest)
 add_test(NAME PtrTest       COMMAND run-test.sh ./PtrTest)
-add_test(NAME RestartTest   COMMAND run-two-tests.sh ./WriteAndRestartTest ./RestartAndReadTest)
 add_test(NAME ParallelMPITest COMMAND run-test.sh "mpirun -np 4 ./ParallelMPITest" 120)
+#add_test(NAME RestartTest   COMMAND run-two-tests.sh ./WriteAndRestartTest ./RestartAndReadTest)
