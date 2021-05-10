@@ -10,7 +10,7 @@ jobs:
       uses: actions/checkout@v2
     - name: Add mpich
       run: |
-        apt install libmpich-dev mpich &&
+        sudo apt install libmpich-dev mpich &&
         mpicc --version &&
         mpirun --verion
     - name: Add latest Spack release
