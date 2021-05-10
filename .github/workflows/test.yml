@@ -12,7 +12,7 @@ jobs:
       run: |
         sudo apt install libmpich-dev mpich &&
         mpicc --version &&
-        mpirun --version &&
+        mpirun --version
     - name: Add latest Spack release
       run: |
         git clone https://github.com/spack/spack.git /opt/spack &&
