@@ -38,4 +38,4 @@ jobs:
     - name: Show test results
       if: ${{ always() }}
       run: |
-        cat Testing/Temporary/LastTest.log
+        cat build/Testing/Temporary/LastTest.log
