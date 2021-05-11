@@ -8,6 +8,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+    - name: Allow cross-memory attach
+      run: |
+        sudo /usr/sbin/sysctl kernel.yama.ptrace_scope=0
     - name: Install mpich and boost
       run: |
         sudo apt install mpich libmpich-dev
