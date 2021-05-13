@@ -105,30 +105,47 @@ class DataStoreImpl {
             throw Exception("Invalid JSON service configuration");
         }
         // Find databases in HEPnOS/Bedrock configuration file
+        // Thanks to the hepnos-list-databases.jx9 script, the hepnos file has
+        // the following json format:
+        // { "address1" : {
+        //       "datasets" : [ { "provider_id" : <id>, "database_id" : <id> }, ... ],
+        //       "runs" : [ ... ],
+        //       "subruns" : [ ... ],
+        //       "events" : [ ... ],
+        //       "products" : [ ... ]
+        //   },
+        //   "address2" : ...
+        // }
         for (auto& entry : serviceConfig.items()) {
             auto& address = entry.key();
-            // reserved keywords starting with __
-            if(address.size() >= 2 && address[0] == '_' && address[1] == '_')
-                return;
             // the other keys are valid addresses
             auto& nodeConfig = entry.value();
             // lookup the address
+            tl::endpoint addr;
             if(m_addrs.count(address) == 0) {
                 try {
-                    auto addr = m_engine.lookup(address);
+                    addr = m_engine.lookup(address);
                     m_addrs[address] = addr;
                 } catch(const std::exception& ex) {
                     cleanup();
                     throw Exception("Address lookup failed: "s + ex.what());
                 }
             }
-            // find the databases located on this node
-            try {
-                findDatabasesInNode(address, nodeConfig);
-            } catch(...) {
-                cleanup();
-                throw;
-            }
+
+            auto populate_db_entries = [this, &addr](const json& cfg, DistributedDBInfo& db_info) {
+                for(auto& entry : cfg) {
+                    auto provider_id = entry["provider_id"].get<uint16_t>();
+                    auto database_id = entry["database_id"].get<sdskv_database_id_t>();
+                    auto providerHandle = sdskv::provider_handle(m_sdskv_client, addr.get_addr(), provider_id);
+                    db_info.dbs.emplace_back(providerHandle, database_id);
+                }
+            };
+
+            populate_db_entries(nodeConfig["datasets"], m_dataset_dbs);
+            populate_db_entries(nodeConfig["runs"],     m_run_dbs);
+            populate_db_entries(nodeConfig["subruns"],  m_subrun_dbs);
+            populate_db_entries(nodeConfig["events"],   m_event_dbs);
+            populate_db_entries(nodeConfig["products"], m_product_dbs);
         }
         // Build ch-placement instances
         if (m_dataset_dbs.dbs.empty()) {
@@ -160,57 +177,6 @@ class DataStoreImpl {
             throw Exception("Could not find any database to store products");
         } else {
             m_product_dbs.chi = ch_placement_initialize("hash_lookup3", m_product_dbs.dbs.size(), 4, 0);
-        }
-    }
-
-    void findDatabasesInNode(const std::string& address, json& config) {
-        // These databases have the following names:
-        // hepnos-datasets, hepnos-runs, hepnos-subruns, hepnos-events, hepnos-products
-        // They should be located in <config>.providers[x].config.databases for sdskv providers
-        if (!config.contains("providers") || !config["providers"].is_array())
-            return;
-        auto& providers = config["providers"];
-        for (auto& provider : providers) {
-            if (!provider.is_object() || !provider.contains("type"))
-                continue;
-            uint16_t provider_id = provider.value("provider_id", 0);
-            sdskv::provider_handle providerHandle;
-            try {
-                auto& addr = m_addrs[address];
-                providerHandle = sdskv::provider_handle(m_sdskv_client, addr.get_addr(), provider_id);
-            } catch(const std::exception& ex) {
-                throw Exception("Could not create SDSKV provider handle: "s + ex.what());
-            }
-            auto& type = provider["type"];
-            if (!type.is_string() || type.get<std::string>() != "sdskv")
-                continue;
-            if (!provider.contains("config"))
-                continue;
-            auto& providerConfig = provider["config"];
-            if (!providerConfig.is_object())
-                continue;
-            if (!providerConfig.contains("databases"))
-                continue;
-            auto& databases = providerConfig["databases"];
-            if (!databases.is_array())
-                continue;
-            for(auto& db : databases) {
-                if (!db.contains("name")) {
-                    continue;
-                }
-                sdskv_database_id_t db_id = db.value<uint64_t>("__database_id__", 0);
-                if (db_id == 0) {
-                    cleanup();
-                    throw Exception("Invalid or inexistant __database_id__ field");
-                }
-                auto name = db["name"].get<std::string>();
-                std::cout << "Found Database " << name << " with id " << db_id << " at address " << address << std::endl;
-                if (name == "hepnos-datasets")      m_dataset_dbs.dbs.emplace_back(providerHandle, db_id);
-                else if (name == "hepnos-runs")     m_run_dbs.dbs.emplace_back(providerHandle, db_id);
-                else if (name == "hepnos-subruns")  m_subrun_dbs.dbs.emplace_back(providerHandle, db_id);
-                else if (name == "hepnos-events")   m_event_dbs.dbs.emplace_back(providerHandle, db_id);
-                else if (name == "hepnos-products") m_product_dbs.dbs.emplace_back(providerHandle, db_id);
-            }
         }
     }
 

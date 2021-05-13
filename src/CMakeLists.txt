@@ -114,15 +114,21 @@ install (FILES ../include/hepnos-service.h
          DESTINATION include)
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/hepnos.pc"
          DESTINATION "lib/pkgconfig/")
-install (FILES "${CMAKE_CURRENT_SOURCE_DIR}/hepnos-list-databases.jx9"
-         DESTINATION "share")
 
- if ("${BEDROCK_QUERY_EXE}" STREQUAL "")
+configure_file (hepnos-list-databases.jx9
+                ${CMAKE_BINARY_DIR}/share/hepnos-list-databases.jx9
+                COPYONLY)
+
+install (FILES ${CMAKE_BINARY_DIR}/share/hepnos-list-databases.jx9
+         DESTINATION share)
+
+if ("${BEDROCK_QUERY_EXE}" STREQUAL "")
     message (WARNING "Could not find a bedrock-query executable, hepnos-list-databases will not be created")
 else ()
     configure_file (hepnos-list-databases.in hepnos-list-databases @ONLY)
     install (FILES ${CMAKE_CURRENT_BINARY_DIR}/hepnos-list-databases
-             DESTINATION bin)
+             DESTINATION bin
+             PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ)
 endif ()
 
 if ("${BEDROCK_EXE}" STREQUAL "")

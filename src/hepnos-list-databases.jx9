@@ -10,17 +10,19 @@ foreach ($__config__.providers as $provider) {
     if ($provider.type != "sdskv") {
         continue;
     }
+    $provider_id = $provider.provider_id;
     foreach ($provider.config.databases as $db) {
+        $entry = { provider_id: $provider_id, database_id: $db.__database_id__ };
         if (strval(strpos($db.name, "hepnos-datasets")) == "0") {
-            array_push($databases.datasets, $db.__database_id__);
+            array_push($databases.datasets, $entry);
         } else if (strval(strpos($db.name, "hepnos-runs")) == "0") {
-            array_push($databases.runs, $db.__database_id__);
+            array_push($databases.runs, $entry);
         } else if (strval(strpos($db.name, "hepnos-subruns")) == "0") {
-            array_push($databases.subruns, $db.__database_id__);
+            array_push($databases.subruns, $entry);
         } else if (strval(strpos($db.name, "hepnos-events")) == "0") {
-            array_push($databases.events, $db.__database_id__);
+            array_push($databases.events, $entry);
         } else if (strval(strpos($db.name, "hepnos-products")) == "0") {
-            array_push($databases.products, $db.__database_id__);
+            array_push($databases.products, $entry);
         }
     }
 }

@@ -38,5 +38,5 @@ function hepnos_test_start_servers()
     sleep ${startwait}
 
     # query configuration
-    bedrock-query na+sm -s $ssgfile > $cfile
+    ../src/hepnos-list-databases na+sm -s $ssgfile > $cfile
 }
