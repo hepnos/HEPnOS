@@ -15,7 +15,7 @@ set(hepnos-src DataStore.cpp
 	       EventSet.cpp)
 
 set(hepnos-service-src
-	UUID.cpp
+       UUID.cpp
        service/ComparisonFunction.cpp)
 
 # load package helper for generating cmake CONFIG packages
@@ -114,3 +114,14 @@ install (FILES ../include/hepnos-service.h
          DESTINATION include)
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/hepnos.pc"
          DESTINATION "lib/pkgconfig/")
+
+if ("${BEDROCK_EXE}" STREQUAL "")
+    message (WARNING "Could not find a bedrock executable, hepnos-daemon symlink will not be created")
+else ()
+    install (CODE "execute_process( \
+               COMMAND ${CMAKE_COMMAND} -E create_symlink \
+               ${BEDROCK_EXE} \
+               ${CMAKE_INSTALL_PREFIX}/bin/hepnos-daemon \
+               )"
+            )
+endif ()

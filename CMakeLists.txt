@@ -23,8 +23,6 @@ endif ()
 set (CMAKE_PREFIX_PATH "" CACHE STRING "External dependencies path")
 set (BUILD_SHARED_LIBS "OFF" CACHE BOOL "Build a shared library")
 
-#include_directories (${CMAKE_CURRENT_SOURCE_DIR}/include)
-
 find_package (spdlog REQUIRED)
 find_package (PkgConfig REQUIRED)
 find_package (MPI REQUIRED)
@@ -36,6 +34,8 @@ find_package (nlohmann_json REQUIRED)
 pkg_check_modules (uuid REQUIRED IMPORTED_TARGET uuid)
 pkg_check_modules (sdskv-client REQUIRED IMPORTED_TARGET sdskv-client)
 pkg_check_modules (ch-placement REQUIRED IMPORTED_TARGET ch-placement)
+
+find_program (BEDROCK_EXE bedrock)
 
 find_package (CppUnit)
 if (CPPUNIT_FOUND)
