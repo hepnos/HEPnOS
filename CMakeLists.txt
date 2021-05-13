@@ -36,6 +36,7 @@ pkg_check_modules (sdskv-client REQUIRED IMPORTED_TARGET sdskv-client)
 pkg_check_modules (ch-placement REQUIRED IMPORTED_TARGET ch-placement)
 
 find_program (BEDROCK_EXE bedrock)
+find_program (BEDROCK_QUERY_EXE bedrock-query)
 
 find_package (CppUnit)
 if (CPPUNIT_FOUND)

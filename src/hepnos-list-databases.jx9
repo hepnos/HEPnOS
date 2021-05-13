@@ -1,0 +1,28 @@
+$databases = {
+    datasets : [],
+    runs : [],
+    subruns : [],
+    events : [],
+    products : []
+};
+
+foreach ($__config__.providers as $provider) {
+    if ($provider.type != "sdskv") {
+        continue;
+    }
+    foreach ($provider.config.databases as $db) {
+        if (strval(strpos($db.name, "hepnos-datasets")) == "0") {
+            array_push($databases.datasets, $db.__database_id__);
+        } else if (strval(strpos($db.name, "hepnos-runs")) == "0") {
+            array_push($databases.runs, $db.__database_id__);
+        } else if (strval(strpos($db.name, "hepnos-subruns")) == "0") {
+            array_push($databases.subruns, $db.__database_id__);
+        } else if (strval(strpos($db.name, "hepnos-events")) == "0") {
+            array_push($databases.events, $db.__database_id__);
+        } else if (strval(strpos($db.name, "hepnos-products")) == "0") {
+            array_push($databases.products, $db.__database_id__);
+        }
+    }
+}
+
+return $databases;

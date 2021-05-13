@@ -1,0 +1,5 @@
+#!/bin/bash
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+JX9_SCRIPT=$SCRIPT_DIR/../share/hepnos-list-databases.jx9
+@BEDROCK_QUERY_EXE@ -j $JX9_SCRIPT "$@"
