@@ -117,6 +117,7 @@ void AsyncWriteBatchTest::testAsyncWriteBatchEvent() {
             auto e = subrun.createEvent(batch, i);
             CPPUNIT_ASSERT(e.store(batch, key1, out_obj_a));
             CPPUNIT_ASSERT(e.store(batch, key1, out_obj_b));
+            batch.flush();
         }
     }
 

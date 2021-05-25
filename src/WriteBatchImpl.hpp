@@ -230,22 +230,33 @@ class WriteBatchImpl {
         return true;
     }
 
-    void flush() {
+    void flush(bool restart_thread=true) {
         if(!m_async_engine) { // flush everything here
             tl::xstream es = tl::xstream::self();
             spawn_writer_threads(*this, m_entries, es.get_main_pools(1)[0]);
         } else { // wait for AsyncEngine to have flushed everything
+            if(m_async_thread.empty())
+                return;
             {
                 std::lock_guard<tl::mutex> lock(m_mutex);
                 m_async_thread_should_stop = true;
             }
             m_cond.notify_all();
             m_async_thread[0]->join();
+            m_async_thread.clear();
+            if(restart_thread) {
+                // thread must be restarted
+                m_async_thread.push_back(
+                    m_async_engine->m_pool.make_thread([batch=this](){
+                        async_writer_thread(*batch);
+                    })
+                );
+            }
         }
     }
 
     ~WriteBatchImpl() {
-        flush();
+        flush(false);
     }
 
     void collectStatistics(WriteBatchStatistics& stats) const {
