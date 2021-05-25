@@ -124,6 +124,8 @@ class WriteBatchImpl {
             std::unique_lock<tl::mutex> lock(batch.m_mutex);
             while(batch.m_entries.empty()) {
                 batch.m_cond.wait(lock);
+                if(batch.m_entries.empty() && should_stop)
+                    break;
             }
             should_stop = batch.m_async_thread_should_stop;
             if(batch.m_entries.empty())
