@@ -115,11 +115,17 @@ class WriteBatchImpl {
     }
 
     static void async_writer_thread(WriteBatchImpl& batch) {
-        while(!(batch.m_async_thread_should_stop && batch.m_entries.empty())) {
+        bool should_stop;
+        {
+            std::unique_lock<tl::mutex> lock(batch.m_mutex);
+            should_stop = batch.m_async_thread_should_stop;
+        }
+        while(!(should_stop && batch.m_entries.empty())) {
             std::unique_lock<tl::mutex> lock(batch.m_mutex);
             while(batch.m_entries.empty()) {
                 batch.m_cond.wait(lock);
             }
+            should_stop = batch.m_async_thread_should_stop;
             if(batch.m_entries.empty())
                 continue;
             auto entries = std::move(batch.m_entries);
