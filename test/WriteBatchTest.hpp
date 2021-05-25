@@ -12,6 +12,7 @@ class WriteBatchTest : public CppUnit::TestFixture
     CPPUNIT_TEST( testWriteBatchRun );
     CPPUNIT_TEST( testWriteBatchSubRun );
     CPPUNIT_TEST( testWriteBatchEvent );
+    CPPUNIT_TEST( testWriteBatchEmpty );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -22,6 +23,7 @@ class WriteBatchTest : public CppUnit::TestFixture
     void testWriteBatchRun();
     void testWriteBatchSubRun();
     void testWriteBatchEvent();
+    void testWriteBatchEmpty();
 };
 
 #endif

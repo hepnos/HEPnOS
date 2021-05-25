@@ -114,3 +114,10 @@ void WriteBatchTest::testWriteBatchEvent() {
         CPPUNIT_ASSERT(out_obj_b == in_obj_b);
     }
 }
+
+void WriteBatchTest::testWriteBatchEmpty() {
+    {
+        hepnos::WriteBatch batch(*datastore);
+        CPPUNIT_ASSERT_NO_THROW(batch.flush());
+    }
+}

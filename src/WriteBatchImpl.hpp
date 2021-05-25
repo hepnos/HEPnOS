@@ -239,7 +239,7 @@ class WriteBatchImpl {
                 std::lock_guard<tl::mutex> lock(m_mutex);
                 m_async_thread_should_stop = true;
             }
-            m_cond.notify_one();
+            m_cond.notify_all();
             m_async_thread[0]->join();
         }
     }

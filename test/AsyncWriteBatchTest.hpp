@@ -12,6 +12,7 @@ class AsyncWriteBatchTest : public CppUnit::TestFixture
     CPPUNIT_TEST( testAsyncWriteBatchRun );
     CPPUNIT_TEST( testAsyncWriteBatchSubRun );
     CPPUNIT_TEST( testAsyncWriteBatchEvent );
+    CPPUNIT_TEST( testAsyncWriteBatchEmpty );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -22,6 +23,7 @@ class AsyncWriteBatchTest : public CppUnit::TestFixture
     void testAsyncWriteBatchRun();
     void testAsyncWriteBatchSubRun();
     void testAsyncWriteBatchEvent();
+    void testAsyncWriteBatchEmpty();
 };
 
 #endif

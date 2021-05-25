@@ -132,3 +132,11 @@ void AsyncWriteBatchTest::testAsyncWriteBatchEvent() {
         CPPUNIT_ASSERT(out_obj_b == in_obj_b);
     }
 }
+
+void AsyncWriteBatchTest::testAsyncWriteBatchEmpty() {
+    hepnos::AsyncEngine async_engine(*datastore, 1);
+    {
+        hepnos::WriteBatch batch(async_engine, 1024);
+        CPPUNIT_ASSERT_NO_THROW(batch.flush());
+    }
+}
