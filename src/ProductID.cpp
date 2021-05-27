@@ -32,7 +32,7 @@ void ProductID::unpackInformation(UUID* dataset_id,
     auto p = name.find('#');
     if(p == std::string::npos)
         return;
-    if(label) *label = name.substr(s,p);
+    if(label) *label = name.substr(0,p);
     if(type) *type = name.substr(p+1);
 }
 
