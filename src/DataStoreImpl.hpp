@@ -365,6 +365,11 @@ class DataStoreImpl {
         return key;
     }
 
+    std::vector<ProductID> listProducts(const ItemDescriptor& id, const std::string& label) const {
+
+        return std::vector<ProductID>(); // TODO
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // DataSet access functions
     ///////////////////////////////////////////////////////////////////////////

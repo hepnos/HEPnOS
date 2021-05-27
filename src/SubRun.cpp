@@ -151,7 +151,7 @@ bool SubRun::loadRawData(const std::string& key, std::string& buffer) const {
 
 bool SubRun::loadRawData(const std::string& key, char* value, size_t* vsize) const {
     if(!valid()) {
-        throw Exception("Calling DataSet member function on an invalid DataSet");
+        throw Exception("Calling SubRun member function on an invalid SubRun");
     }
     // forward the call to the datastore's load function
     auto& id = m_impl->m_descriptor;
@@ -168,7 +168,7 @@ bool SubRun::loadRawData(const Prefetcher& prefetcher, const std::string& key, s
 
 bool SubRun::loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const {
     if(!valid()) {
-        throw Exception("Calling DataSet member function on an invalid DataSet");
+        throw Exception("Calling SubRun member function on an invalid SubRun");
     }
     auto& id = m_impl->m_descriptor;
     return prefetcher.m_impl->loadRawProduct(id, key, value, vsize);
@@ -184,10 +184,19 @@ bool SubRun::loadRawData(const ProductCache& cache, const std::string& key, std:
 
 bool SubRun::loadRawData(const ProductCache& cache, const std::string& key, char* value, size_t* vsize) const {
     if(!valid()) {
-        throw Exception("Calling DataSet member function on an invalid DataSet");
+        throw Exception("Calling SubRun member function on an invalid SubRun");
     }
     auto& id = m_impl->m_descriptor;
     return cache.m_impl->loadRawProduct(id, key, value, vsize);
+}
+
+std::vector<ProductID> SubRun::listProducts(const std::string& label) const {
+    if(!valid()) {
+        throw Exception("Calling SubRun member function on an invalid SubRun object");
+    }
+    // forward the call to the datastore's listProducts function
+    auto& id = m_impl->m_descriptor;
+    return m_impl->m_datastore->listProducts(id, label);
 }
 
 bool SubRun::operator==(const SubRun& other) const {

@@ -139,7 +139,7 @@ bool Run::loadRawData(const std::string& key, std::string& buffer) const {
 
 bool Run::loadRawData(const std::string& key, char* value, size_t* vsize) const {
     if(!valid()) {
-        throw Exception("Calling DataSet member function on an invalid DataSet");
+        throw Exception("Calling Run member function on an invalid Run");
     }
     // forward the call to the datastore's load function
     const ItemDescriptor& id = m_impl->m_descriptor;
@@ -156,7 +156,7 @@ bool Run::loadRawData(const Prefetcher& prefetcher, const std::string& key, std:
 
 bool Run::loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const {
     if(!valid()) {
-        throw Exception("Calling DataSet member function on an invalid DataSet");
+        throw Exception("Calling Run member function on an invalid Run");
     }
     const ItemDescriptor& id = m_impl->m_descriptor;
     return prefetcher.m_impl->loadRawProduct(id, key, value, vsize);
@@ -176,6 +176,15 @@ bool Run::loadRawData(const ProductCache& cache, const std::string& key, char* v
     }
     auto& id = m_impl->m_descriptor;
     return cache.m_impl->loadRawProduct(id, key, value, vsize);
+}
+
+std::vector<ProductID> Run::listProducts(const std::string& label) const {
+    if(!valid()) {
+        throw Exception("Calling Run member function on an invalid Run object");
+    }
+    // forward the call to the datastore's listProducts function
+    auto& id = m_impl->m_descriptor;
+    return m_impl->m_datastore->listProducts(id, label);
 }
 
 bool Run::operator==(const Run& other) const {

@@ -181,6 +181,11 @@ class DataSet : public KeyValueContainer {
     bool loadRawData(const ProductCache& cache, const std::string& key, char* value, size_t* vsize) const override;
 
     /**
+     * @see KeyValueContainer::listProducts()
+     */
+    std::vector<ProductID> listProducts(const std::string& label="") const;
+
+    /**
      * @brief Comparison operator.
      *
      * @param other DataSet to compare with.

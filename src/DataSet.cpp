@@ -134,6 +134,15 @@ bool DataSet::loadRawData(const ProductCache& cache, const std::string& key, cha
     return cache.m_impl->loadRawProduct(id, key, value, vsize);
 }
 
+std::vector<ProductID> DataSet::listProducts(const std::string& label) const {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet object");
+    }
+    // forward the call to the datastore's listProducts function
+    ItemDescriptor id(m_impl->m_uuid);
+    return m_impl->m_datastore->listProducts(id, label);
+}
+
 bool DataSet::operator==(const DataSet& other) const {
     bool v1 = valid();
     bool v2 = other.valid();

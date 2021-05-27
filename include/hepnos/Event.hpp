@@ -163,6 +163,11 @@ class Event : public KeyValueContainer {
     bool loadRawData(const ProductCache& cache, const std::string& key, char* value, size_t* vsize) const override;
 
     /**
+     * @see KeyValueContainer::listProducts()
+     */
+    std::vector<ProductID> listProducts(const std::string& label="") const;
+
+    /**
      * @brief Compares this Event with another Event. The Events must point to
      * the same event number within the same container.
      *

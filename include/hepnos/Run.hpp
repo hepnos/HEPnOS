@@ -176,6 +176,11 @@ class Run : public KeyValueContainer {
     bool loadRawData(const ProductCache& cache, const std::string& key, char* value, size_t* vsize) const override;
 
     /**
+     * @see KeyValueContainer::listProducts()
+     */
+    std::vector<ProductID> listProducts(const std::string& label="") const;
+
+    /**
      * @brief Compares this Run with another Run. The Runs must point to
      * the same run number within the same container.
      *

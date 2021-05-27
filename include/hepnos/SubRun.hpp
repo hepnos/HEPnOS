@@ -174,6 +174,11 @@ class SubRun : public KeyValueContainer {
     bool loadRawData(const ProductCache& cache, const std::string& key, char* value, size_t* vsize) const override;
 
     /**
+     * @see KeyValueContainer::listProducts()
+     */
+    std::vector<ProductID> listProducts(const std::string& label="") const;
+
+    /**
      * @brief Compares this SubRun with another SubRun. The SubRuns must point to
      * the same subrun number within the same container.
      *

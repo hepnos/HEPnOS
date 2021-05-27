@@ -356,6 +356,15 @@ class KeyValueContainer {
         return loadVectorImpl(cache, key, value, std::is_pod<std::remove_reference_t<V>>());
     }
 
+    /**
+     * @brief List all the product ids contained in this container.
+     *
+     * @param label Optional label to filter products.
+     *
+     * @return List of product ids.
+     */
+    virtual std::vector<ProductID> listProducts(const std::string& label="") const = 0;
+
     private:
 
     /**

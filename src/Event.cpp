@@ -139,6 +139,15 @@ bool Event::loadRawData(const ProductCache& cache, const std::string& key, char*
     return cache.m_impl->loadRawProduct(id, key, value, vsize);
 }
 
+std::vector<ProductID> Event::listProducts(const std::string& label) const {
+    if(!valid()) {
+        throw Exception("Calling Event member function on an invalid Event object");
+    }
+    // forward the call to the datastore's listProducts function
+    auto& id = m_impl->m_descriptor;
+    return m_impl->m_datastore->listProducts(id, label);
+}
+
 bool Event::operator==(const Event& other) const {
     bool v1 = valid();
     bool v2 = other.valid();
