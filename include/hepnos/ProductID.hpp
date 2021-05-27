@@ -11,6 +11,10 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/string.hpp>
 
+#include <hepnos/UUID.hpp>
+#include <hepnos/RunNumber.hpp>
+#include <hepnos/SubRunNumber.hpp>
+#include <hepnos/EventNumber.hpp>
 
 namespace hepnos {
 
@@ -112,6 +116,25 @@ class ProductID {
     bool operator!=(const ProductID& other) const {
         return !(*this == other);
     }
+
+
+    /**
+     * @brief Unpacks the information contained in the ProductID.
+     * All arguments are optional (nullptr may be passed).
+     *
+     * @param dataset_id
+     * @param run
+     * @param subrun
+     * @param event
+     * @param label
+     * @param type
+     */
+    void unpackInformation(UUID* dataset_id,
+                           RunNumber* run,
+                           SubRunNumber* subrun,
+                           EventNumber* event,
+                           std::string* label,
+                           std::string* type) const;
 
     private:
 

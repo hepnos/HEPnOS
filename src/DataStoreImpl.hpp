@@ -366,8 +366,30 @@ class DataStoreImpl {
     }
 
     std::vector<ProductID> listProducts(const ItemDescriptor& id, const std::string& label) const {
-
-        return std::vector<ProductID>(); // TODO
+        // make the prefix for the keys associated with the products
+        // Note: normally buildProductID expects a product name (i.e. "label#type")
+        // but by providing just the label, we have a product id representing a prefix
+        auto prefix = buildProductID(id, label);
+        // locate database containing products of interest
+        auto& db = locateProductDb(prefix);
+        std::vector<ProductID> result;
+        result.reserve(8); // pretty arbitrary
+        try {
+            while(true) {
+                std::vector<std::string> keys(8);
+                const auto& start = result.empty() ? prefix : result.back();
+                db.list_keys(start.m_key, prefix.m_key, keys);
+                if(keys.empty())
+                    break;
+                for(auto& k : keys) {
+                    result.emplace_back();
+                    result.back().m_key = std::move(k);
+                }
+            }
+        } catch(sdskv::exception& ex) {
+            throw Exception("Error occured when calling sdskv::database::list_keys (SDSKV error=" + std::to_string(ex.error()) + ")");
+        }
+        return result;
     }
 
     ///////////////////////////////////////////////////////////////////////////

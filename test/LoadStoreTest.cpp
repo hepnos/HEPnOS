@@ -207,6 +207,49 @@ void LoadStoreTest::testLoadStoreEvent() {
     CPPUNIT_ASSERT(in_obj_b == out_obj_b);
 }
 
+void LoadStoreTest::testListProducts() {
+
+    auto root = datastore->root();
+    auto mds = root["matthieu"];
+    auto run = mds[42];
+    auto subrun = run[3];
+    auto event = subrun.createEvent(23);
+    CPPUNIT_ASSERT(mds.valid());
+    CPPUNIT_ASSERT(run.valid());
+    CPPUNIT_ASSERT(subrun.valid());
+    CPPUNIT_ASSERT(event.valid());
+
+    TestObjectA out_obj_a;
+    out_obj_a.x() = 44;
+    out_obj_a.y() = 1.2;
+    TestObjectB out_obj_b;
+    out_obj_b.a() = 33;
+    out_obj_b.b() = "you";
+    std::string key1 = "testkeyA";
+    std::string key2 = "testkeyB";
+
+    ProductID id_A_key1 = event.store(key1, out_obj_a);
+    ProductID id_A_key2 = event.store(key2, out_obj_a);
+    ProductID id_B_key1 = event.store(key1, out_obj_b);
+
+    std::vector<ProductID> all_products
+        = event.listProducts();
+    CPPUNIT_ASSERT(all_products.size() == 3);
+    CPPUNIT_ASSERT(std::find(all_products.begin(), all_products.end(), id_A_key1) != all_products.end());
+    CPPUNIT_ASSERT(std::find(all_products.begin(), all_products.end(), id_A_key2) != all_products.end());
+    CPPUNIT_ASSERT(std::find(all_products.begin(), all_products.end(), id_B_key1) != all_products.end());
+
+    std::vector<ProductID> products_key1
+        = event.listProducts(key1);
+    CPPUNIT_ASSERT(products_key1.size() == 2);
+    CPPUNIT_ASSERT(std::find(products_key1.begin(), products_key1.end(), id_A_key1) != products_key1.end());
+    CPPUNIT_ASSERT(std::find(products_key1.begin(), products_key1.end(), id_B_key1) != products_key1.end());
+
+    std::vector<ProductID> no_product
+        = event.listProducts("bla");
+    CPPUNIT_ASSERT(no_product.empty());
+}
+
 // Async Tests
 
 void LoadStoreTest::testAsyncLoadStoreDataSet() {
