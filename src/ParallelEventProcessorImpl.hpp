@@ -9,6 +9,7 @@
 #include <numeric>
 #include <queue>
 #include <thallium.hpp>
+#include <spdlog/spdlog.h>
 #include "PrefetcherImpl.hpp"
 #include "ProductCacheImpl.hpp"
 #include "hepnos/EventSet.hpp"
@@ -284,21 +285,26 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                 // allocate a buffer of appropriate size for packed values
                 size_t buffer_size = std::accumulate(packed_value_sizes.begin(),
                                                      packed_value_sizes.end(), 0);
-                std::vector<char> value_buffer(buffer_size);
-                // get the actual values
-                hg_size_t actual_count = count;
-                db.get_packed(&actual_count, packed_product_ids.data(),
-                              packed_product_id_sizes.data(),
-                              buffer_size, value_buffer.data(),
-                              packed_value_sizes.data());
-                if(actual_count != count)
-                    throw Exception("get_packed failed to get correct count of product values");
-                // place data into cache
-                offset = 0;
-                for(unsigned i = 0; i < count; i++) {
-                    std::string data(value_buffer.data() + offset, packed_value_sizes[i]);
-                    cache.m_impl->addRawProduct(product_ids[i], std::move(data));
-                    offset += packed_value_sizes[i];
+                if(buffer_size == 0) {
+                    spdlog::warn("Could not find products to preload, "
+                        "did you specify the correct label/type?");
+                } else {
+                    std::vector<char> value_buffer(buffer_size);
+                    // get the actual values
+                    hg_size_t actual_count = count;
+                    db.get_packed(&actual_count, packed_product_ids.data(),
+                            packed_product_id_sizes.data(),
+                            buffer_size, value_buffer.data(),
+                            packed_value_sizes.data());
+                    if(actual_count != count)
+                        throw Exception("get_packed failed to get correct count of product values");
+                    // place data into cache
+                    offset = 0;
+                    for(unsigned i = 0; i < count; i++) {
+                        std::string data(value_buffer.data() + offset, packed_value_sizes[i]);
+                        cache.m_impl->addRawProduct(product_ids[i], std::move(data));
+                        offset += packed_value_sizes[i];
+                    }
                 }
                 // reset buffers and variables
                 offset = 0;
@@ -328,7 +334,7 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
             }
         }
 
-        if(current_db_idx != -1) {
+        if(current_db_idx != -1 && count != 0) {
             // get size of batch of products
             packed_value_sizes.resize(count);
             auto& db = m_datastore->getProductDatabase(current_db_idx);
@@ -338,21 +344,26 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
             // allocate a buffer of appropriate size for packed values
             size_t buffer_size = std::accumulate(packed_value_sizes.begin(),
                     packed_value_sizes.end(), 0);
-            std::vector<char> value_buffer(buffer_size);
-            // get the actual values
-            hg_size_t actual_count = count;
-            db.get_packed(&actual_count, packed_product_ids.data(),
-                    packed_product_id_sizes.data(),
-                    buffer_size, value_buffer.data(),
-                    packed_value_sizes.data());
-            if(actual_count != count)
-                throw Exception("get_packed failed to get correct count of product values");
-            // place data into cache
-            offset = 0;
-            for(unsigned i = 0; i < count; i++) {
-                std::string data(value_buffer.data() + offset, packed_value_sizes[i]);
-                cache.m_impl->addRawProduct(product_ids[i], std::move(data));
-                offset += packed_value_sizes[i];
+            if(buffer_size == 0) {
+                spdlog::warn("Could not find products to preload, "
+                        "did you specify the correct label/type?");
+            } else {
+                std::vector<char> value_buffer(buffer_size);
+                // get the actual values
+                hg_size_t actual_count = count;
+                db.get_packed(&actual_count, packed_product_ids.data(),
+                        packed_product_id_sizes.data(),
+                        buffer_size, value_buffer.data(),
+                        packed_value_sizes.data());
+                if(actual_count != count)
+                    throw Exception("get_packed failed to get correct count of product values");
+                // place data into cache
+                offset = 0;
+                for(unsigned i = 0; i < count; i++) {
+                    std::string data(value_buffer.data() + offset, packed_value_sizes[i]);
+                    cache.m_impl->addRawProduct(product_ids[i], std::move(data));
+                    offset += packed_value_sizes[i];
+                }
             }
         }
 
