@@ -282,9 +282,16 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                 bool b = db.length_packed(count, packed_product_ids.data(),
                                  packed_product_id_sizes.data(),
                                  packed_value_sizes.data());
-                for(auto s : packed_value_sizes) {
+                for(unsigned i=0; i < packed_value_sizes.size(); i++) {
+                    auto s = packed_value_sizes[i];
                     if(s == 0) {
-                        spdlog::warn("A product could not be found while preloading");
+                        std::string label, type;
+                        product_ids[i].unpackInformation(
+                            nullptr, nullptr, nullptr, nullptr, &label, &type);
+                        spdlog::warn("A product (label = {}, type = {}) "
+                                     "could not be found while preloading",
+                                     label, type);
+
                     }
                 }
                 // allocate a buffer of appropriate size for packed values
@@ -349,9 +356,15 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                     packed_product_id_sizes.data(),
                     packed_value_sizes.data());
             // check the size of values
-            for(auto s : packed_value_sizes) {
+            for(unsigned i=0; i < packed_value_sizes.size(); i++) {
+                auto s = packed_value_sizes[i];
                 if(s == 0) {
-                    spdlog::warn("A product could not be found while preloading");
+                    std::string label, type;
+                    product_ids[i].unpackInformation(
+                            nullptr, nullptr, nullptr, nullptr, &label, &type);
+                    spdlog::warn("A product (label = {}, type = {}) "
+                            "could not be found while preloading",
+                            label, type);
                 }
             }
             // allocate a buffer of appropriate size for packed values
