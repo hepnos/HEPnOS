@@ -297,10 +297,7 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                 // allocate a buffer of appropriate size for packed values
                 size_t buffer_size = std::accumulate(packed_value_sizes.begin(),
                                                      packed_value_sizes.end(), 0);
-                if(buffer_size == 0) {
-                    spdlog::warn("Could not find products to preload, "
-                        "did you specify the correct label/type?");
-                } else {
+                if(buffer_size != 0) {
                     std::vector<char> value_buffer(buffer_size);
                     // get the actual values
                     hg_size_t actual_count = count;
@@ -308,16 +305,14 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                             packed_product_id_sizes.data(),
                             buffer_size, value_buffer.data(),
                             packed_value_sizes.data());
-                    if(actual_count != count)
-                        throw Exception("get_packed failed to get correct count of product values"
-                                "(requested " + std::to_string(count)
-                                +", returned "+std::to_string(actual_count)+")");
                     // place data into cache
                     offset = 0;
                     for(unsigned i = 0; i < count; i++) {
-                        std::string data(value_buffer.data() + offset, packed_value_sizes[i]);
-                        cache.m_impl->addRawProduct(product_ids[i], std::move(data));
-                        offset += packed_value_sizes[i];
+                        if(packed_value_sizes[i] != (hg_size_t)(-1)) {
+                            std::string data(value_buffer.data() + offset, packed_value_sizes[i]);
+                            cache.m_impl->addRawProduct(product_ids[i], std::move(data));
+                            offset += packed_value_sizes[i];
+                        }
                     }
                 }
                 // reset buffers and variables
@@ -370,10 +365,7 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
             // allocate a buffer of appropriate size for packed values
             size_t buffer_size = std::accumulate(packed_value_sizes.begin(),
                     packed_value_sizes.end(), 0);
-            if(buffer_size == 0) {
-                spdlog::warn("Could not find products to preload, "
-                        "did you specify the correct label/type?");
-            } else {
+            if(buffer_size != 0) {
                 std::vector<char> value_buffer(buffer_size);
                 // get the actual values
                 hg_size_t actual_count = count;
@@ -381,17 +373,14 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                         packed_product_id_sizes.data(),
                         buffer_size, value_buffer.data(),
                         packed_value_sizes.data());
-                if(actual_count != count) {
-                    throw Exception("get_packed failed to get correct count of product values"
-                            "(requested " + std::to_string(count)
-                            +", returned "+std::to_string(actual_count)+")");
-                }
                 // place data into cache
                 offset = 0;
                 for(unsigned i = 0; i < count; i++) {
-                    std::string data(value_buffer.data() + offset, packed_value_sizes[i]);
-                    cache.m_impl->addRawProduct(product_ids[i], std::move(data));
-                    offset += packed_value_sizes[i];
+                    if(packed_value_sizes[i] != (hg_size_t)(-1)) {
+                        std::string data(value_buffer.data() + offset, packed_value_sizes[i]);
+                        cache.m_impl->addRawProduct(product_ids[i], std::move(data));
+                        offset += packed_value_sizes[i];
+                    }
                 }
             }
         }
