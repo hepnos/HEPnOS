@@ -297,7 +297,9 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                             buffer_size, value_buffer.data(),
                             packed_value_sizes.data());
                     if(actual_count != count)
-                        throw Exception("get_packed failed to get correct count of product values");
+                        throw Exception("get_packed failed to get correct count of product values"
+                                "(requested " + std::to_string(count)
+                                +", returned "+std::to_string(actual_count)+")");
                     // place data into cache
                     offset = 0;
                     for(unsigned i = 0; i < count; i++) {
