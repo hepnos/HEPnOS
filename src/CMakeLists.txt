@@ -46,6 +46,7 @@ configure_file ("hepnos.pc.in" "hepnos.pc" @ONLY)
 add_library(hepnos ${hepnos-src})
 target_link_libraries (hepnos
     nlohmann_json
+    spdlog::spdlog
     PkgConfig::uuid
     PkgConfig::sdskv-client
     PkgConfig::ch-placement)
