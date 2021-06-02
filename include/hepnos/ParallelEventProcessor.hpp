@@ -124,4 +124,33 @@ private:
 
 }
 
+template<>
+struct fmt::formatter<hepnos::ParallelEventProcessorStatistics> {
+
+    constexpr auto parse(format_parse_context& ctx) {
+        auto it = ctx.begin(), end = ctx.end();
+        while(it != end && *it != '}') it++;
+        return it;
+    }
+
+    template<typename FormatContext>
+    auto format(const hepnos::ParallelEventProcessorStatistics& stats, FormatContext& ctx) {
+        return format_to(ctx.out(), "{{ \"total_events_processed\" : {}, "
+                                       "\"local_events_processed\" : {}, "
+                                       "\"total_time\" : {}, "
+                                       "\"acc_event_processing_time\" : {}, "
+                                       "\"acc_product_loading_time\" : {}, "
+                                       "\"processing_time_stats\" : {}, "
+                                       "\"waiting_time_stats\" : {} }}",
+                                       stats.total_events_processed,
+                                       stats.local_events_processed,
+                                       stats.total_time,
+                                       stats.acc_event_processing_time,
+                                       stats.acc_product_loading_time,
+                                       stats.processing_time_stats,
+                                       stats.waiting_time_stats);
+    }
+
+};
+
 #endif

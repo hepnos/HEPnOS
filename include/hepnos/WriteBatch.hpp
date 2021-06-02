@@ -133,4 +133,23 @@ class WriteBatch {
 
 std::ostream& operator<<(std::ostream& os, const hepnos::WriteBatchStatistics& stats);
 
+template<>
+struct fmt::formatter<hepnos::WriteBatchStatistics> {
+
+    constexpr auto parse(format_parse_context& ctx) {
+        auto it = ctx.begin(), end = ctx.end();
+        while(it != end && *it != '}') it++;
+        return it;
+    }
+
+    template<typename FormatContext>
+    auto format(const hepnos::WriteBatchStatistics& stats, FormatContext& ctx) {
+        return format_to(ctx.out(), "{{ \"batch_sizes\" : {}, "
+                                       "\"key_sizes\" : {}, "
+                                       "\"value_sizes\" : {} }}",
+            stats.batch_sizes, stats.key_sizes, stats.value_sizes);
+    }
+
+};
+
 #endif

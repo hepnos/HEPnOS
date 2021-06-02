@@ -166,4 +166,27 @@ class Prefetcher {
 
 }
 
+template<>
+struct fmt::formatter<hepnos::PrefetcherStatistics> {
+
+    constexpr auto parse(format_parse_context& ctx) {
+        auto it = ctx.begin(), end = ctx.end();
+        while(it != end && *it != '}') it++;
+        return it;
+    }
+
+    template<typename FormatContext>
+    auto format(const hepnos::PrefetcherStatistics& stats, FormatContext& ctx) {
+        return format_to(ctx.out(), "{{ \"batch_sizes\" : {}, "
+                                       "\"product_sizes\" : {}, "
+                                       "\"product_cache_hit\" : {}, "
+                                       "\"product_cache_miss\" : {} }}",
+                                       stats.batch_sizes,
+                                       stats.product_sizes,
+                                       stats.product_cache_hit,
+                                       stats.product_cache_miss);
+    }
+
+};
+
 #endif

@@ -7,6 +7,7 @@
 #define __HEPNOS_STATISTICS_H
 
 #include <ostream>
+#include <spdlog/fmt/fmt.h>
 
 namespace hepnos {
 
@@ -54,5 +55,26 @@ std::ostream& operator<<(std::ostream& os, const hepnos::Statistics<Number, Doub
               << ", \"var\" : " << stats.var
               << " }";
 }
+
+template<typename T>
+struct fmt::formatter<hepnos::Statistics<T>> {
+
+    constexpr auto parse(format_parse_context& ctx) {
+        auto it = ctx.begin(), end = ctx.end();
+        while(it != end && *it != '}') it++;
+        return it;
+    }
+
+    template<typename FormatContext>
+    auto format(const hepnos::Statistics<T>& stats, FormatContext& ctx) {
+        return format_to(ctx.out(), "{{ \"num\" : {}, "
+                                       "\"max\" : {}, "
+                                       "\"min\" : {}, "
+                                       "\"avg\" : {}, "
+                                       "\"var\" : {} }}",
+            stats.num, stats.max, stats.min, stats.avg, stats.var);
+    }
+
+};
 
 #endif
