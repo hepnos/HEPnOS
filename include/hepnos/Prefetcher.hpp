@@ -166,8 +166,10 @@ class Prefetcher {
 
 }
 
+namespace fmt {
+
 template<>
-struct fmt::formatter<hepnos::PrefetcherStatistics> {
+struct formatter<hepnos::PrefetcherStatistics> {
 
     constexpr auto parse(format_parse_context& ctx) {
         auto it = ctx.begin(), end = ctx.end();
@@ -188,5 +190,7 @@ struct fmt::formatter<hepnos::PrefetcherStatistics> {
     }
 
 };
+
+}
 
 #endif

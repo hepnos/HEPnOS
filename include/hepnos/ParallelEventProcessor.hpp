@@ -124,8 +124,10 @@ private:
 
 }
 
+namespace fmt {
+
 template<>
-struct fmt::formatter<hepnos::ParallelEventProcessorStatistics> {
+struct formatter<hepnos::ParallelEventProcessorStatistics> {
 
     constexpr auto parse(format_parse_context& ctx) {
         auto it = ctx.begin(), end = ctx.end();
@@ -152,5 +154,7 @@ struct fmt::formatter<hepnos::ParallelEventProcessorStatistics> {
     }
 
 };
+
+}
 
 #endif

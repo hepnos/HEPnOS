@@ -133,8 +133,10 @@ class WriteBatch {
 
 std::ostream& operator<<(std::ostream& os, const hepnos::WriteBatchStatistics& stats);
 
+namespace fmt {
+
 template<>
-struct fmt::formatter<hepnos::WriteBatchStatistics> {
+struct formatter<hepnos::WriteBatchStatistics> {
 
     constexpr auto parse(format_parse_context& ctx) {
         auto it = ctx.begin(), end = ctx.end();
@@ -151,5 +153,7 @@ struct fmt::formatter<hepnos::WriteBatchStatistics> {
     }
 
 };
+
+}
 
 #endif
