@@ -27,7 +27,7 @@ include (CMakePackageConfigHelpers)
 #
 set (HEPNOS_VERSION_MAJOR 0)
 set (HEPNOS_VERSION_MINOR 4)
-set (HEPNOS_VERSION_PATCH 0)
+set (HEPNOS_VERSION_PATCH 6)
 set (hepnos-vers "${HEPNOS_VERSION_MAJOR}.${HEPNOS_VERSION_MINOR}")
 set (HEPNOS_VERSION "${hepnos-vers}.${HEPNOS_VERSION_PATCH}")
 
