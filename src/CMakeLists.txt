@@ -45,6 +45,7 @@ configure_file ("hepnos.pc.in" "hepnos.pc" @ONLY)
 # add hepnos library
 add_library(hepnos ${hepnos-src})
 target_link_libraries (hepnos
+    MPI::MPI_C
     nlohmann_json
     spdlog::spdlog
     PkgConfig::uuid
