@@ -11,6 +11,7 @@ find_dependency (mercury)
 find_dependency (thallium)
 find_dependency (spdlog)
 find_dependency (PkgConfig)
+find_dependency (nlohmann_json)
 
 pkg_check_modules (uuid REQUIRED IMPORTED_TARGET uuid)
 pkg_check_modules (sdskv-client REQUIRED IMPORTED_TARGET sdskv-client)
