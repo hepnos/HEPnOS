@@ -2,4 +2,15 @@
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 JX9_SCRIPT=@CMAKE_INSTALL_PREFIX@/share/hepnos-list-databases.jx9
+
+if [ ! -f "$JX9_SCRIPT" ]; then
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+    JX9_SCRIPT=$SCRIPT_DIR/../share/hepnos-list-databases.jx9
+fi
+
+if [ ! -f "$JX9_SCRIPT" ]; then
+    >&2 echo "Could not find hepnos-list-databases.jx9 file"
+    exit -1
+fi
+
 @BEDROCK_QUERY_EXE@ -j $JX9_SCRIPT "$@"

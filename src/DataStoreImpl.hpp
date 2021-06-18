@@ -80,7 +80,15 @@ class DataStoreImpl {
               const std::string& margoFile) {
         // Initializing thallium engine
         try {
-            std::string config = margoFile.empty() ? "{}" : margoFile;
+            std::string config = "{}";
+            if(!margoFile.empty()) {
+                std::ifstream f(margoFile);
+                if(!f.good()) {
+                    throw Exception("Could not read margo config file "s + margoFile);
+                }
+                config = std::string((std::istreambuf_iterator<char>(f)),
+                                      std::istreambuf_iterator<char>());
+            }
             m_engine = tl::engine(protocol, THALLIUM_SERVER_MODE, config);
             m_engine_initialized = true;
         } catch(const std::exception& ex) {
