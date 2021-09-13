@@ -19,12 +19,13 @@ function hepnos_test_start_servers()
     nservers=${1:-4}
     startwait=${2:-15}
     maxtime=${3:-120}
-    config=${4:-config.yaml}
-    cfile=${5:-connection.yaml}
-    launcher=${6:-mpirun}
+    config=${4:-config.json}
+    cfile=${5:-connection.json}
+    ssgfile=${6:-hepnos-test.ssg}
+    launcher=${7:-mpirun}
     rm -rf ${cfile}
 
-    run_to $maxtime $launcher -n $nservers ../bin/hepnos-daemon $config $cfile &
+    run_to $maxtime $launcher -n $nservers bedrock na+sm -c $config &
     if [ $? -ne 0 ]; then
         # TODO: this doesn't actually work; can't check return code of
         # something executing in background.  We have to rely on the
@@ -35,4 +36,7 @@ function hepnos_test_start_servers()
 
     # wait for servers to start
     sleep ${startwait}
+
+    # query configuration
+    ../src/hepnos-list-databases na+sm -s $ssgfile > $cfile
 }

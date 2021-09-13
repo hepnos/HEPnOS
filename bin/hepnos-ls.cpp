@@ -46,12 +46,12 @@ void navigate_dataset(int level, hepnos::DataSet& ds) {
 
 int main(int argc, char* argv[])
 {
-    if(argc != 2 ) {
-        std::cerr << "Usage: " << argv[0] << " <connection.yaml>" << std::endl;
+    if(argc != 3 ) {
+        std::cerr << "Usage: " << argv[0] << " <protocol> <config.json>" << std::endl;
         exit(-1);
     }
 
-    hepnos::DataStore datastore = hepnos::DataStore::connect(std::string(argv[1]));
+    hepnos::DataStore datastore = hepnos::DataStore::connect(argv[1], argv[2]);
     for(auto& ds : datastore.root()) {
         navigate_dataset(0, ds);
     }

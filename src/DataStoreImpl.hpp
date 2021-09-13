@@ -7,12 +7,13 @@
 #define __HEPNOS_PRIVATE_DATASTORE_IMPL
 
 #include <vector>
+#include <fstream>
 #include <unordered_set>
 #include <unordered_map>
 #include <functional>
 #include <iostream>
+#include <nlohmann/json.hpp>
 #include <thallium.hpp>
-#include <yaml-cpp/yaml.h>
 #include <sdskv-client.hpp>
 #include <ch-placement.h>
 #include "hepnos/Exception.hpp"
@@ -50,6 +51,7 @@ struct DistributedDBInfo {
     struct ch_placement_instance* chi = nullptr;
 };
 
+using nlohmann::json;
 using namespace std::string_literals;
 namespace tl = thallium;
 
@@ -73,63 +75,21 @@ class DataStoreImpl {
         cleanup();
     }
 
-    void populateDatabases(DistributedDBInfo& db_info, const YAML::Node& db_config) {
-        int ret;
-        hg_return_t hret;
-        for(YAML::const_iterator address_it = db_config.begin(); address_it != db_config.end(); address_it++) {
-            std::string str_addr = address_it->first.as<std::string>();
-            YAML::Node providers = address_it->second;
-            // lookup the address
-            tl::endpoint addr;
-            if(m_addrs.count(str_addr) != 0) {
-                addr = m_addrs[str_addr];
-            } else {
-                try {
-                    addr = m_engine.lookup(str_addr);
-                    m_addrs[str_addr] = addr;
-                } catch(const std::exception& ex) {
-                    throw Exception("Address lookup failed: "s + ex.what());
-                }
-            }
-            // iterate over providers for this address
-            for(YAML::const_iterator provider_it = providers.begin(); provider_it != providers.end(); provider_it++) {
-                // get the provider id
-                uint16_t provider_id = provider_it->first.as<uint16_t>();
-                // create provider handle
-                sdskv::provider_handle ph;
-                try {
-                    ph = sdskv::provider_handle(m_sdskv_client, addr.get_addr(), provider_id);
-                } catch(const std::exception& ex) {
-                    throw Exception("Could not create SDSKV provider handle: "s + ex.what());
-                }
-                // get the database ids
-                YAML::Node databases = provider_it->second;
-                // iterate over databases for this provider
-                for(unsigned i=0; i < databases.size(); i++) {
-                    db_info.dbs.push_back(sdskv::database(ph, databases[i].as<uint64_t>()));
-                }
-            } // for each provider
-        } // for each address
-        // initialize ch-placement
-        db_info.chi = ch_placement_initialize("hash_lookup3", db_info.dbs.size(), 4, 0);
-    }
-
-    void init(const std::string& configFile, bool use_progress_thread) {
-        int ret;
-        hg_return_t hret;
-        YAML::Node config = YAML::LoadFile(configFile);
-        checkConfig(config);
-        // get protocol
-        std::string proto = config["hepnos"]["client"]["protocol"].as<std::string>();
-        // get busy spin
-        bool busySpin = config["hepnos"]["client"]["busy-spin"].as<bool>();
-        // initialize Margo
-        hg_init_info hg_opt;
-        memset(&hg_opt, 0, sizeof(hg_opt));
-        if(busySpin)
-            hg_opt.na_init_info.progress_mode = NA_NO_BLOCK;
+    void init(const std::string& protocol,
+              const std::string& hepnosFile,
+              const std::string& margoFile) {
+        // Initializing thallium engine
         try {
-            m_engine = tl::engine(proto, THALLIUM_SERVER_MODE, use_progress_thread, -1, &hg_opt);
+            std::string config = "{}";
+            if(!margoFile.empty()) {
+                std::ifstream f(margoFile);
+                if(!f.good()) {
+                    throw Exception("Could not read margo config file "s + margoFile);
+                }
+                config = std::string((std::istreambuf_iterator<char>(f)),
+                                      std::istreambuf_iterator<char>());
+            }
+            m_engine = tl::engine(protocol, THALLIUM_SERVER_MODE, config);
             m_engine_initialized = true;
         } catch(const std::exception& ex) {
             cleanup();
@@ -142,18 +102,90 @@ class DataStoreImpl {
             cleanup();
             throw Exception("Could not create SDSKV client (SDSKV error="+std::to_string(ex.error())+")");
         }
-        // populate database info structures for each type of database
-        YAML::Node databases = config["hepnos"]["databases"];
-        YAML::Node dataset_db = databases["datasets"];
-        YAML::Node run_db     = databases["runs"];
-        YAML::Node subrun_db  = databases["subruns"];
-        YAML::Node event_db   = databases["events"];
-        YAML::Node product_db = databases["products"];
-        populateDatabases(m_dataset_dbs, dataset_db);
-        populateDatabases(m_run_dbs, run_db);
-        populateDatabases(m_subrun_dbs, subrun_db);
-        populateDatabases(m_event_dbs, event_db);
-        populateDatabases(m_product_dbs, product_db);
+        // parse hepnosFile
+        json serviceConfig;
+        {
+            std::ifstream ifs(hepnosFile);
+            serviceConfig = json::parse(ifs);
+        }
+        if (!serviceConfig.is_object()) {
+            cleanup();
+            throw Exception("Invalid JSON service configuration");
+        }
+        // Find databases in HEPnOS/Bedrock configuration file
+        // Thanks to the hepnos-list-databases.jx9 script, the hepnos file has
+        // the following json format:
+        // { "address1" : {
+        //       "datasets" : [ { "provider_id" : <id>, "database_id" : <id> }, ... ],
+        //       "runs" : [ ... ],
+        //       "subruns" : [ ... ],
+        //       "events" : [ ... ],
+        //       "products" : [ ... ]
+        //   },
+        //   "address2" : ...
+        // }
+        for (auto& entry : serviceConfig.items()) {
+            auto& address = entry.key();
+            // the other keys are valid addresses
+            auto& nodeConfig = entry.value();
+            // lookup the address
+            tl::endpoint addr;
+            if(m_addrs.count(address) == 0) {
+                try {
+                    addr = m_engine.lookup(address);
+                    m_addrs[address] = addr;
+                } catch(const std::exception& ex) {
+                    cleanup();
+                    throw Exception("Address lookup failed: "s + ex.what());
+                }
+            }
+
+            auto populate_db_entries = [this, &addr](const json& cfg, DistributedDBInfo& db_info) {
+                for(auto& entry : cfg) {
+                    auto provider_id = entry["provider_id"].get<uint16_t>();
+                    auto database_id = entry["database_id"].get<sdskv_database_id_t>();
+                    auto providerHandle = sdskv::provider_handle(m_sdskv_client, addr.get_addr(), provider_id);
+                    db_info.dbs.emplace_back(providerHandle, database_id);
+                }
+            };
+
+            populate_db_entries(nodeConfig["datasets"], m_dataset_dbs);
+            populate_db_entries(nodeConfig["runs"],     m_run_dbs);
+            populate_db_entries(nodeConfig["subruns"],  m_subrun_dbs);
+            populate_db_entries(nodeConfig["events"],   m_event_dbs);
+            populate_db_entries(nodeConfig["products"], m_product_dbs);
+        }
+        // Build ch-placement instances
+        if (m_dataset_dbs.dbs.empty()) {
+            cleanup();
+            throw Exception("Could not find any database to store datasets");
+        } else {
+            m_dataset_dbs.chi = ch_placement_initialize("hash_lookup3", m_dataset_dbs.dbs.size(), 4, 0);
+        }
+        if (m_run_dbs.dbs.empty()) {
+            cleanup();
+            throw Exception("Could not find any database to store runs");
+        } else {
+            m_run_dbs.chi = ch_placement_initialize("hash_lookup3", m_run_dbs.dbs.size(), 4, 0);
+        }
+        if (m_subrun_dbs.dbs.empty()) {
+            cleanup();
+            throw Exception("Could not find any database to store subruns");
+        } else {
+            m_subrun_dbs.chi = ch_placement_initialize("hash_lookup3", m_subrun_dbs.dbs.size(), 4, 0);
+        }
+        if (m_event_dbs.dbs.empty()) {
+            cleanup();
+            throw Exception("Could not find any database to store events");
+        } else {
+            m_event_dbs.chi = ch_placement_initialize("hash_lookup3", m_event_dbs.dbs.size(), 4, 0);
+        }
+        if (m_product_dbs.dbs.empty()) {
+            cleanup();
+            throw Exception("Could not find any database to store products");
+        } else {
+            m_product_dbs.chi = ch_placement_initialize("hash_lookup3", m_product_dbs.dbs.size(), 4, 0);
+        }
     }
 
     void cleanup() {
@@ -190,7 +222,7 @@ class DataStoreImpl {
     }
 
     private:
-
+#if 0
     static void checkConfig(YAML::Node& config) {
         // config file starts with hepnos entry
         auto hepnosNode = config["hepnos"];
@@ -241,6 +273,7 @@ class DataStoreImpl {
             }
         }
     }
+#endif
 
     public:
 
