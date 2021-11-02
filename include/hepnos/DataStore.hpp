@@ -281,7 +281,7 @@ Ptr<T> DataStore::makePtr(const ProductID& productID) {
     return Ptr<T>(*this, productID);
 }
 
-template<typename T, typename C = std::vector<T>>
+template<typename T, typename C>
 Ptr<T,C> DataStore::makePtr(const ProductID& productID, std::size_t index) {
     return Ptr<T,C>(*this, productID, index);
 }
