@@ -66,7 +66,7 @@ struct UUID {
     template<typename Archive>
     void save(Archive& a, const unsigned int version) const {
         (void)version;
-        a & std::string(data, 16);
+        a & std::string(reinterpret_cast<const char*>(data), 16);
     }
 
     /**
