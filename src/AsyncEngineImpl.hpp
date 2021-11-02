@@ -111,7 +111,7 @@ class AsyncEngineImpl {
             try {
                 db.put(&id, sizeof(id), nullptr, 0);
             } catch(sdskv::exception& ex) {
-                if(!ex.error() == SDSKV_ERR_KEYEXISTS) {
+                if(ex.error() != SDSKV_ERR_KEYEXISTS) {
                     std::lock_guard<tl::mutex> lock(m_errors_mtx);
                     m_errors.push_back(
                             std::string("SDSKV error: ")
