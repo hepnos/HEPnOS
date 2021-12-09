@@ -14,7 +14,8 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <thallium.hpp>
-#include <sdskv-client.hpp>
+#include <yokan/cxx/database.hpp>
+#include <yokan/cxx/client.hpp>
 #include <ch-placement.h>
 #include "hepnos/Exception.hpp"
 #include "hepnos/DataStore.hpp"
@@ -47,7 +48,7 @@ inline size_t object_size(const hepnos::UUID& uuid) {
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 struct DistributedDBInfo {
-    std::vector<sdskv::database>  dbs;
+    std::vector<yokan::Database>  dbs;
     struct ch_placement_instance* chi = nullptr;
 };
 
@@ -61,12 +62,12 @@ class DataStoreImpl {
     tl::engine                                   m_engine;       // Thallium engine
     bool                                         m_engine_initialized = false;
     std::unordered_map<std::string,tl::endpoint> m_addrs;        // Addresses used by the service
-    sdskv::client                                m_sdskv_client; // SDSKV client
-    DistributedDBInfo                            m_dataset_dbs;  // list of SDSKV databases for DataSets
-    DistributedDBInfo                            m_run_dbs;      // list of SDSKV databases for Runs
-    DistributedDBInfo                            m_subrun_dbs;   // list of SDSKV databases for Runs
-    DistributedDBInfo                            m_event_dbs;    // list of SDSKV databases for Runs
-    DistributedDBInfo                            m_product_dbs;  // list of SDSKV databases for Products
+    yokan::Client                                m_yokan_client; // Yokan client
+    DistributedDBInfo                            m_dataset_dbs;  // list of Yokan databases for DataSets
+    DistributedDBInfo                            m_run_dbs;      // list of Yokan databases for Runs
+    DistributedDBInfo                            m_subrun_dbs;   // list of Yokan databases for Runs
+    DistributedDBInfo                            m_event_dbs;    // list of Yokan databases for Runs
+    DistributedDBInfo                            m_product_dbs;  // list of Yokan databases for Products
 
     DataStoreImpl()
     {}
@@ -95,12 +96,12 @@ class DataStoreImpl {
             cleanup();
             throw Exception("Could not initialized Thallium: "s + ex.what());
         }
-        // initialize SDSKV client
+        // initialize Yokan client
         try {
-            m_sdskv_client = sdskv::client(m_engine.get_margo_instance());
-        } catch(sdskv::exception& ex) {
+            m_yokan_client = yokan::Client(m_engine.get_margo_instance());
+        } catch(yokan::Exception& ex) {
             cleanup();
-            throw Exception("Could not create SDSKV client (SDSKV error="+std::to_string(ex.error())+")");
+            throw Exception("Could not create Yokan client: "+std::string(ex.what()));
         }
         // parse hepnosFile
         json serviceConfig;
@@ -143,9 +144,11 @@ class DataStoreImpl {
             auto populate_db_entries = [this, &addr](const json& cfg, DistributedDBInfo& db_info) {
                 for(auto& entry : cfg) {
                     auto provider_id = entry["provider_id"].get<uint16_t>();
-                    auto database_id = entry["database_id"].get<sdskv_database_id_t>();
-                    auto providerHandle = sdskv::provider_handle(m_sdskv_client, addr.get_addr(), provider_id);
-                    db_info.dbs.emplace_back(providerHandle, database_id);
+                    auto database_id_str = entry["database_id"].get<std::string>();
+                    yk_database_id_t database_id;
+                    yk_database_id_from_string(database_id_str.c_str(), &database_id);
+                    db_info.dbs.push_back(
+                        m_yokan_client.makeDatabaseHandle(addr.get_addr(), provider_id, database_id));
                 }
             };
 
@@ -194,7 +197,7 @@ class DataStoreImpl {
         m_subrun_dbs.dbs.clear();
         m_event_dbs.dbs.clear();
         m_product_dbs.dbs.clear();
-        m_sdskv_client = sdskv::client();
+        m_yokan_client = yokan::Client();
         if(m_dataset_dbs.chi) ch_placement_finalize(m_dataset_dbs.chi);
         if(m_run_dbs.chi)     ch_placement_finalize(m_run_dbs.chi);
         if(m_subrun_dbs.chi)  ch_placement_finalize(m_subrun_dbs.chi);
@@ -299,11 +302,11 @@ class DataStoreImpl {
         return db_idx;
     }
 
-    const sdskv::database& locateProductDb(const ProductID& productID) const {
+    const auto& locateProductDb(const ProductID& productID) const {
         return m_product_dbs.dbs[computeProductDbIndex(productID)];
     }
 
-    const sdskv::database& getProductDatabase(unsigned long index) const {
+    const auto& getProductDatabase(unsigned long index) const {
         return m_product_dbs.dbs[index];
     }
 
@@ -313,14 +316,26 @@ class DataStoreImpl {
         auto& db =  locateProductDb(key);
         // read the value
         if(data.size() == 0)
-            data.resize(2048); // eagerly allocate 2KB
-        try {
-            db.get(key.m_key, data);
-        } catch(sdskv::exception& ex) {
-            if(ex.error() == SDSKV_ERR_UNKNOWN_KEY)
-                return false;
-            else
-                throw Exception("Error occured when calling sdskv::database::get (SDSKV error="+std::to_string(ex.error())+")");
+            data.resize(8*1028); // eagerly allocate 8KB
+        // TODO the above buffer size should be configurable
+        // or I should implement a fetch() function in Yokan
+        while(true) {
+            try {
+                size_t len = data.size();
+                db.get(key.m_key.data(), key.m_key.size(),
+                       const_cast<char*>(data.data()), &len);
+                data.resize(len);
+                break;
+            } catch(yokan::Exception& ex) {
+                if(ex.code() == YOKAN_ERR_KEY_NOT_FOUND)
+                    return false;
+                if(ex.code() == YOKAN_ERR_BUFFER_SIZE) {
+                    size_t len = db.length(key.m_key.data(), key.m_key.size());
+                    data.resize(len);
+                    continue;
+                }
+                throw Exception("yokan::Database::get(): "+std::string(ex.what()));
+            }
         }
         return true;
     }
@@ -339,13 +354,13 @@ class DataStoreImpl {
         auto& db =  locateProductDb(key);
         try {
             db.get(key.m_key.data(), key.m_key.size(), value, vsize);
-        } catch(sdskv::exception& ex) {
-            if(ex.error() == SDSKV_ERR_UNKNOWN_KEY)
+        } catch(yokan::Exception& ex) {
+            if(ex.code() == YOKAN_ERR_KEY_NOT_FOUND)
                 return false;
-            else if(ex.error() == SDSKV_ERR_SIZE)
+            else if(ex.code() == YOKAN_ERR_BUFFER_SIZE)
                 return false;
             else
-                throw Exception("Error occured when calling sdskv::database::get (SDSKV error="+std::to_string(ex.error())+")");
+                throw Exception("yokan::Database::get(): "+std::string(ex.what()));
         }
         return true;
     }
@@ -367,12 +382,13 @@ class DataStoreImpl {
         auto& db =  locateProductDb(key);
         // read the value
         try {
-            db.put(key.m_key.data(), key.m_key.size(), value, vsize);
-        } catch(sdskv::exception& ex) {
-            if(ex.error() == SDSKV_ERR_KEYEXISTS) {
+            db.put(key.m_key.data(), key.m_key.size(), value, vsize,
+                   YOKAN_MODE_NEW_ONLY);
+        } catch(yokan::Exception& ex) {
+            if(ex.code() == YOKAN_ERR_KEY_EXISTS) {
                 return ProductID();
             } else {
-                throw Exception("Error occured when calling sdskv::database::put (SDSKV error=" +std::to_string(ex.error()) + ")");
+                throw Exception("yokan::Database::put(): " + std::string(ex.what()));
             }
         }
         return key;
@@ -387,12 +403,14 @@ class DataStoreImpl {
         auto& db = locateProductDb(key);
         // store the value
         try {
-            db.put(key.m_key, data);
-        } catch(sdskv::exception& ex) {
-            if(ex.error() == SDSKV_ERR_KEYEXISTS) {
+            db.put(key.m_key.data(), key.m_key.size(),
+                   data.data(), data.size(),
+                   YOKAN_MODE_NEW_ONLY);
+        } catch(yokan::Exception& ex) {
+            if(ex.code() == YOKAN_ERR_KEY_EXISTS) {
                 return ProductID();
             } else {
-                throw Exception("Error occured when calling sdskv::database::put (SDSKV error=" +std::to_string(ex.error()) + ")");
+                throw Exception("yokan::Database::put(): "+std::string(ex.what()));
             }
         }
         return key;
@@ -406,21 +424,33 @@ class DataStoreImpl {
         // locate database containing products of interest
         auto& db = locateProductDb(prefix);
         std::vector<ProductID> result;
-        result.reserve(8); // pretty arbitrary
+        std::vector<char> buffer(10240);
+        std::vector<size_t> ksizes(128);
         try {
             while(true) {
-                std::vector<std::string> keys(8);
                 const auto& start = result.empty() ? prefix : result.back();
-                db.list_keys(start.m_key, prefix.m_key, keys);
-                if(keys.empty())
-                    break;
-                for(auto& k : keys) {
+                db.listKeysPacked(start.m_key.data(), start.m_key.size(),
+                                  prefix.m_key.data(), prefix.m_key.size(),
+                                  128, buffer.data(), buffer.size(), ksizes.data());
+                size_t offset = 0;
+                bool done = false;
+                for(size_t i=0; i < ksizes.size(); i++) {
+                    if(ksizes[i] == YOKAN_NO_MORE_KEYS) {
+                        done = true;
+                        break;
+                    }
+                    if(ksizes[i] == YOKAN_SIZE_TOO_SMALL) {
+                        break;
+                    }
                     result.emplace_back();
-                    result.back().m_key = std::move(k);
+                    result.back().m_key.assign(buffer.data()+offset, ksizes[i]);
+                    offset += ksizes[i];
                 }
+                if(done)
+                    break;
             }
-        } catch(sdskv::exception& ex) {
-            throw Exception("Error occured when calling sdskv::database::list_keys (SDSKV error=" + std::to_string(ex.error()) + ")");
+        } catch(yokan::Exception& ex) {
+            throw Exception("yokan::Database::listKeys(): " + std::string(ex.what()));
         }
         return result;
     }
@@ -451,7 +481,7 @@ class DataStoreImpl {
     /**
      * Locates and return the database in charge of the provided DataSet info.
      */
-    const sdskv::database& locateDataSetDb(const std::string& containerName) const {
+    const auto& locateDataSetDb(const std::string& containerName) const {
         // hash the name to get the provider id
         long unsigned db_idx = 0;
         uint64_t hash;
@@ -487,31 +517,46 @@ class DataStoreImpl {
             prefix.resize(1);
         }
         // issue an sdskv_list_keys
-        std::vector<std::string> entries(maxDataSets, std::string(1024,'\0'));
+        std::vector<char> packed_dataset_names(maxDataSets*1024);
+        std::vector<size_t> packed_dataset_name_sizes(maxDataSets);
         std::vector<UUID> uuids(maxDataSets);
+        std::vector<size_t> uuid_sizes(maxDataSets);
         try {
-            db.list_keyvals(lb_entry, prefix, entries, uuids);
-        } catch(sdskv::exception& ex) {
-            throw Exception("Error occured when calling sdskv::database::list_keys (SDSKV error="+std::string(ex.what()) + ")");
+            db.listKeyValsPacked(lb_entry.data(), lb_entry.size(),
+                                 prefix.data(), prefix.size(),
+                                 maxDataSets,
+                                 packed_dataset_names.data(),
+                                 packed_dataset_names.size(),
+                                 packed_dataset_name_sizes.data(),
+                                 uuids.data(),
+                                 uuids.size()*sizeof(UUID),
+                                 uuid_sizes.data());
+        } catch(yokan::Exception& ex) {
+            throw Exception("yokan::Database::listKeys(): "+std::string(ex.what()));
         }
         result.resize(0);
-        unsigned j=0;
-        for(const auto& entry : entries) {
-            size_t i = entry.find_last_of('/');
-            if(i == std::string::npos) i = 1;
-            else i += 1;
+        result.reserve(maxDataSets);
+        size_t offset = 0;
+        for(size_t i=0; i < maxDataSets; i++) {
+            if(packed_dataset_name_sizes[i] > YOKAN_LAST_VALID_SIZE
+            || uuid_sizes[i] > YOKAN_LAST_VALID_SIZE)
+                return i;
+            auto full_dset_name = std::string(packed_dataset_names.data()+offset, packed_dataset_name_sizes[i]);
+            offset += packed_dataset_name_sizes[i];
+            auto j = full_dset_name.find_last_of('/');
+            if(j == std::string::npos) j =1;
+            else j += 1;
             result.push_back(
-                    std::make_shared<DataSetImpl>(
-                        current->m_datastore,
-                        level,
-                        current->m_container,
-                        entry.substr(i),
-                        uuids[j]
-                    )
-                );
-            j += 1;
+                std::make_shared<DataSetImpl>(
+                    current->m_datastore,
+                    level,
+                    current->m_container,
+                    full_dset_name.substr(j),
+                    uuids[i]
+                )
+            );
         }
-        return result.size();
+        return maxDataSets;
     }
 
     /**
@@ -524,10 +569,10 @@ class DataStoreImpl {
         // find out which DB to access
         auto& db = locateDataSetDb(containerName);
         try {
-            bool b = db.exists(key);
+            bool b = db.exists(key.data(), key.size());
             return b;
-        } catch(sdskv::exception& ex) {
-            throw Exception("Error occured when calling sdskv::database::exists (SDSKV error="+std::to_string(ex.error())+")");
+        } catch(yokan::Exception& ex) {
+            throw Exception("yokan::Database::exists(): "+std::string(ex.what()));
         }
         return false;
     }
@@ -548,11 +593,11 @@ class DataStoreImpl {
                    static_cast<void*>(uuid.data),
                    &s);
             return s == sizeof(uuid);
-        } catch(sdskv::exception& ex) {
-            if(ex.error() == SDSKV_ERR_UNKNOWN_KEY) {
+        } catch(yokan::Exception& ex) {
+            if(ex.code() == YOKAN_ERR_KEY_NOT_FOUND) {
                 return false;
             }
-            throw Exception("Error occured when calling sdskv::database::get (SDSKV error="+std::to_string(ex.error())+")");
+            throw Exception("yokan::Database::get(): "+std::string(ex.what()));
         }
         return false;
     }
@@ -567,12 +612,13 @@ class DataStoreImpl {
         auto& db = locateDataSetDb(containerName);
         uuid.randomize();
         try {
-            db.put(key.data(), key.size(), uuid.data, sizeof(uuid));
-        } catch(sdskv::exception& ex) {
-            if(ex.error() == SDSKV_ERR_KEYEXISTS) {
+            db.put(key.data(), key.size(), uuid.data, sizeof(uuid),
+                   YOKAN_MODE_NEW_ONLY);
+        } catch(yokan::Exception& ex) {
+            if(ex.code() == YOKAN_ERR_KEY_EXISTS) {
                 return false;
             } else {
-                throw Exception("Error occured when calling sdskv::database::put (SDSKV error=" +std::to_string(ex.error()) + ")");
+                throw Exception("yokan::Database::put(): " +std::string(ex.what()));
             }
         }
         return true;
@@ -582,7 +628,7 @@ class DataStoreImpl {
     // Access functions for numbered items (Runs, SubRuns, and Events)
     ///////////////////////////////////////////////////////////////////////////
 
-    const sdskv::database& locateItemDb(const ItemType& type, const ItemDescriptor& id, int target=-1) const {
+    const auto& locateItemDb(const ItemType& type, const ItemDescriptor& id, int target=-1) const {
         long unsigned db_idx = 0;
         if(target >= 0) {
             if(type == ItemType::RUN)    return m_run_dbs.dbs[target];
@@ -620,23 +666,21 @@ class DataStoreImpl {
             size_t maxItems,
             int target=-1) const {
         int ret;
-        const ItemDescriptor& start_key   = current;
+        const ItemDescriptor& start_key = current;
         auto& db = locateItemDb(item_type, start_key, target);
-        // ignore keys that don't have the same uuid
-        // issue an sdskv_list_keys
         descriptors.resize(maxItems);
-        std::vector<void*> keys_addr(maxItems);
-        std::vector<hg_size_t> keys_sizes(maxItems, sizeof(ItemDescriptor));
-        for(auto i=0; i < maxItems; i++) {
-            keys_addr[i] = static_cast<void*>(&descriptors[i]);
-        }
-        size_t numItems = maxItems;
+        std::vector<size_t> ksizes(maxItems, sizeof(ItemDescriptor));
+        size_t numItems = 0;
         try {
-            db.list_keys(&start_key, sizeof(start_key),
+            db.listKeysPacked(&start_key, sizeof(start_key),
                          &start_key, ItemImpl::descriptorSize(prefix_type),
-                         keys_addr.data(), keys_sizes.data(), &numItems);
-        } catch(sdskv::exception& ex) {
-            throw Exception("Error occured when calling sdskv::database::list_keys (SDSKV error="+std::string(ex.what()) + ")");
+                         maxItems, descriptors.data(), descriptors.size()*sizeof(ItemDescriptor),
+                         ksizes.data());
+            for(numItems=0; numItems < maxItems; numItems++) {
+                if(ksizes[numItems] > YOKAN_LAST_VALID_SIZE) break;
+            }
+        } catch(yokan::Exception& ex) {
+            throw Exception("yokan::Database::listKeysPacked(): "+std::string(ex.what()));
         }
         descriptors.resize(numItems);
         return numItems;
@@ -683,8 +727,8 @@ class DataStoreImpl {
         try {
             bool b = db.exists(&descriptor, sizeof(descriptor));
             return b;
-        } catch(sdskv::exception& ex) {
-            throw Exception("Error occured when calling sdskv::database::exists (SDSKV error="+std::to_string(ex.error())+")");
+        } catch(yokan::Exception& ex) {
+            throw Exception("yokan::Database::exists(): "+std::string(ex.what()));
         }
         return false;
     }
@@ -728,12 +772,13 @@ class DataStoreImpl {
         // find out which DB to access
         auto& db = locateItemDb(type, k);
         try {
-            db.put(&k, sizeof(k), nullptr, 0);
-        } catch(sdskv::exception& ex) {
-            if(ex.error() == SDSKV_ERR_KEYEXISTS) {
+            db.put(&k, sizeof(k), nullptr, 0,
+                   YOKAN_MODE_NEW_ONLY);
+        } catch(yokan::Exception& ex) {
+            if(ex.code() == YOKAN_ERR_KEY_EXISTS) {
                 return false;
             } else {
-                throw Exception("Error occured when calling sdskv::database::put (SDSKV error=" +std::to_string(ex.error()) + ")");
+                throw Exception("yokan::Database::put(): " +std::string(ex.what()));
             }
         }
         return true;

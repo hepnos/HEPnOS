@@ -200,7 +200,7 @@ bool Run::operator!=(const Run& other) const {
     return !(*this == other);
 }
 
-const RunNumber& Run::number() const {
+RunNumber Run::number() const {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run object");
     }

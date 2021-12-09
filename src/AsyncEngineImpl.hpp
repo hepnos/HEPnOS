@@ -68,10 +68,11 @@ class AsyncEngineImpl {
                             data=std::string(value,vsize)]() { // create new string
             auto& db = ds->locateProductDb(product_id);
             try {
-                db.put(product_id.m_key, data);
-            } catch(sdskv::exception& ex) {
+                db.put(product_id.m_key.data(), product_id.m_key.size(),
+                       data.data(), data.size(), YOKAN_MODE_NEW_ONLY);
+            } catch(yokan::Exception& ex) {
                 std::lock_guard<tl::mutex> lock(m_errors_mtx);
-                if(ex.error() == SDSKV_ERR_KEYEXISTS) {
+                if(ex.code() == YOKAN_ERR_KEY_EXISTS) {
                     m_errors.push_back(
                             std::string("Product ")
                             +productName
@@ -79,7 +80,7 @@ class AsyncEngineImpl {
                             +id.to_string());
                 } else {
                     m_errors.push_back(
-                            std::string("SDSKV error: ")
+                            std::string("yokan::Database::put(): ")
                             +ex.what());
                 }
             }
@@ -109,12 +110,12 @@ class AsyncEngineImpl {
             // locate db
             auto& db = ds->locateItemDb(type, id);
             try {
-                db.put(&id, sizeof(id), nullptr, 0);
-            } catch(sdskv::exception& ex) {
-                if(ex.error() != SDSKV_ERR_KEYEXISTS) {
+                db.put(&id, sizeof(id), nullptr, 0, YOKAN_MODE_NEW_ONLY);
+            } catch(yokan::Exception& ex) {
+                if(ex.code() != YOKAN_ERR_KEY_EXISTS) {
                     std::lock_guard<tl::mutex> lock(m_errors_mtx);
                     m_errors.push_back(
-                            std::string("SDSKV error: ")
+                            std::string("yokan::Database::put(): ")
                             +ex.what());
                 }
             }

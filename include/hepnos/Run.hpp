@@ -205,7 +205,7 @@ class Run : public KeyValueContainer {
      *
      * @return The run number.
      */
-    const RunNumber& number() const;
+    RunNumber number() const;
 
     class const_iterator;
     class iterator;

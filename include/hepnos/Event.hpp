@@ -192,7 +192,7 @@ class Event : public KeyValueContainer {
      *
      * @return The event number.
      */
-    const EventNumber& number() const;
+    EventNumber number() const;
 
     /**
      * @brief Returns an intance of the enclosing SubRun.

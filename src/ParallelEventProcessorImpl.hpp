@@ -259,15 +259,15 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
         product_ids.reserve(descriptors.size());
 
         // size of each product id
-        std::vector<hg_size_t> packed_product_id_sizes;
+        std::vector<size_t> packed_product_id_sizes;
         packed_product_id_sizes.reserve(descriptors.size());
 
         // size of each value
-        std::vector<hg_size_t> packed_value_sizes(descriptors.size(), 0);
+        std::vector<size_t> packed_value_sizes(descriptors.size(), 0);
 
         // build the list of packed product ids, product id sizes
         size_t offset = 0;
-        hg_size_t count = 0;
+        size_t count = 0;
         long current_db_idx = -1;
         for(const auto& descriptor : descriptors) {
             // build a fake product id to get the db_index
@@ -279,12 +279,12 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                 // get size of batch of products
                 packed_value_sizes.resize(count);
                 auto& db = m_datastore->getProductDatabase(current_db_idx);
-                bool b = db.length_packed(count, packed_product_ids.data(),
-                                 packed_product_id_sizes.data(),
-                                 packed_value_sizes.data());
+                db.lengthPacked(count, packed_product_ids.data(),
+                                packed_product_id_sizes.data(),
+                                packed_value_sizes.data());
                 for(unsigned i=0; i < packed_value_sizes.size(); i++) {
                     auto s = packed_value_sizes[i];
-                    if(s == 0) {
+                    if(s == YOKAN_KEY_NOT_FOUND) {
                         std::string label, type;
                         product_ids[i].unpackInformation(
                             nullptr, nullptr, nullptr, nullptr, &label, &type);
@@ -300,19 +300,18 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                 if(buffer_size != 0) {
                     std::vector<char> value_buffer(buffer_size);
                     // get the actual values
-                    hg_size_t actual_count = count;
-                    db.get_packed(&actual_count, packed_product_ids.data(),
-                            packed_product_id_sizes.data(),
-                            buffer_size, value_buffer.data(),
-                            packed_value_sizes.data());
+                    db.getPacked(count, packed_product_ids.data(),
+                                 packed_product_id_sizes.data(),
+                                 buffer_size, value_buffer.data(),
+                                 packed_value_sizes.data());
                     // place data into cache
                     offset = 0;
                     for(unsigned i = 0; i < count; i++) {
-                        if(packed_value_sizes[i] != (hg_size_t)(-1)) {
-                            std::string data(value_buffer.data() + offset, packed_value_sizes[i]);
-                            cache.m_impl->addRawProduct(product_ids[i], std::move(data));
-                            offset += packed_value_sizes[i];
-                        }
+                        if(packed_value_sizes[i] > YOKAN_LAST_VALID_SIZE)
+                            break;
+                        std::string data(value_buffer.data() + offset, packed_value_sizes[i]);
+                        cache.m_impl->addRawProduct(product_ids[i], std::move(data));
+                        offset += packed_value_sizes[i];
                     }
                 }
                 // reset buffers and variables
@@ -347,13 +346,14 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
             // get size of batch of products
             packed_value_sizes.resize(count);
             auto& db = m_datastore->getProductDatabase(current_db_idx);
-            bool b = db.length_packed(count, packed_product_ids.data(),
+            db.lengthPacked(count,
+                    packed_product_ids.data(),
                     packed_product_id_sizes.data(),
                     packed_value_sizes.data());
             // check the size of values
             for(unsigned i=0; i < packed_value_sizes.size(); i++) {
                 auto s = packed_value_sizes[i];
-                if(s == 0) {
+                if(s == YOKAN_KEY_NOT_FOUND) {
                     std::string label, type;
                     product_ids[i].unpackInformation(
                             nullptr, nullptr, nullptr, nullptr, &label, &type);
@@ -368,19 +368,18 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
             if(buffer_size != 0) {
                 std::vector<char> value_buffer(buffer_size);
                 // get the actual values
-                hg_size_t actual_count = count;
-                db.get_packed(&actual_count, packed_product_ids.data(),
+                db.getPacked(count, packed_product_ids.data(),
                         packed_product_id_sizes.data(),
                         buffer_size, value_buffer.data(),
                         packed_value_sizes.data());
                 // place data into cache
                 offset = 0;
                 for(unsigned i = 0; i < count; i++) {
-                    if(packed_value_sizes[i] != (hg_size_t)(-1)) {
-                        std::string data(value_buffer.data() + offset, packed_value_sizes[i]);
-                        cache.m_impl->addRawProduct(product_ids[i], std::move(data));
-                        offset += packed_value_sizes[i];
-                    }
+                    if(packed_value_sizes[i] > YOKAN_LAST_VALID_SIZE)
+                        break;
+                    std::string data(value_buffer.data() + offset, packed_value_sizes[i]);
+                    cache.m_impl->addRawProduct(product_ids[i], std::move(data));
+                    offset += packed_value_sizes[i];
                 }
             }
         }

@@ -40,7 +40,7 @@ class WriteBatchImpl {
         keyvals& operator=(const keyvals&) = delete;
     };
 
-    typedef std::unordered_map<const sdskv::database*, std::queue<keyvals>> entries_type;
+    typedef std::unordered_map<const yokan::Database*, std::queue<keyvals>> entries_type;
 
     std::unique_ptr<WriteBatchStatistics> m_stats;
     mutable tl::mutex                     m_stats_mtx;
@@ -69,7 +69,7 @@ class WriteBatchImpl {
     }
 
     static void writer_thread(WriteBatchImpl& wb,
-                              const sdskv::database* db,
+                              const yokan::Database* db,
                               std::queue<keyvals>& kvs_queue,
                               Exception* exception,
                               char* ok) {
@@ -77,13 +77,14 @@ class WriteBatchImpl {
         while(!kvs_queue.empty()) {
             auto& batch = kvs_queue.front();
             try {
-                db->put_packed(batch.m_packed_keys, batch.m_packed_key_sizes,
-                               batch.m_packed_vals, batch.m_packed_val_sizes);
-            } catch(sdskv::exception& ex) {
-                if(ex.error() != SDSKV_ERR_KEYEXISTS) {
+                auto count = batch.m_packed_key_sizes.size();
+                db->putPacked(count, batch.m_packed_keys.data(), batch.m_packed_key_sizes.data(),
+                              batch.m_packed_vals.data(), batch.m_packed_val_sizes.data(),
+                              YOKAN_MODE_NEW_ONLY);
+            } catch(yokan::Exception& ex) {
+                if(ex.code() != YOKAN_ERR_KEY_EXISTS) {
                     *ok = 0;
-                    *exception = Exception(std::string("SDSKV error: ")+ex.what());
-                    spdlog::error("SDSKV exception occured in WriteBatch's writer_thread: {}", ex.what());
+                    *exception = Exception(std::string("yokan::Database::putPacked(): ")+ex.what());
                 }
             }
             wb.update_operation_statistics(batch.m_size);

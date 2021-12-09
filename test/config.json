@@ -8,45 +8,38 @@
         }
     ],
     "libraries" : {
-        "sdskv" : "libsdskv-bedrock.so"
+        "yokan" : "libyokan-bedrock-module.so"
     },
     "providers" : [
         {
             "name" : "hepnos",
-            "type" : "sdskv",
+            "type" : "yokan",
             "config" : {
-                "comparators" : [
-                    { "name" : "hepnos_compare_item_descriptors",
-                      "library" : "../src/libhepnos-service.so" }
-                ],
                 "databases" : [
                     {
                         "name" : "hepnos-datasets",
                         "type" : "map",
-                        "no_overwrite" : true
+                        "config": {}
                     },
                     {
                         "name" : "hepnos-runs",
                         "type" : "map",
-                        "comparator" : "hepnos_compare_item_descriptors",
-                        "no_overwrite" : true
+                        "config": {}
                     },
                     {
                         "name" : "hepnos-subruns",
                         "type" : "map",
-                        "comparator" : "hepnos_compare_item_descriptors",
-                        "no_overwrite" : true
+                        "config": {}
                     },
                     {
                         "name" : "hepnos-events",
                         "type" : "map",
-                        "comparator" : "hepnos_compare_item_descriptors",
-                        "no_overwrite" : true
+                        "config": {}
                     },
                     {
                         "name" : "hepnos-products",
                         "type" : "map",
-                        "no_overwrite" : true
+                        "config": {}
                     }
                 ]
             }

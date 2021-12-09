@@ -47,9 +47,9 @@ add_library(hepnos ${hepnos-src})
 target_link_libraries (hepnos
     MPI::MPI_C
     nlohmann_json
+    yokan-client
     spdlog::spdlog
     PkgConfig::uuid
-    PkgConfig::sdskv-client
     PkgConfig::ch-placement)
 target_include_directories (hepnos BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private)
 target_include_directories (hepnos PUBLIC $<INSTALL_INTERFACE:include>)

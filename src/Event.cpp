@@ -161,7 +161,7 @@ bool Event::operator!=(const Event& other) const {
     return !(*this == other);
 }
 
-const EventNumber& Event::number() const {
+EventNumber Event::number() const {
     if(!valid()) {
         throw Exception("Calling Event member function on an invalid Event object");
     }

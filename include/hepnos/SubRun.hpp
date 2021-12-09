@@ -203,7 +203,7 @@ class SubRun : public KeyValueContainer {
      *
      * @return The subrun number.
      */
-    const SubRunNumber& number() const;
+    SubRunNumber number() const;
 
     /**
      * @brief Returns an instance of the enclosing Run.

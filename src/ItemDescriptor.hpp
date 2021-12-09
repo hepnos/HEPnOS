@@ -8,14 +8,15 @@
 #include "hepnos/SubRunNumber.hpp"
 #include "hepnos/EventNumber.hpp"
 #include "hepnos/UUID.hpp"
+#include "BigEndian.hpp"
 
 namespace hepnos {
 
 struct ItemDescriptor {
-    UUID         dataset;
-    RunNumber    run;
-    SubRunNumber subrun;
-    EventNumber  event;
+    UUID             dataset;
+    BE<RunNumber>    run;
+    BE<SubRunNumber> subrun;
+    BE<EventNumber>  event;
 
     ItemDescriptor()
     : run(InvalidRunNumber)

@@ -212,7 +212,7 @@ bool SubRun::operator!=(const SubRun& other) const {
     return !(*this == other);
 }
 
-const SubRunNumber& SubRun::number() const {
+SubRunNumber SubRun::number() const {
     return m_impl->m_descriptor.subrun;
 }
 
