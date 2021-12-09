@@ -62,25 +62,6 @@ set_target_properties (hepnos
     SOVERSION ${HEPNOS_VERSION_MAJOR})
 
 #
-# Service library
-#
-
-# add hepnos-service library
-add_library(hepnos-service SHARED ${hepnos-service-src})
-target_link_libraries (hepnos-service
-    PkgConfig::uuid
-    mercury)
-target_include_directories (hepnos-service BEFORE PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
-target_include_directories (hepnos-service BEFORE PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/service>)
-
-# for shared libs, establish the lib version
-set_target_properties (hepnos-service
-    PROPERTIES VERSION ${HEPNOS_VERSION}
-    SOVERSION ${HEPNOS_VERSION_MAJOR})
-
-#
 # installation stuff (packaging and install commands)
 #
 write_basic_package_version_file(
@@ -97,7 +78,6 @@ configure_file (hepnos-config.cmake.in hepnos-config.cmake @ONLY)
 install (TARGETS hepnos EXPORT hepnos-targets
          ARCHIVE DESTINATION lib
          LIBRARY DESTINATION lib)
-install (TARGETS hepnos-service ARCHIVE DESTINATION lib LIBRARY DESTINATION lib)
 install (EXPORT hepnos-targets
          DESTINATION ${hepnos-pkg}
          FILE "hepnos-targets.cmake")
