@@ -12,9 +12,9 @@ find_dependency (thallium)
 find_dependency (spdlog)
 find_dependency (PkgConfig)
 find_dependency (nlohmann_json)
+find_dependency (yokan)
 
 pkg_check_modules (uuid REQUIRED IMPORTED_TARGET uuid)
-pkg_check_modules (sdskv-client REQUIRED IMPORTED_TARGET sdskv-client)
 pkg_check_modules (ch-placement REQUIRED IMPORTED_TARGET ch-placement)
 
 include ("${CMAKE_CURRENT_LIST_DIR}/hepnos-targets.cmake")

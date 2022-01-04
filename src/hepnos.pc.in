@@ -7,7 +7,7 @@ Name: HEPnOS
 Description: A distributed storage system for high energy physics applications.
 Version: @HEPNOS_VERSION@
 
-Requires: uuid yaml-cpp thallium sdskv-client ch-placement
+Requires: uuid yaml-cpp thallium yokan-client ch-placement
 Libs: -L${libdir} @PRIVATE_LIBS@
 Cflags: -I${includedir}
 
