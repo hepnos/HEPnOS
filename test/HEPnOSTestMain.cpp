@@ -46,6 +46,7 @@ int main(int argc, char* argv[])
     // Run the tests.
     bool wasSucessful = runner.run();
 
+    MPI_Barrier(MPI_COMM_WORLD);
     if(rank == 0) {
         ds.shutdown();
     }

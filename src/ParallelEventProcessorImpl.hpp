@@ -292,6 +292,7 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                                      "could not be found while preloading",
                                      label, type);
 
+                        packed_value_sizes[i] = 0;
                     }
                 }
                 // allocate a buffer of appropriate size for packed values
@@ -307,6 +308,8 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                     // place data into cache
                     offset = 0;
                     for(unsigned i = 0; i < count; i++) {
+                        if(packed_value_sizes[i] == YOKAN_KEY_NOT_FOUND)
+                            continue;
                         if(packed_value_sizes[i] > YOKAN_LAST_VALID_SIZE)
                             break;
                         std::string data(value_buffer.data() + offset, packed_value_sizes[i]);
@@ -360,6 +363,7 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                     spdlog::warn("A product (label = {}, type = {}) "
                             "could not be found while preloading",
                             label, type);
+                    packed_value_sizes[i] = 0;
                 }
             }
             // allocate a buffer of appropriate size for packed values
@@ -375,6 +379,8 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                 // place data into cache
                 offset = 0;
                 for(unsigned i = 0; i < count; i++) {
+                    if(packed_value_sizes[i] == YOKAN_KEY_NOT_FOUND)
+                        continue;
                     if(packed_value_sizes[i] > YOKAN_LAST_VALID_SIZE)
                         break;
                     std::string data(value_buffer.data() + offset, packed_value_sizes[i]);
