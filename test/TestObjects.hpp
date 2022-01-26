@@ -57,4 +57,29 @@ class TestObjectB {
     }
 };
 
+class TestObjectC {
+
+    friend class boost::serialization::access;
+
+    public:
+
+    double& a() { return _a; }
+    std::string& b() { return _b; }
+
+    bool operator==(const TestObjectC& other) const {
+        return _a == other._a && _b == other._b;
+    }
+
+    private:
+
+    double            _a;
+    std::string       _b;
+
+    template<typename Archive>
+    void serialize(Archive& ar, const unsigned int version) {
+        ar & _a;
+        ar & _b;
+    }
+};
+
 #endif

@@ -5,6 +5,7 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
 #include <hepnos.hpp>
+#include <spdlog/spdlog.h>
 
 hepnos::DataStore* datastore = nullptr;
 
@@ -16,7 +17,9 @@ int main(int argc, char* argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if(argc < 2) return 1;
 
+    spdlog::set_level(spdlog::level::trace);
     sleep(1);
+
     // Create the datastore
     hepnos::DataStore ds = hepnos::DataStore::connect("na+sm", argv[1]);
     datastore = &ds;

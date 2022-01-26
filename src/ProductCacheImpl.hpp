@@ -6,6 +6,7 @@
 #include "hepnos/ProductCache.hpp"
 #include "ItemDescriptor.hpp"
 #include "DataStoreImpl.hpp"
+#include <spdlog/spdlog.h>
 #include <unordered_map>
 #include <thallium.hpp>
 
@@ -33,6 +34,8 @@ struct ProductCacheImpl {
             }
         }
         m_lock.unlock();
+        spdlog::trace("[cache] Loading product {} from cache => {}",
+                      product_id.toJSON(), found ? "found" : "not found");
         return found;
     }
 
@@ -49,6 +52,8 @@ struct ProductCacheImpl {
                 m_map.erase(it);
         }
         m_lock.unlock();
+        spdlog::trace("[cache] Loading product {} from cache => {}",
+                      product_id.toJSON(), found ? "found" : "not found");
         return found;
     }
 
@@ -71,6 +76,8 @@ struct ProductCacheImpl {
         auto it = m_map.find(product_id.m_key);
         auto found = it != m_map.end();
         m_lock.unlock();
+        spdlog::trace("[cache] Checking product {} from cache => {}",
+                      product_id.toJSON(), found ? "found" : "not found");
         return found;
     }
 
@@ -85,6 +92,8 @@ struct ProductCacheImpl {
         m_lock.wrlock();
         m_map[product_id.m_key] = data;
         m_lock.unlock();
+        spdlog::trace("[cache] Added product {} to cache",
+                      product_id.toJSON());
     }
 
     void addRawProduct(const ItemDescriptor& id,
@@ -99,6 +108,8 @@ struct ProductCacheImpl {
         m_lock.wrlock();
         m_map[product_id.m_key] = std::move(data);
         m_lock.unlock();
+        spdlog::trace("[cache] Added product {} to cache",
+                      product_id.toJSON());
     }
 
     void addRawProduct(const ItemDescriptor& id,
@@ -112,6 +123,8 @@ struct ProductCacheImpl {
         m_lock.wrlock();
         m_map.erase(product_id.m_key);
         m_lock.unlock();
+        spdlog::trace("[cache] Removed product {} from cache",
+                      product_id.toJSON());
     }
 
     void removeRawProduct(const ItemDescriptor& id,

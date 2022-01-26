@@ -25,6 +25,11 @@ void ParallelMPITest::setUp() {
             auto ev = subrun.createEvent(k);
             ev.store("abc", a);
             ev.store("abc", b);
+            if(k % 2 == 1) {
+                TestObjectC c;
+                c.a() = k;
+                ev.store("abc", c);
+            }
         }
     }
     MPI_Barrier(MPI_COMM_WORLD);
@@ -204,9 +209,12 @@ void ParallelMPITest::testParallelEventProcessorWithProducts() {
     int size;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+    AsyncEngine async(*datastore, 2);
+
     ParallelEventProcessorStatistics stats;
-    ParallelEventProcessor parallel_processor(*datastore, MPI_COMM_WORLD);
+    ParallelEventProcessor parallel_processor(async, MPI_COMM_WORLD);
     parallel_processor.preload<TestObjectA>("abc");
+    parallel_processor.preload<TestObjectC>("abc");
 
     std::vector<item> items;
     parallel_processor.process(mds,
@@ -218,9 +226,21 @@ void ParallelMPITest::testParallelEventProcessorWithProducts() {
             items.emplace_back(r.number(), sr.number(), ev.number());
             TestObjectA a;
             TestObjectB b;
-            CPPUNIT_ASSERT(ev.load(cache, "abc", a));
-            CPPUNIT_ASSERT(!ev.load(cache, "abc", b));
+            TestObjectC c;
+            bool ba = ev.load(cache, "abc", a);
+            bool bb = ev.load(cache, "abc", b);
+            bool bc = ev.load(cache, "abc", c);
+            if(!ba) std::cout << "Rank " << rank << " could not load object of type A" << std::endl;
+            CPPUNIT_ASSERT(ba);
+            CPPUNIT_ASSERT(!bb);
+            if(ev.number() % 2 == 0) {
+                CPPUNIT_ASSERT(!bc);
+            } else {
+                if(!bc) std::cout << "Rank " << rank << " could not load object of type C" << std::endl;
+                CPPUNIT_ASSERT(bc);
+            }
             CPPUNIT_ASSERT(a.x() == ev.number());
+            std::cout << "Rank " << rank << " OK" << std::endl;
             double t = tl::timer::wtime();
             while(tl::timer::wtime() - t < 0.1) {}
         },

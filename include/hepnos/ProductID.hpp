@@ -7,7 +7,6 @@
 #define __HEPNOS_PRODUCT_ID_H
 
 #include <string>
-
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/string.hpp>
 
@@ -129,12 +128,19 @@ class ProductID {
      * @param label
      * @param type
      */
-    void unpackInformation(UUID* dataset_id,
+    bool unpackInformation(UUID* dataset_id,
                            RunNumber* run,
                            SubRunNumber* subrun,
                            EventNumber* event,
                            std::string* label,
                            std::string* type) const;
+
+    /**
+     * @brief Converts the ProductID into a JSON representation.
+     *
+     * @return a JSON string representing the product.
+     */
+    std::string toJSON() const;
 
     private:
 
