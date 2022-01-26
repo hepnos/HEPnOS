@@ -285,9 +285,9 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                 for(unsigned i=0; i < packed_value_sizes.size(); i++) {
                     auto s = packed_value_sizes[i];
                     if(s == YOKAN_KEY_NOT_FOUND) {
-                        spdlog::warn("A product (product_id = {}) "
-                                     "could not be found while preloading",
-                                     product_ids[i].toJSON());
+                        //spdlog::warn("A product (product_id = {}) "
+                        //             "could not be found while preloading",
+                        //             product_ids[i].toJSON());
                         packed_value_sizes[i] = 0;
                     }
                 }
@@ -304,8 +304,10 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                     // place data into cache
                     offset = 0;
                     for(unsigned i = 0; i < count; i++) {
-                        if(packed_value_sizes[i] == YOKAN_KEY_NOT_FOUND)
+                        if(packed_value_sizes[i] == YOKAN_KEY_NOT_FOUND) {
+                            cache.m_impl->addNotFound(product_ids[i]);
                             continue;
+                        }
                         if(packed_value_sizes[i] == YOKAN_SIZE_TOO_SMALL) {
                             spdlog::warn("A product (product_id = {}) "
                                     "could not be loaded because buffer is too small, "
@@ -314,8 +316,8 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                         if(packed_value_sizes[i] > YOKAN_LAST_VALID_SIZE)
                             break;
                         std::string data(value_buffer.data() + offset, packed_value_sizes[i]);
-                        spdlog::trace("Adding product to cache (product id = {})",
-                                      product_ids[i].toJSON());
+                        //spdlog::trace("Adding product to cache (product id = {})",
+                        //              product_ids[i].toJSON());
                         cache.m_impl->addRawProduct(product_ids[i], std::move(data));
                         offset += packed_value_sizes[i];
                     }
@@ -360,9 +362,9 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
             for(unsigned i=0; i < packed_value_sizes.size(); i++) {
                 auto s = packed_value_sizes[i];
                 if(s == YOKAN_KEY_NOT_FOUND) {
-                    spdlog::warn("A product (product_id = {}) "
-                            "could not be found while preloading",
-                            product_ids[i].toJSON());
+                    //spdlog::warn("A product (product_id = {}) "
+                    //        "could not be found while preloading",
+                    //        product_ids[i].toJSON());
                     packed_value_sizes[i] = 0;
                 }
             }
@@ -379,8 +381,10 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                 // place data into cache
                 offset = 0;
                 for(unsigned i = 0; i < count; i++) {
-                    if(packed_value_sizes[i] == YOKAN_KEY_NOT_FOUND)
+                    if(packed_value_sizes[i] == YOKAN_KEY_NOT_FOUND) {
+                        cache.m_impl->addNotFound(product_ids[i]);
                         continue;
+                    }
                     if(packed_value_sizes[i] == YOKAN_SIZE_TOO_SMALL) {
                         spdlog::warn("A product (product_id = {}) "
                             "could not be loaded because buffer is too small, "
@@ -389,8 +393,8 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                     if(packed_value_sizes[i] > YOKAN_LAST_VALID_SIZE)
                         break;
                     std::string data(value_buffer.data() + offset, packed_value_sizes[i]);
-                    spdlog::trace("Adding product to cache (product_id = {})",
-                                  product_ids[i].toJSON());
+                    //spdlog::trace("Adding product to cache (product_id = {})",
+                    //              product_ids[i].toJSON());
                     cache.m_impl->addRawProduct(product_ids[i], std::move(data));
                     offset += packed_value_sizes[i];
                 }
