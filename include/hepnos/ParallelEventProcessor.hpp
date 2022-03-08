@@ -23,6 +23,7 @@ struct ParallelEventProcessorOptions {
     unsigned inputBatchSize  = 16;                                   // size of batches loaded from HEPnOS
     unsigned outputBatchSize = 16;                                   // size of batches sent over MPI to workers
     uint16_t providerID      = 0;                                    // provider id to use (if multiple ParallelEventProcessor instances are used)
+    bool     use_rdma        = true;                                 // whether to use RDMA to exchange event descriptors
 };
 
 struct ParallelEventProcessorStatistics {

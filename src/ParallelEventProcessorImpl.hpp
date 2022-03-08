@@ -18,6 +18,17 @@
 
 namespace hepnos {
 
+template<typename Archive>
+inline void save(Archive& ar, const EventDescriptor& desc) {
+    ar.write(desc.data, hepnos::EventDescriptorLength);
+}
+
+template<typename Archive>
+inline void load(Archive& ar, EventDescriptor& desc) {
+    ar.read(desc.data, hepnos::EventDescriptorLength);
+}
+
+
 namespace tl = thallium;
 
 struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorImpl> {
@@ -31,7 +42,8 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
     std::vector<int>                  m_targets;
     std::unordered_set<std::string>   m_product_keys;
 
-    tl::remote_procedure              m_req_events_rpc;
+    tl::remote_procedure              m_req_events_rpc_rdma;
+    tl::remote_procedure              m_req_events_rpc_no_rdma;
     std::vector<tl::provider_handle>  m_provider_handles;
 
     bool                              m_loader_running = false;
@@ -39,7 +51,7 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
     tl::mutex                         m_event_queue_mtx;
     tl::condition_variable            m_event_queue_cv;
 
-    int                               m_num_active_consumers;
+    std::atomic<int>                  m_num_active_consumers;
     tl::eventual<void>                m_no_more_consumers;
     bool                              m_is_loader = false;
 
@@ -58,7 +70,8 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
     , m_datastore(std::move(ds))
     , m_comm(comm)
     , m_options(options)
-    , m_req_events_rpc(define("hepnos_pep_req_events", &ParallelEventProcessorImpl::requestEventsRPC)) {
+    , m_req_events_rpc_rdma(define("hepnos_pep_req_events_rdma", &ParallelEventProcessorImpl::requestEventsRDMA))
+    , m_req_events_rpc_no_rdma(define("hepnos_pep_req_events_no_rdma", &ParallelEventProcessorImpl::requestEventsNoRDMA)) {
         int size;
         MPI_Comm_rank(comm, &m_my_rank);
         MPI_Comm_size(comm, &size);
@@ -77,7 +90,8 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
     }
 
     ~ParallelEventProcessorImpl() {
-        m_req_events_rpc.deregister();
+        m_req_events_rpc_rdma.deregister();
+        m_req_events_rpc_no_rdma.deregister();
     }
 
     /**
@@ -144,7 +158,7 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
         }
     }
 
-    void requestEventsRPC(const tl::request& req, size_t max, tl::bulk& remote_mem) {
+    void requestEventsRDMA(const tl::request& req, size_t max, tl::bulk& remote_mem) {
         std::vector<EventDescriptor> descriptorsToSend;
         descriptorsToSend.reserve(max);
         {
@@ -167,8 +181,29 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
         req.respond(static_cast<size_t>(descriptorsToSend.size()));
 
         if(descriptorsToSend.empty()) {
-            m_num_active_consumers -= 1;
-            if(m_num_active_consumers == 0) {
+            if(--m_num_active_consumers == 0) {
+                m_no_more_consumers.set_value(); // allow the destructor to complete
+            }
+        }
+    }
+
+    void requestEventsNoRDMA(const tl::request& req, size_t max) {
+        std::vector<EventDescriptor> descriptorsToSend;
+        descriptorsToSend.reserve(max);
+        {
+            std::unique_lock<tl::mutex> lock(m_event_queue_mtx);
+            while(m_loader_running && m_event_queue.empty())
+                m_event_queue_cv.wait(lock);
+            for(unsigned i = 0; i < max && !m_event_queue.empty(); i++) {
+                descriptorsToSend.push_back(m_event_queue.front());
+                m_event_queue.pop();
+            }
+        }
+
+        req.respond(descriptorsToSend);
+
+        if(descriptorsToSend.empty()) {
+            if(--m_num_active_consumers == 0) {
                 m_no_more_consumers.set_value(); // allow the destructor to complete
             }
         }
@@ -213,21 +248,24 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                 }
             } else {
                 size_t max = m_options.outputBatchSize;
-                descriptors.resize(max);
+                if(!m_options.use_rdma) {
+                    descriptors = m_req_events_rpc_no_rdma
+                        .on(m_provider_handles[loader_rank])(max).as<std::vector<EventDescriptor>>();
+                } else {
+                    descriptors.resize(max);
+                    std::vector<std::pair<void*, size_t>> segment =
+                        {{ descriptors.data(), sizeof(descriptors[0])*descriptors.size() }};
+                    auto local_mem = m_datastore->m_engine.expose(segment, tl::bulk_mode::write_only);
 
-                std::vector<std::pair<void*, size_t>> segment =
-                    {{ descriptors.data(), sizeof(descriptors[0])*descriptors.size() }};
-                auto local_mem = m_datastore->m_engine.expose(segment, tl::bulk_mode::write_only);
-
-                size_t num_actual_events = m_req_events_rpc
-                    .on(m_provider_handles[loader_rank])(max, local_mem);
-
-                if(num_actual_events != 0) {
+                    size_t num_actual_events = m_req_events_rpc_rdma
+                        .on(m_provider_handles[loader_rank])(max, local_mem);
                     descriptors.resize(num_actual_events);
+                }
+                if(descriptors.size() != 0) {
                     t2 = tl::timer::wtime();
                     // no need to lock m_stats_mtx, this is the only ULT modifying waiting_time_stats
                     if(m_stats) {
-                        m_stats->total_events_processed += num_actual_events;
+                        m_stats->total_events_processed += descriptors.size();
                         m_stats->waiting_time_stats.updateWith(t2-t1);
                     }
                     return true;
