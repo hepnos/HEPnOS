@@ -72,6 +72,7 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
     , m_options(options)
     , m_req_events_rpc_rdma(define("hepnos_pep_req_events_rdma", &ParallelEventProcessorImpl::requestEventsRDMA))
     , m_req_events_rpc_no_rdma(define("hepnos_pep_req_events_no_rdma", &ParallelEventProcessorImpl::requestEventsNoRDMA)) {
+        spdlog::trace("Initializing ParallelEventProcessorImpl with provider id {}", options.providerID);
         int size;
         MPI_Comm_rank(comm, &m_my_rank);
         MPI_Comm_size(comm, &size);
@@ -87,11 +88,13 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
             auto ep = m_datastore->m_engine.lookup(all_addresses_packed.data()+j*1024);
             m_provider_handles[j] = tl::provider_handle(std::move(ep), options.providerID);
         }
+        spdlog::trace("ParallelEventProcessorImpl: address exchange done, found {} participants", size);
     }
 
     ~ParallelEventProcessorImpl() {
         m_req_events_rpc_rdma.deregister();
         m_req_events_rpc_no_rdma.deregister();
+        spdlog::trace("ParallelEventProcessorImpl: finalizing");
     }
 
     /**
@@ -103,14 +106,19 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
         int size;
         MPI_Comm_size(m_comm, &size);
         m_is_loader = (m_loader_ranks[0] == m_my_rank);
+        spdlog::trace("ParallelEventProcessorImpl: starting process, (this rank is {})",
+                      m_is_loader ? "loader" : "not loader");
         if(size == 1)
             m_no_more_consumers.set_value();
         m_stats = stats;
         startLoadingEventsFromTargets(evsets);
         processEvents(function);
         m_stats = nullptr;
-        if(m_is_loader)
+        if(m_is_loader) {
+            spdlog::trace("ParallelEventProcessorImpl: waiting for all the consumers...");
             m_no_more_consumers.wait();
+        }
+        spdlog::trace("ParallelEventProcessorImpl: process completed");
     }
 
     /**
@@ -121,9 +129,12 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
         if(evsets.size() == 0) {
             return;
         }
+        spdlog::trace("ParallelEventProcessorImpl: starting ULT to load events");
         m_loader_running = true;
         tl::xstream::self().make_thread([this, evsets](){
+            spdlog::trace("ParallelEventProcessorImpl: loader ULT started");
             loadEventsFromTargets(evsets);
+            spdlog::trace("ParallelEventProcessorImpl: loader ULT completing");
         }, tl::anonymous());
     }
 
@@ -134,7 +145,7 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
      */
     void loadEventsFromTargets(const std::vector<EventSet>& evsets) {
         for(auto& evset : evsets) {
-
+            spdlog::trace("ParallelEventProcessorImpl: starting to load events from EventSet");
             Prefetcher prefetcher(
                     DataStore(m_datastore),
                     m_options.cacheSize,
@@ -154,23 +165,31 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
         {
             std::lock_guard<tl::mutex> lock(m_event_queue_mtx);
             m_loader_running = false;
-            m_event_queue_cv.notify_all();
         }
+        spdlog::trace("ParallelEventProcessorImpl: no more events to load, notifying");
+        m_event_queue_cv.notify_all();
     }
 
     void requestEventsRDMA(const tl::request& req, size_t max, tl::bulk& remote_mem) {
+        spdlog::trace("ParallelEventProcessorImpl: (req={}) received request for up to {} events via RDMA",
+                      (void*)(&req), max);
         std::vector<EventDescriptor> descriptorsToSend;
         descriptorsToSend.reserve(max);
         {
             std::unique_lock<tl::mutex> lock(m_event_queue_mtx);
-            while(m_loader_running && m_event_queue.empty())
+            while(m_loader_running && m_event_queue.empty()) {
+                spdlog::trace("ParallelEventProcessorImpl: (req={}) waiting for more events to be available...",
+                              (void*)(&req));
                 m_event_queue_cv.wait(lock);
+            }
             for(unsigned i = 0; i < max && !m_event_queue.empty(); i++) {
                 descriptorsToSend.push_back(m_event_queue.front());
                 m_event_queue.pop();
             }
         }
 
+        spdlog::trace("ParallelEventProcessorImpl: (req={}) sending {} events via RDMA",
+                      (void*)(&req), descriptorsToSend.size());
         if(descriptorsToSend.size() != 0) {
             std::vector<std::pair<void*, size_t>> segment =
                 {{ descriptorsToSend.data(), sizeof(descriptorsToSend[0])*descriptorsToSend.size() }};
@@ -178,34 +197,51 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
             remote_mem.on(req.get_endpoint()) << local_mem;
         }
 
+        spdlog::trace("ParallelEventProcessorImpl: (req={}) done sending",
+                      (void*)(&req));
         req.respond(static_cast<size_t>(descriptorsToSend.size()));
 
         if(descriptorsToSend.empty()) {
-            if(--m_num_active_consumers == 0) {
+            auto x = --m_num_active_consumers;
+            if(x == 0) {
                 m_no_more_consumers.set_value(); // allow the destructor to complete
             }
+            spdlog::trace("ParallelEventProcessorImpl: (req={}) decreasing num consumers to {}",
+                          (void*)(&req), x);
         }
     }
 
     void requestEventsNoRDMA(const tl::request& req, size_t max) {
+        spdlog::trace("ParallelEventProcessorImpl: (req={}) received request for up to {} events via RPC",
+                      (void*)(&req), max);
         std::vector<EventDescriptor> descriptorsToSend;
         descriptorsToSend.reserve(max);
         {
             std::unique_lock<tl::mutex> lock(m_event_queue_mtx);
-            while(m_loader_running && m_event_queue.empty())
+            while(m_loader_running && m_event_queue.empty()) {
+                spdlog::trace("ParallelEventProcessorImpl: (req={}) waiting for more events to be available...",
+                              (void*)(&req));
                 m_event_queue_cv.wait(lock);
+            }
             for(unsigned i = 0; i < max && !m_event_queue.empty(); i++) {
                 descriptorsToSend.push_back(m_event_queue.front());
                 m_event_queue.pop();
             }
         }
 
+        spdlog::trace("ParallelEventProcessorImpl: (req={}) sending {} events via RPC",
+                      (void*)(&req), descriptorsToSend.size());
         req.respond(descriptorsToSend);
+        spdlog::trace("ParallelEventProcessorImpl: (req={}) done sending",
+                      (void*)(&req));
 
         if(descriptorsToSend.empty()) {
-            if(--m_num_active_consumers == 0) {
+            auto x = --m_num_active_consumers;
+            if(x == 0) {
                 m_no_more_consumers.set_value(); // allow the destructor to complete
             }
+            spdlog::trace("ParallelEventProcessorImpl: (req={}) decreasing num consumers to {}",
+                          (void*)(&req), x);
         }
     }
 
@@ -218,12 +254,15 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
     bool requestEvents(std::vector<EventDescriptor>& descriptors) {
         double t1 = tl::timer::wtime();
         double t2;
+        spdlog::trace("Requesting batch of events");
         while(m_loader_ranks.size() != 0) {
             int loader_rank = m_loader_ranks[0];
             if(loader_rank == m_my_rank) {
                 std::unique_lock<tl::mutex> lock(m_event_queue_mtx);
-                while(m_event_queue.empty() && m_loader_running)
-                     m_event_queue_cv.wait(lock);
+                while(m_event_queue.empty() && m_loader_running) {
+                    spdlog::trace("Waiting for events to appear in local queue");
+                    m_event_queue_cv.wait(lock);
+                }
                 size_t num_events_requested = m_options.outputBatchSize;
                 descriptors.resize(num_events_requested);
                 size_t num_actual_events = 0;
@@ -238,20 +277,24 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                     }
                 }
                 if(num_actual_events != 0) {
+                    spdlog::trace("Loaded {} events from local queue", num_actual_events);
                     descriptors.resize(num_actual_events);
                     t2 = tl::timer::wtime();
                     // no need to lock m_stats_mtx, this is the only ULT modifying waiting_time_stats
                     if(m_stats) m_stats->waiting_time_stats.updateWith(t2-t1);
                     return true;
                 } else {
+                    spdlog::trace("No more events in local queue, erasing self from loader ranks");
                     m_loader_ranks.erase(m_loader_ranks.begin());
                 }
             } else {
                 size_t max = m_options.outputBatchSize;
                 if(!m_options.use_rdma) {
+                    spdlog::trace("Loading events from loader rank {} via RPC", loader_rank);
                     descriptors = m_req_events_rpc_no_rdma
                         .on(m_provider_handles[loader_rank])(max).as<std::vector<EventDescriptor>>();
                 } else {
+                    spdlog::trace("Loading events from loader rank {} via RDMA", loader_rank);
                     descriptors.resize(max);
                     std::vector<std::pair<void*, size_t>> segment =
                         {{ descriptors.data(), sizeof(descriptors[0])*descriptors.size() }};
@@ -261,6 +304,7 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                         .on(m_provider_handles[loader_rank])(max, local_mem);
                     descriptors.resize(num_actual_events);
                 }
+                spdlog::trace("Obtained {} events from loader rank {}", descriptors.size(), loader_rank);
                 if(descriptors.size() != 0) {
                     t2 = tl::timer::wtime();
                     // no need to lock m_stats_mtx, this is the only ULT modifying waiting_time_stats
@@ -270,11 +314,13 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                     }
                     return true;
                 } else {
+                    spdlog::trace("No more events in loader {}, erasing from loader ranks", loader_rank);
                     m_loader_ranks.erase(m_loader_ranks.begin());
                 }
             }
         }
         t2 = tl::timer::wtime();
+        spdlog::trace("No more events to load");
         // no need to lock m_stats_mtx, this is the only ULT modifying waiting_time_stats
         if(m_stats) m_stats->waiting_time_stats.updateWith(t2-t1);
         return false;
@@ -283,7 +329,7 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
     void preloadProductsForDescriptors(const std::vector<EventDescriptor>& descriptors,
                                        ProductCache& cache) {
         if(m_product_keys.size() == 0) return;
-
+        spdlog::trace("Preloading products for {} events", descriptors.size());
         double t1 = tl::timer::wtime();
 
         size_t pks = 0;
@@ -314,18 +360,19 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
 
             // if the db_idx changed, we need to flush the current batch
             if(current_db_idx != -1 && current_db_idx != (long)db_idx) {
+
+                spdlog::trace("Starting to preload products from database {}", current_db_idx);
                 // get size of batch of products
                 packed_value_sizes.resize(count);
                 auto& db = m_datastore->getProductDatabase(current_db_idx);
+                spdlog::trace("Getting {} product lengths from database", count);
                 db.lengthPacked(count, packed_product_ids.data(),
                                 packed_product_id_sizes.data(),
                                 packed_value_sizes.data());
+                spdlog::trace("Done getting {} product lengths from database", count);
                 for(unsigned i=0; i < packed_value_sizes.size(); i++) {
                     auto s = packed_value_sizes[i];
                     if(s == YOKAN_KEY_NOT_FOUND) {
-                        //spdlog::warn("A product (product_id = {}) "
-                        //             "could not be found while preloading",
-                        //             product_ids[i].toJSON());
                         packed_value_sizes[i] = 0;
                     }
                 }
@@ -335,10 +382,12 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                 if(buffer_size != 0) {
                     std::vector<char> value_buffer(buffer_size);
                     // get the actual values
+                    spdlog::trace("Getting {} products from database", count);
                     db.getPacked(count, packed_product_ids.data(),
                                  packed_product_id_sizes.data(),
                                  buffer_size, value_buffer.data(),
                                  packed_value_sizes.data());
+                    spdlog::trace("Done getting {} products from database", count);
                     // place data into cache
                     offset = 0;
                     for(unsigned i = 0; i < count; i++) {
@@ -392,17 +441,16 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
             // get size of batch of products
             packed_value_sizes.resize(count);
             auto& db = m_datastore->getProductDatabase(current_db_idx);
+            spdlog::trace("Getting {} product lengths from database", count);
             db.lengthPacked(count,
                     packed_product_ids.data(),
                     packed_product_id_sizes.data(),
                     packed_value_sizes.data());
+            spdlog::trace("Done getting {} product lengths from database", count);
             // check the size of values
             for(unsigned i=0; i < packed_value_sizes.size(); i++) {
                 auto s = packed_value_sizes[i];
                 if(s == YOKAN_KEY_NOT_FOUND) {
-                    //spdlog::warn("A product (product_id = {}) "
-                    //        "could not be found while preloading",
-                    //        product_ids[i].toJSON());
                     packed_value_sizes[i] = 0;
                 }
             }
@@ -412,10 +460,12 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
             if(buffer_size != 0) {
                 std::vector<char> value_buffer(buffer_size);
                 // get the actual values
+                spdlog::trace("Getting {} products from database", count);
                 db.getPacked(count, packed_product_ids.data(),
                         packed_product_id_sizes.data(),
                         buffer_size, value_buffer.data(),
                         packed_value_sizes.data());
+                spdlog::trace("Done getting {} products from database", count);
                 // place data into cache
                 offset = 0;
                 for(unsigned i = 0; i < count; i++) {
@@ -439,6 +489,7 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
             }
         }
 
+        spdlog::trace("Done preloading products");
         double t2 = tl::timer::wtime();
         if(m_stats) m_stats->acc_product_loading_time += t2-t1;
     }
@@ -469,6 +520,7 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
      * This function keeps requesting new events and call the user-provided callback.
      */
     void processEvents(const ParallelEventProcessor::EventProcessingWithCacheFn& user_function) {
+        spdlog::trace("Entering processEvents");
         if(m_stats) *m_stats = ParallelEventProcessorStatistics();
         double t_start = tl::timer::wtime();
         std::vector<EventDescriptor> descriptors;
@@ -482,6 +534,7 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                     {   // don't submit more ULTs than twice the number of ES
                         std::unique_lock<tl::mutex> lock(m_processing_ults_mtx);
                         while(m_num_processing_ults >= max_ults) {
+                            spdlog::trace("Waiting for some processing ULTs to complete...");
                             m_processing_ults_cv.wait(lock);
                         }
                         m_num_processing_ults += 1;
@@ -494,12 +547,15 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
                 }
             }
         }
+        spdlog::trace("No more events to request");
         {   // wait until all ULTs completed
             std::unique_lock<tl::mutex> lock(m_processing_ults_mtx);
             while(m_num_processing_ults != 0) {
+                spdlog::trace("Waiting for remaining processing ULTs to complete...");
                 m_processing_ults_cv.wait(lock);
             }
         }
+        spdlog::trace("Leaving processEvents");
         double t_end = tl::timer::wtime();
         if(m_stats) m_stats->total_time = t_end - t_start;
     }

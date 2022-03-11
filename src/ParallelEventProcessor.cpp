@@ -3,6 +3,7 @@
  *
  * See COPYRIGHT in top-level directory.
  */
+#include <spdlog/spdlog.h>
 #include "hepnos/ParallelEventProcessor.hpp"
 #include "hepnos/AsyncEngine.hpp"
 #include "ParallelEventProcessorImpl.hpp"
@@ -52,6 +53,8 @@ ParallelEventProcessor::ParallelEventProcessor(
 
     m_impl->m_loader_ranks = std::move(loader_ranks);
     m_impl->m_targets = std::move(my_targets);
+    spdlog::trace("Initialized ParallelEventProcessor with {} loader ranks and {} local targets",
+                  m_impl->m_loader_ranks.size(), m_impl->m_targets.size());
     MPI_Barrier(comm);
 }
 
@@ -61,9 +64,12 @@ ParallelEventProcessor::ParallelEventProcessor(
         const ParallelEventProcessorOptions& options)
 : ParallelEventProcessor(DataStore(async.m_impl->m_datastore), comm, options) {
     m_impl->m_async = async.m_impl;
+    spdlog::trace("ParallelEventProcessor will use provided AsyncEngine");
 }
 
-ParallelEventProcessor::~ParallelEventProcessor() = default;
+ParallelEventProcessor::~ParallelEventProcessor() {
+    spdlog::trace("Finalizing ParallelEventProcessor");
+}
 
 void ParallelEventProcessor::process(
         const DataSet& dataset,
@@ -84,7 +90,9 @@ void ParallelEventProcessor::process(
     for(auto t : m_impl->m_targets) {
         ev_sets.push_back(dataset.events(t));
     }
+    spdlog::trace("ParallelEventProcessing: started processing, {} local EventSet found", ev_sets.size());
     m_impl->process(ev_sets, function, stats);
+    spdlog::trace("ParallelEventProcessing: done processing");
 }
 
 void ParallelEventProcessor::preloadImpl(const std::string& productKey) {
