@@ -38,13 +38,18 @@ ParallelEventProcessor::ParallelEventProcessor(
               num_procs/num_targets
             : num_procs/num_targets + 1;
         unsigned j = 0;
+        bool stop_adding_to_loader_ranks = false;
         for(unsigned i = 0; i < num_targets; i++) {
-            loader_ranks.push_back(j);
+            if(!stop_adding_to_loader_ranks)
+                loader_ranks.push_back(j);
             if(j == my_rank) {
                 my_targets.push_back(i);
             }
             j += x;
-            j %= num_procs;
+            if(j >= num_procs) {
+                stop_adding_to_loader_ranks = true;
+                j = 0;
+            }
         }
     }
     // we want loader_ranks to start with the first rank greater or equal to my_rank
