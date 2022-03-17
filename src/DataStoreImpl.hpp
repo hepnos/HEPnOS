@@ -224,60 +224,6 @@ class DataStoreImpl {
         return 0;
     }
 
-    private:
-#if 0
-    static void checkConfig(YAML::Node& config) {
-        // config file starts with hepnos entry
-        auto hepnosNode = config["hepnos"];
-        if(!hepnosNode) {
-            throw Exception("\"hepnos\" entry not found in YAML file");
-        }
-        // hepnos entry has client entry
-        auto clientNode = hepnosNode["client"];
-        if(!clientNode) {
-            throw Exception("\"client\" entry not found in \"hepnos\" section");
-        }
-        // client entry has protocol entry
-        auto protoNode = clientNode["protocol"];
-        if(!protoNode) {
-            throw Exception("\"protocol\" entry not found in \"client\" section");
-        }
-        // hepnos entry has databases entry
-        auto databasesNode = hepnosNode["databases"];
-        if(!databasesNode) {
-            throw Exception("\"databasess\" entry not found in \"hepnos\" section");
-        }
-        if(!databasesNode.IsMap()) {
-            throw Exception("\"databases\" entry should be a map");
-        }
-        // database entry has keys datasets, runs, subruns, events, and products.
-        std::vector<std::string> fields = { "datasets", "runs", "subruns", "events", "products" };
-        for(auto& f : fields) {
-            auto fieldNode = databasesNode[f];
-            if(!fieldNode) {
-                throw Exception("\""+f+"\" entry not found in databases section");
-            }
-            if(!fieldNode.IsMap()) {
-                throw Exception("\""+f+"\" entry should be a mapping from addresses to providers");
-            }
-            for(auto addresses_it = fieldNode.begin(); addresses_it != fieldNode.end(); addresses_it++) {
-                auto providers = addresses_it->second;
-                for(auto provider_it = providers.begin(); provider_it != providers.end(); provider_it++) {
-                    // provider entry should be a sequence
-                    if(!provider_it->second.IsSequence()) {
-                        throw Exception("provider entry should be a sequence");
-                    }
-                    for(auto db : provider_it->second) {
-                        if(!db.IsScalar()) {
-                            throw Exception("database id should be a scalar");
-                        }
-                    }
-                }
-            }
-        }
-    }
-#endif
-
     public:
 
     ///////////////////////////////////////////////////////////////////////////
@@ -647,6 +593,8 @@ class DataStoreImpl {
             ch_placement_find_closest(m_subrun_dbs.chi, hash, 1, &db_idx);
             return m_subrun_dbs.dbs[db_idx];
         } else { // we are locating an Event
+            hash *= prime;
+            hash = hash ^ id.run;
             hash *= prime;
             hash = hash ^ id.subrun;
             ch_placement_find_closest(m_event_dbs.chi, hash, 1, &db_idx);
