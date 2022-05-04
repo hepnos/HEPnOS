@@ -9,6 +9,7 @@ spack:
   - nlohmann-json
   - mochi-thallium
   - mochi-ch-placement
+  - mochi-bedrock@main+mpi
   - mochi-yokan@main+bedrock
-  - mochi-bedrock+mpi
+  - py-hepnos-wizard
   concretization: together
