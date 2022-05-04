@@ -35,6 +35,16 @@ The WriteBatch object can be passed to :code:`DataSet::createRun`,
 :code:`Run::createSubRun`, :code:`SubRun::createEvent`, as well
 as all the :code:`store` methods.
 
+.. note::
+   The :code:`max_batch_size` doesn't represent the total number of items
+   that have to be written to trigger a flush. The WriteBatch internally keeps
+   as many batches of key/value pairs as the number of underlying databases,
+   each batch with its own limit of :code:`max_batch_size`. Hence if
+   :code:`max_batch_size` is 128 and the client has written 254 items,
+   127 of which will go into one database and 127 other will go into another
+   database, the WriteBatch won't automatically flush any of these batches
+   until they reach 128.
+
 Prefetching reads
 -----------------
 
@@ -63,20 +73,20 @@ DataStore in a single operation.
 A Prefetcher instance can be passed to most functions from the
 RunSet, Run, and SubRun classes that return an iterator. This iterator
 will then use the Prefetcher when iterating through the container.
-The syntax illustrated above, passing the subrun to the 
+The syntax illustrated above, passing the subrun to the
 :code:`Prefetcher::operator()()` method, shows a simple way of enabling
-prefetching in a modern C++ style for loop.
+prefetching in a modern C++ style :code:`for` loop.
 
 By default, a Prefetcher will not prefetch products. To enable prefetching
 products as well, the :code:`Prefetcher::fetchProduct<T>(label)` can be
-used. This method tells the Prefetcher to prefetch products of type T
-with the specified label as the iteration goes on. The :code:`load` function
-that is used to load the product then needs to take the prefetcher instance
-as first argument so that it looks in the prefetcher's cache first rather
-than the datastore.
+used. This method *does NOT load any products*, it tells the Prefetcher to
+prefetch products of type T with the specified label as the iteration goes on.
+The :code:`load` function that is used to load the product then needs to take
+the prefetcher instance as first argument so that it looks in the prefetcher's
+cache first rather than in the datastore.
 
 .. important::
-   The prefetching is enabled for a given product/label, it is expected
+   If prefetching is enabled for a given product/label, it is expected
    that the client program consumes the prefetched product by calling
    :code:`load`. If it does not, the prefetcher's memory will fill up
    with prefetched products that are never consumed.
@@ -117,6 +127,5 @@ will continually take operations from the WriteBatch, batch them, and
 execute them. Hence the batches issued by the AsyncEngine may be smaller
 than the maximum batch size of the WritBatch object.
 
-When used with a Prefetcher, the Prefetcher will not long prefetch
-batches of objects, it will do so asynchronously using the AsyncEngine's
-threads.
+When used with a Prefetcher, the Prefetcher will prefetch asynchronously
+using the AsyncEngine's threads.

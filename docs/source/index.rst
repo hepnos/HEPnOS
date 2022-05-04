@@ -6,13 +6,13 @@
 Welcome to the HEPnOS project
 =============================
 
-HEPnOS is an ephemeral, in-memory, distributed storage system for
+HEPnOS is an transient, in-memory, distributed storage system for
 high energy physics (HEP) workflows running on supercomputers.
 It is based on software components fron the
-`Mochi project <https://press3.mcs.anl.gov/mochi/>`_ 
-and was designed in the context of the 
+`Mochi project <https://www.mcs.anl.gov/research/projects/mochi/>`_
+and was designed in the context of the
 `SciDAC-4 "HEP on HPC" <https://computing.fnal.gov/hep-on-hpc/>`_
-collaboration between Argonne National Laboratory, and FermiLab.
+collaboration between Argonne National Laboratory and FermiLab.
 
 This website gathers documentation and tutorials on how to install
 it and use it.
@@ -33,7 +33,6 @@ Contents
    events.rst
    products.rst
    optimizations.rst
-   theta.rst
 
 Indices and tables
 ==================

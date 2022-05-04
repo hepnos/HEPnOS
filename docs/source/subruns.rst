@@ -1,7 +1,7 @@
 Accessing SubRuns
 =================
 
-The example code bellow show how to create SubRuns inside
+The example code bellow shows how to create SubRuns inside
 Runs, how to iterate over all the SubRuns in a
 Run, how to access a SubRun from
 a Run, and how to search for SubRuns.

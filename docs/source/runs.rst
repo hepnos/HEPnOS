@@ -1,7 +1,7 @@
 Accessing Runs
 ==============
 
-The example code bellow show how to create Runs inside
+The example code bellow shows how to create Runs inside
 DataSets, how to iterate over all the runs in a
 DataSet, how to access a Run from
 a parent DataSet, and how to search for Runs.

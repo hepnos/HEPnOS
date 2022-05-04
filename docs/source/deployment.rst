@@ -4,107 +4,145 @@ Deployment
 Creating a configuration file
 -----------------------------
 
+HEPnOS relies on the `Bedrock <https://mochi.readthedocs.io/en/latest/bedrock.html>`_
+Mochi microservice for bootstrapping and configuration.
+
 The first step before deploying HEPnOS is to create a configuration file.
-This configuration file should look like the following.
+This configuration file should be in JSON format and at least contain the following.
 
-.. code-block:: yaml
+.. code-block:: json
 
-   ---
-   address: ofi+gni://
-   threads: 63
-   databases:
-     datasets:
-       name: hepnos-datasets
-       path: /dev/shm
-       type: map
-       targets: 1
-       providers: 1
-     runs:
-       name: hepnos-runs
-       path: /dev/shm
-       type: map
-       targets: 1
-       providers: 1
-     subruns:
-       name: hepnos-subruns
-       path: /dev/shm
-       type: map
-       targets: 1
-       providers: 1
-     events:
-       name: hepnos-events
-       path: /dev/shm
-       type: map
-       targets: 1
-       providers: 1
-     products:
-       name: hepnos-products
-       path: /dev/shm
-       type: map
-       targets: 1
-       providers: 1
+   {
+      "ssg" : [
+        {
+            "name" : "hepnos",
+            "bootstrap" : "mpi",
+            "group_file" : "hepnos.ssg",
+            "swim" : { "disabled" : true }
+        }
+      ],
+      "libraries" : {
+        "yokan" : "libyokan-bedrock-module.so"
+      },
+      "providers" : [
+        {
+            "name" : "hepnos",
+            "type" : "yokan",
+            "config" : {
+                "databases" : [
+                    {
+                        "name" : "hepnos-datasets",
+                        "type" : "map",
+                        "config": {}
+                    },
+                    {
+                        "name" : "hepnos-runs",
+                        "type" : "map",
+                        "config": {}
+                    },
+                    {
+                        "name" : "hepnos-subruns",
+                        "type" : "map",
+                        "config": {}
+                    },
+                    {
+                        "name" : "hepnos-events",
+                        "type" : "map",
+                        "config": {}
+                    },
+                    {
+                        "name" : "hepnos-products",
+                        "type" : "map",
+                        "config": {}
+                    }
+                ]
+            }
+        }
+      ]
+   }
 
-The first field of the configuration is an address, or more precisely,
-a protocol to use. Here *ofi+gni* indicates that libfabric should be
-used with the Cray GNI backend. On a laptop or single node, the *na+sm*
-(shared memory) protocol may be used. *ofi+tcp* may be used on Linux
-clusters with traditional TCP networks.
 
-The *threads* field indicates how many threads should be used by
-HEPnOS on each node. Typically this value should be set to the number
-of cores available, minus one core that is used to run the network
-progress loop.
+This example configuration file only provides the bare minimum to get
+started. The *"ssg"* section sets up the group management component.
+The only important field here is the name of the group file, which we
+will use later.
 
-Then come five databases entries, respectively for DataSets, Runs,
-SubRuns, Events, and Products. Each of these entries must have a name,
-a path, a type, a number of targets per provider and a number of providers.
-The name should be distinct for each database. The type of database can
-be *map* (in memory database), *ldb* (LevelDB), or *bdb* (BerkeleyDB).
-If *map* is used, the *path* is ignored since the database is stored in
-memory. Otherwise, the path should point to a directory in a local
-file system.
+The *"providers"* section should contain at least one Yokan provider
+with a number of databases. These databases must have a name that
+starts with *"hepnos-datasets"*, *"hepnos-runs"*, *"hepnos-subruns"*,
+*"hepnos-events"*, or *"hepnos-products"*. At least one database for each
+type of data should be provided, but you are free to use more than
+one database for some types of data, as long as their name starts
+with the above prefixes. For example, you can have two databases
+to store events, named *"hepnos-events-1"* and *"hepnos-events-2"*.
 
-There is no real reason for changing the value of the *providers* entry
-to anything else than 1 at the moment. However, changing the number of *targets*
-may be useful to improve performance under heavy concurrency. "Target" is
-another term for "database instance." Setting *targets* to a value greater
-than 1 will make each node handle multiple databases.
+Configuring with the HEPnOS Wizard
+----------------------------------
 
-.. important::
-   If the *providers* or *targets* fields are set to a value greater than 1,
-   the name of the database should include the $PROVIDER or $TARGET keys
-   respectively. These keys will be replaced with the provider number and
-   the target number.
+An easy way of creating a HEPnOS configuration for Bedrock is to use
+the HEPnOS Wizard, which can be installed as follows.
 
-.. important::
-   If multiple HEPnOS daemons are started on the same node, the $RANK
-   key should be used either in the database name or in the database
-   path. This $RANK key will be replaced with the MPI rank of the
-   process.
+.. code-block:: console
+
+   $ spack install py-hepnos-wizard
+
+Once installed and loaded, you can use it as follows.
+
+.. code-block:: console
+
+   $ hepnos-gen-config --address na+sm --output=myconfig.json
+
+The only required parameter is the *address*, which should be a valid
+protocol accepted by the underlying Mercury library (e.g. *na+sm*, *ofi+tcp*,
+and so on).
+
+Passing *--help* to hepnos-gen-config will provide information on
+all the available arguments and their meaning.
+
 
 Deploying HEPnOS on a single node
 ---------------------------------
 
-Simply ssh into the node where you want to run the HEPnOS service and type:
-
+To deploy HEPnOS on a single node, simply ssh into the node and type the following.
 
 .. code-block:: console
 
-   hepnos-daemon config.yaml client.yaml
+   bedrock na+sm -c config.json
 
-This tells HEPnOS to start and configure itself using the *config.yaml* file (written before).
-HEPnOS will generate a *client.yaml* file that can be used for clients to connect to it.
-The command will block. To run it as a daemon, put it in the background, use nohup, or 
+Change *na+sm* into the protocol that you want to use for communication.
+This tells Bedrock to start and initialize itself with the provided configuration.
+The command will block. To run it as a daemon, put it in the background, use nohup, or
 another other mechanism available on your platform.
 
 Deploying HEPnOS on multiple nodes
 ----------------------------------
 
-The hepnos-daemon program is actually an MPI program that can be deployed on multiple nodes:
+The bedrock program can just as simply be deployed on multiple nodes, using
+your favorite MPI laucher (mpirun, aprun, etc.), for instance:
 
 .. code-block:: console
 
-   mpirun -np N -f hostfile hepnos-daemon config.yaml client.yaml
+   mpirun -np 4 -f hostfile bedrock na+sm -c config.json
 
-Replacing N with the number of nodes and hostfile with the name of a file containing the list
-of hosts on which to deploy HEPnOS.
+Getting connection information
+------------------------------
+
+Once deployed, run the following command to obtain connection information readable
+by the client.
+
+.. code-block:: console
+
+   hepnos-list-databases na+sm -s ssg-file > connection.json
+
+Where *ssg-file* is the name of the SSG file as specified in your HEPnOS
+configuration file.
+
+This command will query the service and print a JSON representation of
+the information required for a client to connect to HEPnOS (addresses, database ids, etc.).
+Hence we pipe its output to a *connection.json* file that the clients will use later.
+
+.. important::
+   On some platforms, you will need to launch this command as an MPI application
+   running on a single process/node (typically if your login node does not connect
+   to the compute nodes via the same type of network as across compute nodes).
+
