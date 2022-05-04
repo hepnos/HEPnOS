@@ -3,7 +3,6 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-
 Welcome to the HEPnOS project
 =============================
 
@@ -17,7 +16,6 @@ collaboration between Argonne National Laboratory and FermiLab.
 
 This website gathers documentation and tutorials on how to install
 it and use it.
-
 
 Contents
 ========
@@ -35,7 +33,7 @@ Contents
    events.rst
    products.rst
    optimizations.rst
-
+   underlying.rst
 
 Indices and tables
 ==================
