@@ -2,7 +2,7 @@ Creating and accessing Products
 ===============================
 
 DataSets, Runs, SubRuns, and Events can store *Products*.
-A Product is an instance of a any C++ object. Since the mechanism
+A Product is an instance of any C++ object. Since the mechanism
 for storing and loading products is the same when using DataSets,
 Runs, SubRuns, and Events, the following code sample illustrates
 only how to store products in events.

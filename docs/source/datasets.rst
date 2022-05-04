@@ -1,7 +1,7 @@
 Accessing DataSets
 ==================
 
-The example code bellow show how to create DataSets inside other
+The example code bellow shows how to create DataSets inside other
 DataSets, how to iterate over all the child datasets of a parent
 DataSet, how to access a DataSet using an "absolute path" from
 a parent DataSet, and how to search for DataSets.

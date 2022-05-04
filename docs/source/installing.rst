@@ -1,7 +1,7 @@
 Installing
 ==========
 
-The recommended way to install the HEPnOS and its dependencies 
+The recommended way to install the HEPnOS and its dependencies
 is to use `Spack <https://spack.readthedocs.io/en/latest/>`_.
 Spack is a package management tool designed to support multiple
 versions and configurations of software on a wide variety of
@@ -17,8 +17,8 @@ git reporitory and add it as a Spack namespace.
 
 .. code-block:: console
 
-   git clone https://xgitlab.cels.anl.gov/sds/sds-repo.git
-   spack repo add sds-repo
+   git clone https://github.com/mochi-hpc/mochi-spack-packages.git
+   spack repo add mochi-spack-packages
 
 You can then check that Spack can find HEPnOS by typping:
 
@@ -35,7 +35,7 @@ You should see something like the following.
    Description:
        Object store for High Energy Physics, build around Mochi components
    
-   Homepage: https://xgitlab.cels.anl.gov/sds/HEPnOS
+   Homepage: https://github.com/hepnos/HEPnOS
    ... (more lines follow) ...
 
 Installing HEPnOS
@@ -54,7 +54,7 @@ Once installed, you can load HEPnOS using the following command.
 
 .. code-block:: console
 
-   spack load -r hepnos
+   spack load hepnos
 
 This will load HEPnOS and its dependencies (Mercury, Thallium, Argobots, etc.).
 You are now ready to use HEPnOS!
