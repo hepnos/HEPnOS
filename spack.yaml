@@ -7,7 +7,7 @@ spack:
   - cppunit
   - spdlog
   - nlohmann-json
-  - mochi-thallium
+  - mochi-thallium+cereal
   - mochi-ch-placement
   - mochi-bedrock@main+mpi
   - mochi-yokan@main+bedrock
