@@ -15,9 +15,10 @@
 
 namespace hepnos {
 
-constexpr const int EventDescriptorLength  = 40;
-constexpr const int SubRunDescriptorLength = 32;
-constexpr const int RunDescriptorLength    = 24;
+constexpr const int EventDescriptorLength   = 40;
+constexpr const int SubRunDescriptorLength  = 32;
+constexpr const int RunDescriptorLength     = 24;
+constexpr const int DataSetDescriptorLength = 16;
 
 struct EventDescriptor {
     char data[EventDescriptorLength];
@@ -30,6 +31,8 @@ struct SubRunDescriptor {
 struct RunDescriptor {
     char data[RunDescriptorLength];
 };
+
+typedef UUID DataSetDescriptor;
 
 struct ItemDescriptor {
     UUID             dataset;
