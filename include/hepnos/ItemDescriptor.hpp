@@ -25,22 +25,10 @@ struct EventDescriptor {
 
 struct SubRunDescriptor {
     char data[SubRunDescriptorLength];
-
-    template<typename Archive>
-    void serialize(Archive& ar, const unsigned int version) {
-        ar & boost::serialization::make_binary_object(
-                static_cast<void*>(this), sizeof(*this));
-    }
 };
 
 struct RunDescriptor {
     char data[RunDescriptorLength];
-
-    template<typename Archive>
-    void serialize(Archive& ar, const unsigned int version) {
-        ar & boost::serialization::make_binary_object(
-                static_cast<void*>(this), sizeof(*this));
-    }
 };
 
 struct ItemDescriptor {

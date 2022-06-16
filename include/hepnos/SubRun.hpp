@@ -669,4 +669,16 @@ class SubRun::iterator : public SubRun::const_iterator {
 
 }
 
+namespace boost {
+namespace serialization {
+
+    template<typename Archive>
+    inline void serialize(Archive& ar, hepnos::SubRunDescriptor& desc, const unsigned int version) {
+        ar & boost::serialization::make_binary_object(
+                static_cast<void*>(desc.data), hepnos::SubRunDescriptorLength);
+    }
+
+}
+}
+
 #endif
