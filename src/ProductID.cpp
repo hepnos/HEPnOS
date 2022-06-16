@@ -4,7 +4,7 @@
  * See COPYRIGHT in top-level directory.
  */
 #include "hepnos/ProductID.hpp"
-#include "BigEndian.hpp"
+#include "hepnos/BigEndian.hpp"
 #include <sstream>
 
 namespace hepnos {

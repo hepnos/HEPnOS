@@ -8,7 +8,6 @@
 
 #include <memory>
 #include <string>
-#include <boost/serialization/binary_object.hpp>
 #include <hepnos/DataStore.hpp>
 #include <hepnos/RunNumber.hpp>
 #include <hepnos/SubRun.hpp>
@@ -19,28 +18,6 @@ namespace hepnos {
 
 class Prefetcher;
 class RunSet;
-
-/**
- * @brief Size of the data (in bytes) in a RunDescriptor.
- */
-constexpr const int RunDescriptorLength = 24;
-
-/**
- * @brief The RunDescriptor structure can be used to
- * serialize the representation of a Run for
- * the purpose of sending it to another process, where
- * the corresponding Run can be reconstructed without
- * involving the DataStore.
- */
-struct RunDescriptor {
-    char data[RunDescriptorLength];
-
-    template<typename Archive>
-    void serialize(Archive& ar, const unsigned int version) {
-        ar & boost::serialization::make_binary_object(
-                static_cast<void*>(this), sizeof(*this));
-    }
-};
 
 /**
  * @brief Run class, contains SubRuns.

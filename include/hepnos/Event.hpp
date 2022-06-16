@@ -8,7 +8,6 @@
 
 #include <memory>
 #include <string>
-#include <boost/serialization/binary_object.hpp>
 #include <cereal/cereal.hpp>
 #include <hepnos/DataStore.hpp>
 #include <hepnos/EventNumber.hpp>
@@ -17,14 +16,8 @@
 
 namespace hepnos {
 
-constexpr const int EventDescriptorLength = 40;
-
 class SubRun;
 class EventSet;
-
-struct EventDescriptor {
-    char data[EventDescriptorLength];
-};
 
 /**
  * @brief The Event class is a KeyValueContainer contained in SubRuns

@@ -8,7 +8,6 @@
 
 #include <memory>
 #include <string>
-#include <boost/serialization/binary_object.hpp>
 #include <hepnos/DataStore.hpp>
 #include <hepnos/Event.hpp>
 #include <hepnos/SubRunNumber.hpp>
@@ -18,28 +17,6 @@
 namespace hepnos {
 
 class Prefetcher;
-
-/**
- * @brief Size of the SubRunDescriptor.
- */
-constexpr const int SubRunDescriptorLength = 32;
-
-/**
- * @brief The SubRunDescriptor structure can be used to
- * serialize the representation of a SubRun for
- * the purpose of sending it to another process, where
- * the corresponding SubRun can be reconstructed without
- * involving the DataStore.
- */
-struct SubRunDescriptor {
-    char data[SubRunDescriptorLength];
-
-    template<typename Archive>
-    void serialize(Archive& ar, const unsigned int version) {
-        ar & boost::serialization::make_binary_object(
-                static_cast<void*>(this), sizeof(*this));
-    }
-};
 
 /**
  * @brief SubRuns can contain Events.

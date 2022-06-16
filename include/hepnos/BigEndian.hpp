@@ -1,3 +1,8 @@
+/*
+ * (C) 2022 The University of Chicago
+ *
+ * See COPYRIGHT in top-level directory.
+ */
 #ifndef __HEPNOS_BIG_ENDIAN_HPP
 #define __HEPNOS_BIG_ENDIAN_HPP
 

@@ -7,13 +7,16 @@
 #define __HEPNOS_PRODUCT_ID_H
 
 #include <string>
+#include <cstring>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/string.hpp>
 
+#include <hepnos/Demangle.hpp>
 #include <hepnos/UUID.hpp>
 #include <hepnos/RunNumber.hpp>
 #include <hepnos/SubRunNumber.hpp>
 #include <hepnos/EventNumber.hpp>
+#include <hepnos/ItemDescriptor.hpp>
 
 namespace hepnos {
 
@@ -142,6 +145,13 @@ class ProductID {
      */
     std::string toJSON() const;
 
+    template<typename T>
+    static ProductID from(const char* label,
+                          const UUID& dataset_id,
+                          RunNumber run = InvalidRunNumber,
+                          SubRunNumber subrun = InvalidSubRunNumber,
+                          EventNumber event = InvalidEventNumber);
+
     private:
 
     std::string m_key;
@@ -155,6 +165,28 @@ class ProductID {
     }
 
 };
+
+template<typename T>
+ProductID ProductID::from(const char* label,
+                          const UUID& dataset_id,
+                          RunNumber run,
+                          SubRunNumber subrun,
+                          EventNumber event) {
+    ProductID pid;
+    size_t label_len = std::strlen(label);
+    std::string type_name = demangle<T>();
+    ItemDescriptor id(dataset_id, run, subrun, event);
+    pid.m_key.resize(label_len + type_name.size() + 1 + sizeof(ItemDescriptor));
+    char* s = const_cast<char*>(pid.m_key.c_str());
+    std::memcpy(s, &id, sizeof(id));
+    s += sizeof(id);
+    std::memcpy(s, label, label_len);
+    s += label_len;
+    s[0] = '#';
+    s += 1;
+    std::memcpy(s, type_name.c_str(), type_name.size());
+    return pid;
+}
 
 }
 

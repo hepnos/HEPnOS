@@ -4,7 +4,7 @@
  * See COPYRIGHT in top-level directory.
  */
 #include "hepnos/ProductCache.hpp"
-#include "ItemDescriptor.hpp"
+#include "hepnos/ItemDescriptor.hpp"
 #include "DataStoreImpl.hpp"
 #include <spdlog/spdlog.h>
 #include <unordered_map>

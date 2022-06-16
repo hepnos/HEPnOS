@@ -1,16 +1,47 @@
+/*
+ * (C) 2022 The University of Chicago
+ *
+ * See COPYRIGHT in top-level directory.
+ */
 #ifndef __HEPNOS_ITEM_DESCRIPTOR_HPP
 #define __HEPNOS_ITEM_DESCRIPTOR_HPP
 
-#include "hepnos/Event.hpp"
-#include "hepnos/SubRun.hpp"
-#include "hepnos/Run.hpp"
-#include "hepnos/RunNumber.hpp"
-#include "hepnos/SubRunNumber.hpp"
-#include "hepnos/EventNumber.hpp"
-#include "hepnos/UUID.hpp"
-#include "BigEndian.hpp"
+#include <boost/serialization/binary_object.hpp>
+#include <hepnos/RunNumber.hpp>
+#include <hepnos/SubRunNumber.hpp>
+#include <hepnos/EventNumber.hpp>
+#include <hepnos/UUID.hpp>
+#include <hepnos/BigEndian.hpp>
 
 namespace hepnos {
+
+constexpr const int EventDescriptorLength  = 40;
+constexpr const int SubRunDescriptorLength = 32;
+constexpr const int RunDescriptorLength    = 24;
+
+struct EventDescriptor {
+    char data[EventDescriptorLength];
+};
+
+struct SubRunDescriptor {
+    char data[SubRunDescriptorLength];
+
+    template<typename Archive>
+    void serialize(Archive& ar, const unsigned int version) {
+        ar & boost::serialization::make_binary_object(
+                static_cast<void*>(this), sizeof(*this));
+    }
+};
+
+struct RunDescriptor {
+    char data[RunDescriptorLength];
+
+    template<typename Archive>
+    void serialize(Archive& ar, const unsigned int version) {
+        ar & boost::serialization::make_binary_object(
+                static_cast<void*>(this), sizeof(*this));
+    }
+};
 
 struct ItemDescriptor {
     UUID             dataset;

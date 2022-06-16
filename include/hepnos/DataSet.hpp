@@ -439,6 +439,11 @@ class DataSet : public KeyValueContainer {
      * @return an EventSet associated with the DataSet.
      */
     EventSet events(int target=-1) const;
+
+    /**
+     * @brief Return the UUID of the Dataset.
+     */
+    const UUID& uuid() const;
 };
 
 class DataSet::const_iterator {

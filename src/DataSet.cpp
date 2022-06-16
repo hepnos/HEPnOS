@@ -37,6 +37,13 @@ DataStore DataSet::datastore() const {
     return DataStore(m_impl->m_datastore);
 }
 
+const UUID& DataSet::uuid() const {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
+    return m_impl->m_uuid;
+}
+
 DataSet DataSet::next() const {
     if(!valid()) return DataSet();
     std::vector<std::shared_ptr<DataSetImpl>> result;

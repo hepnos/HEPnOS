@@ -12,7 +12,7 @@
 #include "hepnos/Run.hpp"
 #include "hepnos/UUID.hpp"
 #include "hepnos/ItemType.hpp"
-#include "ItemDescriptor.hpp"
+#include "hepnos/ItemDescriptor.hpp"
 
 namespace hepnos {
 
