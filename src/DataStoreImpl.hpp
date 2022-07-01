@@ -516,7 +516,7 @@ class DataStoreImpl {
         // find out which DB to access
         auto& db = locateDataSetDb(containerName);
         try {
-            bool b = db.exists(key.data(), key.size());
+            bool b = db.exists(key.data(), key.size(), YOKAN_MODE_NO_RDMA);
             return b;
         } catch(yokan::Exception& ex) {
             throw Exception("yokan::Database::exists(): "+std::string(ex.what()));
@@ -538,7 +538,8 @@ class DataStoreImpl {
             db.get(static_cast<const void*>(key.data()),
                    key.size(),
                    static_cast<void*>(uuid.data),
-                   &s);
+                   &s,
+                   YOKAN_MODE_NO_RDMA);
             return s == sizeof(uuid);
         } catch(yokan::Exception& ex) {
             if(ex.code() == YOKAN_ERR_KEY_NOT_FOUND) {
@@ -560,7 +561,7 @@ class DataStoreImpl {
         uuid.randomize();
         try {
             db.put(key.data(), key.size(), uuid.data, sizeof(uuid),
-                   YOKAN_MODE_NEW_ONLY);
+                   YOKAN_MODE_NEW_ONLY|YOKAN_MODE_NO_RDMA);
         } catch(yokan::Exception& ex) {
             if(ex.code() == YOKAN_ERR_KEY_EXISTS) {
                 return false;
@@ -674,7 +675,7 @@ class DataStoreImpl {
         // find out which DB to access
         auto& db = locateItemDb(type, descriptor, target);
         try {
-            bool b = db.exists(&descriptor, sizeof(descriptor));
+            bool b = db.exists(&descriptor, sizeof(descriptor), YOKAN_MODE_NO_RDMA);
             return b;
         } catch(yokan::Exception& ex) {
             throw Exception("yokan::Database::exists(): "+std::string(ex.what()));
@@ -722,7 +723,7 @@ class DataStoreImpl {
         auto& db = locateItemDb(type, k);
         try {
             db.put(&k, sizeof(k), nullptr, 0,
-                   YOKAN_MODE_NEW_ONLY);
+                   YOKAN_MODE_NEW_ONLY|YOKAN_MODE_NO_RDMA);
         } catch(yokan::Exception& ex) {
             if(ex.code() == YOKAN_ERR_KEY_EXISTS) {
                 return false;
