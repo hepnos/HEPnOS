@@ -9,6 +9,7 @@ fi
 
 function run_to()
 {
+    echo "About to execute $@"
     maxtime=${1}s
     shift
     $TIMEOUT --signal=9 $maxtime "$@"
@@ -39,4 +40,6 @@ function hepnos_test_start_servers()
 
     # query configuration
     ../src/hepnos-list-databases na+sm -s $ssgfile > $cfile
+
+    echo "hepnos-list-databases returned successully"
 }

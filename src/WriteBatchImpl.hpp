@@ -14,6 +14,7 @@
 #include <vector>
 #include <thallium.hpp>
 #include <spdlog/spdlog.h>
+#include "DatabaseAdaptor.hpp"
 #include "hepnos/WriteBatch.hpp"
 #include "DataStoreImpl.hpp"
 #include "AsyncEngineImpl.hpp"
@@ -40,7 +41,7 @@ class WriteBatchImpl {
         keyvals& operator=(const keyvals&) = delete;
     };
 
-    typedef std::unordered_map<const yokan::Database*, std::queue<keyvals>> entries_type;
+    typedef std::unordered_map<const DatabaseAdaptor*, std::queue<keyvals>> entries_type;
 
     std::unique_ptr<WriteBatchStatistics> m_stats;
     mutable tl::mutex                     m_stats_mtx;
@@ -69,7 +70,7 @@ class WriteBatchImpl {
     }
 
     static void writer_thread(WriteBatchImpl& wb,
-                              const yokan::Database* db,
+                              const DatabaseAdaptor* db,
                               std::queue<keyvals>& kvs_queue,
                               Exception* exception,
                               char* ok) {

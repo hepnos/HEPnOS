@@ -20,6 +20,7 @@
 #include "hepnos/Exception.hpp"
 #include "hepnos/DataStore.hpp"
 #include "hepnos/DataSet.hpp"
+#include "DatabaseAdaptor.hpp"
 #include "StringHash.hpp"
 #include "DataSetImpl.hpp"
 #include "ItemImpl.hpp"
@@ -48,7 +49,7 @@ inline size_t object_size(const hepnos::UUID& uuid) {
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 struct DistributedDBInfo {
-    std::vector<yokan::Database>  dbs;
+    std::vector<DatabaseAdaptor>  dbs;
     struct ch_placement_instance* chi = nullptr;
 };
 
@@ -65,8 +66,8 @@ class DataStoreImpl {
     yokan::Client                                m_yokan_client; // Yokan client
     DistributedDBInfo                            m_dataset_dbs;  // list of Yokan databases for DataSets
     DistributedDBInfo                            m_run_dbs;      // list of Yokan databases for Runs
-    DistributedDBInfo                            m_subrun_dbs;   // list of Yokan databases for Runs
-    DistributedDBInfo                            m_event_dbs;    // list of Yokan databases for Runs
+    DistributedDBInfo                            m_subrun_dbs;   // list of Yokan databases for SubRuns
+    DistributedDBInfo                            m_event_dbs;    // list of Yokan databases for Events
     DistributedDBInfo                            m_product_dbs;  // list of Yokan databases for Products
 
     DataStoreImpl()
