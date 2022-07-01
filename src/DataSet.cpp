@@ -44,6 +44,31 @@ const UUID& DataSet::uuid() const {
     return m_impl->m_uuid;
 }
 
+DataSet DataSet::fromUUID(const DataStore& datastore, std::string name, std::string parent, const UUID& uuid) {
+    if(name.find('/') != std::string::npos
+    || name.find('%') != std::string::npos) {
+        throw Exception("Invalid character '/' or '%' in dataset name");
+    }
+    if(name.find('%') != std::string::npos) {
+        throw Exception("Invalid character '%' in parent name");
+    }
+    uint8_t level = 1;
+    if(!parent.empty()) {
+        if(parent.front() != '/')
+            parent = "/" + parent;
+        if(parent.back() == '/')
+            parent.resize(parent.size()-1);
+        for(auto c : parent)
+            if(c == '/')
+                level += 1;
+    }
+    auto new_dataset_impl = std::make_shared<DataSetImpl>(
+            datastore.m_impl, level,
+            std::make_shared<std::string>(std::move(parent)), name,
+            uuid);
+    return DataSet(new_dataset_impl);
+}
+
 DataSet DataSet::next() const {
     if(!valid()) return DataSet();
     std::vector<std::shared_ptr<DataSetImpl>> result;
@@ -172,6 +197,13 @@ const std::string& DataSet::name() const {
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
     return m_impl->m_name;
+}
+
+uint8_t DataSet::level() const {
+    if(!valid()) {
+        throw Exception("Calling DataSet member function on an invalid DataSet");
+    }
+    return m_impl->m_level;
 }
 
 const std::string& DataSet::container() const {

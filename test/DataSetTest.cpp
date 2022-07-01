@@ -65,6 +65,12 @@ void DataSetTest::testFillDataStore() {
     DataSet ds5 = mds.createDataSet("dsD");
     CPPUNIT_ASSERT(ds4.valid());
     CPPUNIT_ASSERT(ds5.valid());
+    // test fromUUID
+    DataSet ds11_from_uuid =
+        DataSet::fromUUID(*datastore,
+                          "ds11", "matthieu/ds1",
+                          ds1_ds11.uuid());
+    CPPUNIT_ASSERT(ds11_from_uuid == ds1_ds11);
 }
 
 void DataSetTest::testBraketOperator() {

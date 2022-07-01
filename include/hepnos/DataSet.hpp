@@ -101,6 +101,11 @@ class DataSet : public KeyValueContainer {
     const std::string& name() const;
 
     /**
+     * @brief Nesting level of the dataset.
+     */
+    uint8_t level() const;
+
+    /**
      * @brief Name of the container of the DataSet.
      *
      * @return the name of the container of the DataSet.
@@ -444,6 +449,24 @@ class DataSet : public KeyValueContainer {
      * @brief Return the UUID of the Dataset.
      */
     const UUID& uuid() const;
+
+    /**
+     * @brief Builds a DataSet from a known UUID. This can be
+     * used e.g. if one process loads/creates a DataSet then gets
+     * its UUID via DataSet::uuid() and shares it with other
+     * ranks.
+     *
+     * @param DataStore datastore
+     * @param name name of the dataset
+     * @param parent full name of the parent dataset
+     * @param uuid UUID of the dataset
+     *
+     * @return Dataset instance.
+     */
+    static DataSet fromUUID(const DataStore& datastore,
+                            std::string name,
+                            std::string parent,
+                            const UUID& uuid);
 };
 
 class DataSet::const_iterator {
