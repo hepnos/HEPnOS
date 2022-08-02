@@ -309,7 +309,7 @@ class KeyValueContainer {
         auto t3 = wtime();
         if(stats) {
             stats->serialization_time.updateWith(t2-t1);
-            stats->raw_storage_time(t3-t2);
+            stats->raw_storage_time.updateWith(t3-t2);
         }
         return result;
     }
@@ -329,7 +329,7 @@ class KeyValueContainer {
         auto t3 = wtime();
         if(stats) {
             stats->serialization_time.updateWith(t2-t1);
-            stats->raw_storage_time(t3-t2);
+            stats->raw_storage_time.updateWith(t3-t2);
         }
         return result;
     }
