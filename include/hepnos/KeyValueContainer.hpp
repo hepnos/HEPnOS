@@ -9,10 +9,9 @@
 #include <memory>
 #include <string>
 #include <sstream>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/archive/binary_iarchive.hpp>
 #include <boost/serialization/string.hpp>
 #include <hepnos/Statistics.hpp>
+#include <hepnos/OutputArchive.hpp>
 #include <hepnos/InputArchive.hpp>
 #include <hepnos/ProductID.hpp>
 #include <hepnos/Demangle.hpp>
@@ -886,7 +885,7 @@ class KeyValueContainer {
             std::string& key_str, std::string& value_str) {
         serializeKeyValue(label, value, key_str);
         std::stringstream ss_value;
-        boost::archive::binary_oarchive oa(ss_value, boost::archive::archive_flags::no_header);
+        OutputArchive oa(ss_value);
         try {
             oa << value;
         } catch(const std::exception& e) {
@@ -920,7 +919,7 @@ class KeyValueContainer {
             throw Exception("Invalid range when storing vector");
         serializeKeyValue(label, value, key_str);
         std::stringstream ss_value;
-        boost::archive::binary_oarchive oa(ss_value, boost::archive::archive_flags::no_header);
+        OutputArchive oa(ss_value);
         try {
             size_t count = end-start;
             oa << count;
