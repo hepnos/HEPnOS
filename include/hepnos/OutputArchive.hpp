@@ -47,8 +47,31 @@ class OutputArchive : public oarchive {
 
 };
 
+class OutputSizer {
+
+    public:
+
+    typedef char                       char_type;
+    typedef boost::iostreams::sink_tag category;
+
+    std::streamsize write(const char_type* s, std::streamsize n) {
+        (void)s;
+        m_size += n;
+        return n;
+    }
+
+    size_t size() const {
+        return m_size;
+    }
+
+    private:
+
+    size_t m_size = 0;
+};
+
 using OutputStringWrapper = boost::iostreams::back_insert_device<std::string>;
 using OutputStream = boost::iostreams::stream<OutputStringWrapper>;
+using OutputSizeEvaluator = boost::iostreams::stream<OutputSizer>;
 
 }
 
