@@ -281,8 +281,9 @@ class KeyValueContainer {
     ProductID store(const L& label, const std::vector<V>& value, int start=0, int end=-1,
                     StoreStatistics* stats = nullptr) {
         auto t1 = wtime();
-        std::string key_str, val_str;
-        serializeKeyValueVector(std::is_pod<std::remove_reference_t<V>>(), label, value, key_str, val_str, start, end);
+        auto key_str = makeKey(label, value);
+        std::string val_str;
+        serializeValueVector(std::is_pod<std::remove_reference_t<V>>(), value, val_str, start, end);
         auto t2 = wtime();
         auto result = storeRawData(key_str, val_str.data(), val_str.size());
         auto t3 = wtime();
@@ -300,8 +301,9 @@ class KeyValueContainer {
     ProductID store(WriteBatch& batch, const L& label, const std::vector<V>& value, int start=0, int end=-1,
                     StoreStatistics* stats = nullptr) {
         auto t1 = wtime();
-        std::string key_str, val_str;
-        serializeKeyValueVector(std::is_pod<std::remove_reference_t<V>>(), label, value, key_str, val_str, start, end);
+        auto key_str = makeKey(label, value);
+        std::string val_str;
+        serializeValueVector(std::is_pod<std::remove_reference_t<V>>(), value, val_str, start, end);
         auto t2 = wtime();
         auto result = storeRawData(batch, key_str, val_str.data(), val_str.size());
         auto t3 = wtime();
@@ -319,8 +321,9 @@ class KeyValueContainer {
     ProductID store(AsyncEngine& async, const L& label, const std::vector<V>& value, int start=0, int end=-1,
                     StoreStatistics* stats = nullptr) {
         auto t1 = wtime();
-        std::string key_str, val_str;
-        serializeKeyValueVector(std::is_pod<std::remove_reference_t<V>>(), label, value, key_str, val_str, start, end);
+        auto key_str = makeKey(label, value);
+        std::string val_str;
+        serializeValueVector(std::is_pod<std::remove_reference_t<V>>(), value, val_str, start, end);
         auto t2 = wtime();
         auto result = storeRawData(async, key_str, val_str.data(), val_str.size());
         auto t3 = wtime();
@@ -418,8 +421,9 @@ class KeyValueContainer {
     ProductID storeImpl(const L& label, const V& value,
             const std::integral_constant<bool, false>&, StoreStatistics* stats) {
         auto t1 = wtime();
-        std::string key_str, val_str;
-        serializeKeyValue(label, value, key_str, val_str);
+        auto key_str = makeKey(label, value);
+        std::string val_str;
+        serializeValue(value, val_str);
         auto t2 = wtime();
         auto result = storeRawData(key_str, val_str.data(), val_str.size());
         auto t3 = wtime();
@@ -438,8 +442,9 @@ class KeyValueContainer {
     ProductID storeImpl(WriteBatch& batch, const L& label, const V& value,
             const std::integral_constant<bool, false>&, StoreStatistics* stats) {
         auto t1 = wtime();
-        std::string key_str, val_str;
-        serializeKeyValue(label, value, key_str, val_str);
+        auto key_str = makeKey(label, value);
+        std::string val_str;
+        serializeValue(value, val_str);
         auto t2 = wtime();
         auto result = storeRawData(batch, key_str, val_str.data(), val_str.size());
         auto t3 = wtime();
@@ -458,8 +463,9 @@ class KeyValueContainer {
     ProductID storeImpl(AsyncEngine& async, const L& label, const V& value,
             const std::integral_constant<bool, false>&, StoreStatistics* stats) {
         auto t1 = wtime();
-        std::string key_str, val_str;
-        serializeKeyValue(label, value, key_str, val_str);
+        auto key_str = makeKey(label, value);
+        std::string val_str;
+        serializeValue(value, val_str);
         auto t2 = wtime();
         auto result = storeRawData(async, key_str, val_str.data(), val_str.size());
         auto t3 = wtime();
@@ -874,10 +880,8 @@ class KeyValueContainer {
      * @brief Creates the string key based on the provided key
      * and the type of the value. Serializes the value into a string.
      */
-    template<typename L, typename V>
-    static void serializeKeyValue(const L& label, const V& value,
-            std::string& key_str, std::string& value_str) {
-        key_str = makeKey(label, value);
+    template<typename V>
+    static void serializeValue(const V& value, std::string& value_str) {
         std::stringstream ss_value;
         OutputArchive oa(ss_value);
         try {
@@ -889,18 +893,15 @@ class KeyValueContainer {
     }
 
     /**
-     * @brief Version of serializeKeyValue for vectors of non-POD datatypes.
+     * @brief Version of serializeValue for vectors of non-POD datatypes.
      */
-    template<typename L, typename V>
-    static void serializeKeyValueVector(const std::integral_constant<bool, false>&,
-            const L& label, const std::vector<V>& value,
-            std::string& key_str, std::string& value_str,
-            int start, int end) {
+    template<typename V>
+    static void serializeValueVector(const std::integral_constant<bool, false>&,
+            const std::vector<V>& value, std::string& value_str, int start, int end) {
         if(end == -1)
             end = value.size();
         if(start < 0 || start > end || end > value.size())
             throw Exception("Invalid range when storing vector");
-        key_str = makeKey(label, value);
         std::stringstream ss_value;
         OutputArchive oa(ss_value);
         try {
@@ -915,18 +916,15 @@ class KeyValueContainer {
     }
 
     /**
-     * @brief Version of serializeKeyValue for vectors of POD datatypes.
+     * @brief Version of serializeValue for vectors of POD datatypes.
      */
-    template<typename L, typename V>
-    static void serializeKeyValueVector(const std::integral_constant<bool, true>&,
-            const L& label, const std::vector<V>& value,
-            std::string& key_str, std::string& value_str,
-            int start, int end) {
+    template<typename V>
+    static void serializeValueVector(const std::integral_constant<bool, true>&,
+            const std::vector<V>& value, std::string& value_str, int start, int end) {
         if(end == -1)
             end = value.size();
         if(start < 0 || start > end || end > value.size())
             throw Exception("Invalid range when storing vector");
-        key_str = makeKey(label, value);
         size_t count = end-start;
         value_str.resize(sizeof(count) + count*sizeof(V));
         std::memcpy(const_cast<char*>(value_str.data()), &count, sizeof(count));
