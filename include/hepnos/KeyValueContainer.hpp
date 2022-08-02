@@ -478,8 +478,7 @@ class KeyValueContainer {
     ProductID storeImpl(const L& label, const V& value,
             const std::integral_constant<bool, true>&, StoreStatistics* stats) {
         auto t1 = wtime();
-        std::string key_str;
-        serializeKeyValue(label, value, key_str);
+        auto key_str = makeKey(label, value);
         auto t2 = wtime();
         auto result = storeRawData(key_str, reinterpret_cast<const char*>(&value), sizeof(value));
         auto t3 = wtime();
@@ -498,8 +497,7 @@ class KeyValueContainer {
     ProductID storeImpl(WriteBatch& batch, const L& label, const V& value,
             const std::integral_constant<bool, true>&, StoreStatistics* stats) {
         auto t1 = wtime();
-        std::string key_str;
-        serializeKeyValue(label, value, key_str);
+        std::string key_str = makeKey(label, value);
         auto t2 = wtime();
         auto result = storeRawData(batch, key_str, reinterpret_cast<const char*>(&value), sizeof(value));
         auto t3 = wtime();
@@ -518,8 +516,7 @@ class KeyValueContainer {
     ProductID storeImpl(AsyncEngine& async, const L& label, const V& value,
             const std::integral_constant<bool, true>&, StoreStatistics* stats) {
         auto t1 = wtime();
-        std::string key_str;
-        serializeKeyValue(label, value, key_str);
+        auto key_str = makeKey(label, value);
         auto t2 = wtime();
         auto result = storeRawData(async, key_str, reinterpret_cast<const char*>(&value), sizeof(value));
         auto t3 = wtime();
@@ -537,11 +534,10 @@ class KeyValueContainer {
     bool loadImpl(const L& label, V& value,
             const std::integral_constant<bool, true>&, LoadStatistics* stats) const {
         std::string buffer;
-        std::stringstream ss_key;
-        ss_key << label << "#" << demangle<V>();
+        auto key = makeKey(label, value);
         size_t vsize = sizeof(value);
         auto t1 = wtime();
-        auto b = loadRawData(ss_key.str(), reinterpret_cast<char*>(&value), &vsize);
+        auto b = loadRawData(key, reinterpret_cast<char*>(&value), &vsize);
         auto t2 = wtime();
         if(b && stats) {
             stats->deserialization_time.updateWith(0.0);
@@ -557,11 +553,10 @@ class KeyValueContainer {
     bool loadImpl(const Prefetcher& prefetcher, const L& label, V& value,
             const std::integral_constant<bool, true>&, LoadStatistics* stats) const {
         std::string buffer;
-        std::stringstream ss_key;
-        ss_key << label << "#" << demangle<V>();
+        auto key = makeKey(label, value);
         size_t vsize = sizeof(value);
         auto t1 = wtime();
-        bool b = loadRawData(prefetcher, ss_key.str(), reinterpret_cast<char*>(&value), &vsize);
+        bool b = loadRawData(prefetcher, key, reinterpret_cast<char*>(&value), &vsize);
         auto t2 = wtime();
         if(b && stats) {
             stats->deserialization_time.updateWith(0.0);
@@ -577,11 +572,10 @@ class KeyValueContainer {
     bool loadImpl(const ProductCache& cache, const L& label, V& value,
             const std::integral_constant<bool, true>&, LoadStatistics* stats) const {
         std::string buffer;
-        std::stringstream ss_key;
-        ss_key << label << "#" << demangle<V>();
+        auto key = makeKey(label, value);
         size_t vsize = sizeof(value);
         auto t1 = wtime();
-        auto b = loadRawData(cache, ss_key.str(), reinterpret_cast<char*>(&value), &vsize);
+        auto b = loadRawData(cache, key, reinterpret_cast<char*>(&value), &vsize);
         auto t2 = wtime();
         if(b && stats) {
             stats->deserialization_time.updateWith(0.0);
@@ -598,10 +592,9 @@ class KeyValueContainer {
             const std::integral_constant<bool, false>&,
             LoadStatistics* stats) const {
         std::string buffer;
-        std::stringstream ss_key;
-        ss_key << label << "#" << demangle<V>();
+        auto key = makeKey(label, value);
         auto t1 = wtime();
-        auto b = loadRawData(ss_key.str(), buffer);
+        auto b = loadRawData(key, buffer);
         auto t2 = wtime();
         if(!b) return false;
         try {
@@ -627,10 +620,9 @@ class KeyValueContainer {
             const std::integral_constant<bool, false>&,
             LoadStatistics* stats) const {
         std::string buffer;
-        std::stringstream ss_key;
-        ss_key << label << "#" << demangle<V>();
+        auto key = makeKey(label, value);
         auto t1 = wtime();
-        if(!loadRawData(prefetcher, ss_key.str(), buffer)) {
+        if(!loadRawData(prefetcher, key, buffer)) {
             return false;
         }
         auto t2 = wtime();
@@ -656,10 +648,9 @@ class KeyValueContainer {
     bool loadImpl(const ProductCache& cache, const L& label, V& value,
             const std::integral_constant<bool, false>&, LoadStatistics* stats) const {
         std::string buffer;
-        std::stringstream ss_key;
-        ss_key << label << "#" << demangle<V>();
+        auto key = makeKey(label, value);
         auto t1 = wtime();
-        if(!loadRawData(cache, ss_key.str(), buffer)) {
+        if(!loadRawData(cache, key, buffer)) {
             return false;
         }
         auto t2 = wtime();
@@ -685,10 +676,9 @@ class KeyValueContainer {
     bool loadVectorImpl(const L& label, std::vector<V>& value,
             const std::integral_constant<bool, true>&, LoadStatistics* stats) const {
         std::string buffer;
-        std::stringstream ss_key;
-        ss_key << label << "#" << demangle<std::vector<V>>();
+        auto key = makeKey(label, value);
         auto t1 = wtime();
-        if(!loadRawData(ss_key.str(), buffer)) {
+        if(!loadRawData(key, buffer)) {
             return false;
         }
         auto t2 = wtime();
@@ -717,10 +707,9 @@ class KeyValueContainer {
     bool loadVectorImpl(const Prefetcher& prefetcher, const L& label, std::vector<V>& value,
             const std::integral_constant<bool, true>&, LoadStatistics* stats) const {
         std::string buffer;
-        std::stringstream ss_key;
-        ss_key << label << "#" << demangle<std::vector<V>>();
+        auto key = makeKey(label, value);
         auto t1 = wtime();
-        if(!loadRawData(prefetcher, ss_key.str(), buffer)) {
+        if(!loadRawData(prefetcher, key, buffer)) {
             return false;
         }
         auto t2 = wtime();
@@ -749,10 +738,9 @@ class KeyValueContainer {
     bool loadVectorImpl(const ProductCache& cache, const L& label, std::vector<V>& value,
             const std::integral_constant<bool, true>&, LoadStatistics* stats) const {
         std::string buffer;
-        std::stringstream ss_key;
-        ss_key << label << "#" << demangle<std::vector<V>>();
+        auto key = makeKey(label, value);
         auto t1 = wtime();
-        if(!loadRawData(cache, ss_key.str(), buffer)) {
+        if(!loadRawData(cache, key, buffer)) {
             return false;
         }
         auto t2 = wtime();
@@ -781,10 +769,9 @@ class KeyValueContainer {
     bool loadVectorImpl(const L& label, std::vector<V>& value,
             const std::integral_constant<bool, false>&, LoadStatistics* stats) const {
         std::string buffer;
-        std::stringstream ss_key;
-        ss_key << label << "#" << demangle<std::vector<V>>();
+        auto key = makeKey(label, value);
         auto t1 = wtime();
-        if(!loadRawData(ss_key.str(), buffer)) {
+        if(!loadRawData(key, buffer)) {
             return false;
         }
         auto t2 = wtime();
@@ -815,10 +802,9 @@ class KeyValueContainer {
     bool loadVectorImpl(const Prefetcher& prefetcher, const L& label, std::vector<V>& value,
             const std::integral_constant<bool, false>&, LoadStatistics* stats) const {
         std::string buffer;
-        std::stringstream ss_key;
-        ss_key << label << "#" << demangle<std::vector<V>>();
+        auto key = makeKey(label, value);
         auto t1 = wtime();
-        if(!loadRawData(prefetcher, ss_key.str(), buffer)) {
+        if(!loadRawData(prefetcher, key, buffer)) {
             return false;
         }
         auto t2 = wtime();
@@ -849,10 +835,9 @@ class KeyValueContainer {
     bool loadVectorImpl(const ProductCache& cache, const L& label, std::vector<V>& value,
             const std::integral_constant<bool, false>&, LoadStatistics* stats) const {
         std::string buffer;
-        std::stringstream ss_key;
-        ss_key << label << "#" << demangle<std::vector<V>>();
+        auto key = makeKey(label, value);
         auto t1 = wtime();
-        if(!loadRawData(cache, ss_key.str(), buffer)) {
+        if(!loadRawData(cache, key, buffer)) {
             return false;
         }
         auto t2 = wtime();
@@ -878,12 +863,21 @@ class KeyValueContainer {
 
     /**
      * @brief Creates the string key based on the provided key
+     * and the type of the value.
+     */
+    template<typename L, typename V>
+    static std::string makeKey(const L& label, const V& value) {
+        return std::string(label) + "#" + demangle<V>();
+    }
+
+    /**
+     * @brief Creates the string key based on the provided key
      * and the type of the value. Serializes the value into a string.
      */
     template<typename L, typename V>
     static void serializeKeyValue(const L& label, const V& value,
             std::string& key_str, std::string& value_str) {
-        serializeKeyValue(label, value, key_str);
+        key_str = makeKey(label, value);
         std::stringstream ss_value;
         OutputArchive oa(ss_value);
         try {
@@ -892,17 +886,6 @@ class KeyValueContainer {
             throw Exception(std::string("Exception occured during serialization: ") + e.what());
         }
         value_str = ss_value.str();
-    }
-
-    /**
-     * @brief Creates the string key based on the provided key
-     * and the type of the value.
-     */
-    template<typename L, typename V>
-    static void serializeKeyValue(const L& label, const V& value, std::string& key_str) {
-        std::stringstream ss_key;
-        ss_key << label << "#" << demangle<V>();
-        key_str = std::move(ss_key.str());
     }
 
     /**
@@ -917,7 +900,7 @@ class KeyValueContainer {
             end = value.size();
         if(start < 0 || start > end || end > value.size())
             throw Exception("Invalid range when storing vector");
-        serializeKeyValue(label, value, key_str);
+        key_str = makeKey(label, value);
         std::stringstream ss_value;
         OutputArchive oa(ss_value);
         try {
@@ -943,7 +926,7 @@ class KeyValueContainer {
             end = value.size();
         if(start < 0 || start > end || end > value.size())
             throw Exception("Invalid range when storing vector");
-        serializeKeyValue(label, value, key_str);
+        key_str = makeKey(label, value);
         size_t count = end-start;
         value_str.resize(sizeof(count) + count*sizeof(V));
         std::memcpy(const_cast<char*>(value_str.data()), &count, sizeof(count));
