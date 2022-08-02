@@ -882,14 +882,15 @@ class KeyValueContainer {
      */
     template<typename V>
     static void serializeValue(const V& value, std::string& value_str) {
-        std::stringstream ss_value;
-        OutputArchive oa(ss_value);
+        value_str.resize(0);
+        OutputStringWrapper value_wrapper(value_str);
+        OutputStream value_stream(value_wrapper);
+        OutputArchive oa(value_stream);
         try {
             oa << value;
         } catch(const std::exception& e) {
             throw Exception(std::string("Exception occured during serialization: ") + e.what());
         }
-        value_str = ss_value.str();
     }
 
     /**
@@ -902,8 +903,10 @@ class KeyValueContainer {
             end = value.size();
         if(start < 0 || start > end || end > value.size())
             throw Exception("Invalid range when storing vector");
-        std::stringstream ss_value;
-        OutputArchive oa(ss_value);
+        value_str.resize(0);
+        OutputStringWrapper value_wrapper(value_str);
+        OutputStream value_stream(value_wrapper);
+        OutputArchive oa(value_stream);
         try {
             size_t count = end-start;
             oa << count;
@@ -912,7 +915,6 @@ class KeyValueContainer {
         } catch(const std::exception& e) {
             throw Exception(std::string("Exception occured during serialization: ") + e.what());
         }
-        value_str = ss_value.str();
     }
 
     /**

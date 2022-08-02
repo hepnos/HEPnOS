@@ -12,6 +12,7 @@
 #include <boost/archive/impl/basic_binary_oarchive.ipp>
 #include <boost/iostreams/categories.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
 
 namespace hepnos {
 
@@ -46,29 +47,8 @@ class OutputArchive : public oarchive {
 
 };
 
-class OutputBuffer {
-
-    public:
-
-    typedef std::string::size_type     size_type;
-    typedef std::string::value_type    char_type;
-    typedef boost::iostreams::sink_tag category;
-
-    std::streamsize write(const char_type* s, std::streamsize n) {
-        m_data.insert(m_data.end(), s, s+n);
-        return n;
-    }
-
-    inline const std::string& data() const {
-        return m_data;
-    }
-
-    private:
-
-    std::string m_data;
-};
-
-using OutputStream = boost::iostreams::stream<OutputBuffer>;
+using OutputStringWrapper = boost::iostreams::back_insert_device<std::string>;
+using OutputStream = boost::iostreams::stream<OutputStringWrapper>;
 
 }
 
