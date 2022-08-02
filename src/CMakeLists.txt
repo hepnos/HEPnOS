@@ -12,7 +12,8 @@ set(hepnos-src DataStore.cpp
 	       ProductCache.cpp
 	       ProductID.cpp
 	       AsyncEngine.cpp
-	       EventSet.cpp)
+	       EventSet.cpp
+	       Statistics.cpp)
 
 set(hepnos-service-src
        UUID.cpp

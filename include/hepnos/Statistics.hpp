@@ -43,6 +43,8 @@ struct Statistics {
     }
 };
 
+double wtime();
+
 }
 
 template<typename Number, typename Double=double>
