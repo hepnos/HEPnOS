@@ -9,6 +9,8 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/impl/basic_binary_iprimitive.ipp>
 #include <boost/archive/impl/basic_binary_iarchive.ipp>
+#include <boost/iostreams/stream.hpp>
+#include <boost/iostreams/device/array.hpp>
 
 namespace hepnos {
 
@@ -70,6 +72,9 @@ class InputArchive : public iarchive {
     }
 
 };
+
+using InputStringWrapper = boost::iostreams::array_source;
+using InputStream = boost::iostreams::stream<InputStringWrapper>;
 
 }
 

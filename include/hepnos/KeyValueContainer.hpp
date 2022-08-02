@@ -604,8 +604,9 @@ class KeyValueContainer {
         auto t2 = wtime();
         if(!b) return false;
         try {
-            std::stringstream ss(buffer);
-            InputArchive ia(datastore(), ss);
+            InputStringWrapper value_wrapper(buffer.data(), buffer.size());
+            InputStream value_stream(value_wrapper);
+            InputArchive ia(datastore(), value_stream);
             ia >> value;
         } catch(const std::exception& e) {
             throw Exception(std::string("Exception occured during serialization: ") + e.what());
@@ -633,8 +634,9 @@ class KeyValueContainer {
         }
         auto t2 = wtime();
         try {
-            std::stringstream ss(buffer);
-            InputArchive ia(datastore(), ss);
+            InputStringWrapper value_wrapper(buffer.data(), buffer.size());
+            InputStream value_stream(value_wrapper);
+            InputArchive ia(datastore(), value_stream);
             ia >> value;
         } catch(const std::exception& e) {
             throw Exception(std::string("Exception occured during serialization: ") + e.what());
@@ -661,8 +663,9 @@ class KeyValueContainer {
         }
         auto t2 = wtime();
         try {
-            std::stringstream ss(buffer);
-            InputArchive ia(datastore(), ss);
+            InputStringWrapper value_wrapper(buffer.data(), buffer.size());
+            InputStream value_stream(value_wrapper);
+            InputArchive ia(datastore(), value_stream);
             ia >> value;
         } catch(const std::exception& e) {
             throw Exception(std::string("Exception occured during serialization: ") + e.what());
@@ -782,8 +785,9 @@ class KeyValueContainer {
         }
         auto t2 = wtime();
         try {
-            std::stringstream ss(buffer);
-            InputArchive ia(datastore(), ss);
+            InputStringWrapper value_wrapper(buffer.data(), buffer.size());
+            InputStream value_stream(value_wrapper);
+            InputArchive ia(datastore(), value_stream);
             size_t count = 0;
             ia >> count;
             value.resize(count);
@@ -815,8 +819,9 @@ class KeyValueContainer {
         }
         auto t2 = wtime();
         try {
-            std::stringstream ss(buffer);
-            InputArchive ia(datastore(), ss);
+            InputStringWrapper value_wrapper(buffer.data(), buffer.size());
+            InputStream value_stream(value_wrapper);
+            InputArchive ia(datastore(), value_stream);
             size_t count = 0;
             ia >> count;
             value.resize(count);
@@ -848,8 +853,9 @@ class KeyValueContainer {
         }
         auto t2 = wtime();
         try {
-            std::stringstream ss(buffer);
-            InputArchive ia(datastore(), ss);
+            InputStringWrapper value_wrapper(buffer.data(), buffer.size());
+            InputStream value_stream(value_wrapper);
+            InputArchive ia(datastore(), value_stream);
             size_t count = 0;
             ia >> count;
             value.resize(count);
