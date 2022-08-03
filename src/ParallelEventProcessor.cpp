@@ -100,8 +100,8 @@ void ParallelEventProcessor::process(
     spdlog::trace("ParallelEventProcessing: done processing");
 }
 
-void ParallelEventProcessor::preloadImpl(const std::string& productKey) {
-    m_impl->m_product_keys.insert(productKey);
+void ParallelEventProcessor::preloadImpl(std::string label, std::string type) {
+    m_impl->m_product_keys.emplace(std::move(label), std::move(type));
 }
 
 }

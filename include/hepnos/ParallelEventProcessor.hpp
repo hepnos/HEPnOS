@@ -92,8 +92,7 @@ class ParallelEventProcessor {
      */
     template<typename T>
     void preload(const std::string& label) {
-        std::string productKey = label + "#" + demangle<T>();
-        preloadImpl(productKey);
+        preloadImpl(label, demangle<T>());
     }
 
     /**
@@ -120,7 +119,7 @@ class ParallelEventProcessor {
 
 private:
 
-    void preloadImpl(const std::string& productKey);
+    void preloadImpl(std::string label, std::string type);
 };
 
 }

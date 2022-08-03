@@ -26,14 +26,16 @@ class SyncPrefetcherImpl : public PrefetcherImpl {
     void fetchRequestedProducts(const std::shared_ptr<ItemImpl>& itemImpl) const override {
         auto& descriptor = itemImpl->m_descriptor;
         for(auto& key : m_active_product_keys) {
-            if(m_product_cache.m_impl->hasProduct(descriptor, key))
+            auto product_id = DataStoreImpl::makeProductID(
+                descriptor, key.label.c_str(), key.label.size(),
+                key.type.c_str(), key.label.size());
+            if(m_product_cache.m_impl->hasProduct(product_id))
                 continue;
-            auto product_id = DataStoreImpl::buildProductID(descriptor, key);
             std::string data;
             bool ok = m_datastore->loadRawProduct(product_id, data);
             if(ok) {
                 update_product_statistics(data.size());
-                m_product_cache.m_impl->addRawProduct(descriptor, key, std::move(data));
+                m_product_cache.m_impl->addRawProduct(product_id, std::move(data));
             }
         }
     }
@@ -87,10 +89,8 @@ class SyncPrefetcherImpl : public PrefetcherImpl {
         return result.size();
     }
 
-    bool loadRawProduct(const ItemDescriptor& id,
-                        const std::string& productName,
+    bool loadRawProduct(const ProductID& product_id,
                         std::string& data) const override {
-        auto product_id = DataStoreImpl::buildProductID(id, productName);
         if(m_product_cache.m_impl->loadRawProduct(product_id, data)) {
             if(m_stats) m_stats->product_cache_hit += 1;
             m_product_cache.m_impl->removeRawProduct(product_id);
@@ -101,10 +101,8 @@ class SyncPrefetcherImpl : public PrefetcherImpl {
         }
     }
 
-    bool loadRawProduct(const ItemDescriptor& id,
-                        const std::string& productName,
+    bool loadRawProduct(const ProductID& product_id,
                         char* value, size_t* vsize) const override {
-        auto product_id = DataStoreImpl::buildProductID(id, productName);
         std::string data;
         if(m_product_cache.m_impl->loadRawProduct(product_id, data)) {
             if(m_stats) m_stats->product_cache_hit += 1;
@@ -114,7 +112,7 @@ class SyncPrefetcherImpl : public PrefetcherImpl {
             return true;
         } else {
             if(m_stats) m_stats->product_cache_miss += 1;
-            return m_datastore->loadRawProduct(id, productName, value, vsize);
+            return m_datastore->loadRawProduct(product_id, value, vsize);
         }
     }
 };

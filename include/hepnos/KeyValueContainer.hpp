@@ -77,6 +77,20 @@ class KeyValueContainer {
     virtual DataStore datastore() const = 0;
 
     /**
+     * @brief Create the full product key for this container from the label
+     * and type name.
+     *
+     * @param label Label
+     * @param label_size Label size
+     * @param type Type name
+     * @param type_size Size of type name
+     *
+     * @return Full product key.
+     */
+    virtual ProductID makeProductID(const char* label, size_t label_size,
+                                    const char* type, size_t type_size) const = 0;
+
+    /**
      * @brief Stores raw key/value data in this KeyValueContainer.
      * This function is virtual and must be overloaded in the child class.
      *
@@ -86,7 +100,7 @@ class KeyValueContainer {
      *
      * @return A valid ProductID if the key did not already exist, an invalid one otherwise.
      */
-    virtual ProductID storeRawData(const std::string& key, const char* value, size_t vsize) = 0;
+    virtual ProductID storeRawData(const ProductID& key, const char* value, size_t vsize) = 0;
 
     /**
      * @brief Stores raw key/value data in a WriteBatch.
@@ -104,7 +118,7 @@ class KeyValueContainer {
      *
      * @return A valid ProductID.
      */
-    virtual ProductID storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) = 0;
+    virtual ProductID storeRawData(WriteBatch& batch, const ProductID& key, const char* value, size_t vsize) = 0;
 
     /**
      * @brief Stores binary data associated with a particular key using the AsyncEngine.
@@ -120,7 +134,7 @@ class KeyValueContainer {
      *
      * @return a valid ProductID.
      */
-    virtual ProductID storeRawData(AsyncEngine& async, const std::string& key, const char* value, size_t vsize) = 0;
+    virtual ProductID storeRawData(AsyncEngine& async, const ProductID& key, const char* value, size_t vsize) = 0;
 
     /**
      * @brief Loads raw key/value data from this KeyValueContainer.
@@ -131,7 +145,7 @@ class KeyValueContainer {
      *
      * @return true if the key exists, false otherwise.
      */
-    virtual bool loadRawData(const std::string& key, std::string& buffer) const = 0;
+    virtual bool loadRawData(const ProductID& key, std::string& buffer) const = 0;
 
     /**
      * @brief Loads binary data associated with a particular key from the container.
@@ -144,7 +158,7 @@ class KeyValueContainer {
      *
      * @return true if the key exists and the read succeeded, false otherwise.
      */
-    virtual bool loadRawData(const std::string& key, char* value, size_t* vsize) const = 0;
+    virtual bool loadRawData(const ProductID& key, char* value, size_t* vsize) const = 0;
 
     /**
      * @brief Loads binary data associated with a particular key from the container.
@@ -158,7 +172,7 @@ class KeyValueContainer {
      *
      * @return true if the key exists and the read succeeded, false otherwise.
      */
-    virtual bool loadRawData(const Prefetcher& prefetcher, const std::string& key, std::string& buffer) const = 0;
+    virtual bool loadRawData(const Prefetcher& prefetcher, const ProductID& key, std::string& buffer) const = 0;
 
     /**
      * @brief Loads binary data associated with a particular key from the container.
@@ -173,7 +187,7 @@ class KeyValueContainer {
      *
      * @return true if the key exists and the read succeeded, false otherwise.
      */
-    virtual bool loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const = 0;
+    virtual bool loadRawData(const Prefetcher& prefetcher, const ProductID& key, char* value, size_t* vsize) const = 0;
 
     /**
      * @brief Loads binary data associated with a particular key from the container.
@@ -187,7 +201,7 @@ class KeyValueContainer {
      *
      * @return true if the key exists and the read succeeded, false otherwise.
      */
-    virtual bool loadRawData(const ProductCache& cache, const std::string& key, std::string& buffer) const = 0;
+    virtual bool loadRawData(const ProductCache& cache, const ProductID& key, std::string& buffer) const = 0;
 
     /**
      * @brief Loads binary data associated with a particular key from the container.
@@ -202,7 +216,7 @@ class KeyValueContainer {
      *
      * @return true if the key exists and the read succeeded, false otherwise.
      */
-    virtual bool loadRawData(const ProductCache& cache, const std::string& key, char* value, size_t* vsize) const = 0;
+    virtual bool loadRawData(const ProductCache& cache, const ProductID& key, char* value, size_t* vsize) const = 0;
 
     /**
      * @brief Stores a key/value pair into the KeyValueContainer.
@@ -281,11 +295,11 @@ class KeyValueContainer {
     ProductID store(const L& label, const std::vector<V>& value, int start=0, int end=-1,
                     StoreStatistics* stats = nullptr) {
         auto t1 = wtime();
-        auto key_str = makeKey(label, value);
+        auto key = makeKey(label, value);
         std::string val_str;
         serializeValueVector(std::is_pod<std::remove_reference_t<V>>(), value, val_str, start, end);
         auto t2 = wtime();
-        auto result = storeRawData(key_str, val_str.data(), val_str.size());
+        auto result = storeRawData(key, val_str.data(), val_str.size());
         auto t3 = wtime();
         if(stats) {
             stats->serialization_time.updateWith(t2-t1);
@@ -301,11 +315,11 @@ class KeyValueContainer {
     ProductID store(WriteBatch& batch, const L& label, const std::vector<V>& value, int start=0, int end=-1,
                     StoreStatistics* stats = nullptr) {
         auto t1 = wtime();
-        auto key_str = makeKey(label, value);
+        auto key = makeKey(label, value);
         std::string val_str;
         serializeValueVector(std::is_pod<std::remove_reference_t<V>>(), value, val_str, start, end);
         auto t2 = wtime();
-        auto result = storeRawData(batch, key_str, val_str.data(), val_str.size());
+        auto result = storeRawData(batch, key, val_str.data(), val_str.size());
         auto t3 = wtime();
         if(stats) {
             stats->serialization_time.updateWith(t2-t1);
@@ -321,11 +335,11 @@ class KeyValueContainer {
     ProductID store(AsyncEngine& async, const L& label, const std::vector<V>& value, int start=0, int end=-1,
                     StoreStatistics* stats = nullptr) {
         auto t1 = wtime();
-        auto key_str = makeKey(label, value);
+        auto key = makeKey(label, value);
         std::string val_str;
         serializeValueVector(std::is_pod<std::remove_reference_t<V>>(), value, val_str, start, end);
         auto t2 = wtime();
-        auto result = storeRawData(async, key_str, val_str.data(), val_str.size());
+        auto result = storeRawData(async, key, val_str.data(), val_str.size());
         auto t3 = wtime();
         if(stats) {
             stats->serialization_time.updateWith(t2-t1);
@@ -342,7 +356,7 @@ class KeyValueContainer {
      * The resulting string must not have the "/" or "%" characters.
      * The type of the value must be serializable using Boost.
      *
-     * @tparam K type of the key.
+     * @tparam L type of the label.
      * @tparam V type of the value.
      * @param key Key to load.
      * @param value Value to load.
@@ -421,11 +435,11 @@ class KeyValueContainer {
     ProductID storeImpl(const L& label, const V& value,
             const std::integral_constant<bool, false>&, StoreStatistics* stats) {
         auto t1 = wtime();
-        auto key_str = makeKey(label, value);
+        auto key = makeKey(label, value);
         std::string val_str;
         serializeValue(value, val_str);
         auto t2 = wtime();
-        auto result = storeRawData(key_str, val_str.data(), val_str.size());
+        auto result = storeRawData(key, val_str.data(), val_str.size());
         auto t3 = wtime();
         if(stats) {
             stats->serialization_time.updateWith(t2-t1);
@@ -442,11 +456,11 @@ class KeyValueContainer {
     ProductID storeImpl(WriteBatch& batch, const L& label, const V& value,
             const std::integral_constant<bool, false>&, StoreStatistics* stats) {
         auto t1 = wtime();
-        auto key_str = makeKey(label, value);
+        auto key = makeKey(label, value);
         std::string val_str;
         serializeValue(value, val_str);
         auto t2 = wtime();
-        auto result = storeRawData(batch, key_str, val_str.data(), val_str.size());
+        auto result = storeRawData(batch, key, val_str.data(), val_str.size());
         auto t3 = wtime();
         if(stats) {
             stats->serialization_time.updateWith(t2-t1);
@@ -463,11 +477,11 @@ class KeyValueContainer {
     ProductID storeImpl(AsyncEngine& async, const L& label, const V& value,
             const std::integral_constant<bool, false>&, StoreStatistics* stats) {
         auto t1 = wtime();
-        auto key_str = makeKey(label, value);
+        auto key = makeKey(label, value);
         std::string val_str;
         serializeValue(value, val_str);
         auto t2 = wtime();
-        auto result = storeRawData(async, key_str, val_str.data(), val_str.size());
+        auto result = storeRawData(async, key, val_str.data(), val_str.size());
         auto t3 = wtime();
         if(stats) {
             stats->serialization_time.updateWith(t2-t1);
@@ -484,9 +498,9 @@ class KeyValueContainer {
     ProductID storeImpl(const L& label, const V& value,
             const std::integral_constant<bool, true>&, StoreStatistics* stats) {
         auto t1 = wtime();
-        auto key_str = makeKey(label, value);
+        auto key = makeKey(label, value);
         auto t2 = wtime();
-        auto result = storeRawData(key_str, reinterpret_cast<const char*>(&value), sizeof(value));
+        auto result = storeRawData(key, reinterpret_cast<const char*>(&value), sizeof(value));
         auto t3 = wtime();
         if(stats) {
             stats->serialization_time.updateWith(t2-t1);
@@ -503,9 +517,9 @@ class KeyValueContainer {
     ProductID storeImpl(WriteBatch& batch, const L& label, const V& value,
             const std::integral_constant<bool, true>&, StoreStatistics* stats) {
         auto t1 = wtime();
-        std::string key_str = makeKey(label, value);
+        auto key = makeKey(label, value);
         auto t2 = wtime();
-        auto result = storeRawData(batch, key_str, reinterpret_cast<const char*>(&value), sizeof(value));
+        auto result = storeRawData(batch, key, reinterpret_cast<const char*>(&value), sizeof(value));
         auto t3 = wtime();
         if(stats) {
             stats->serialization_time.updateWith(t2-t1);
@@ -522,9 +536,9 @@ class KeyValueContainer {
     ProductID storeImpl(AsyncEngine& async, const L& label, const V& value,
             const std::integral_constant<bool, true>&, StoreStatistics* stats) {
         auto t1 = wtime();
-        auto key_str = makeKey(label, value);
+        auto key = makeKey(label, value);
         auto t2 = wtime();
-        auto result = storeRawData(async, key_str, reinterpret_cast<const char*>(&value), sizeof(value));
+        auto result = storeRawData(async, key, reinterpret_cast<const char*>(&value), sizeof(value));
         auto t3 = wtime();
         if(stats) {
             stats->serialization_time.updateWith(t2-t1);
@@ -878,8 +892,10 @@ class KeyValueContainer {
      * and the type of the value.
      */
     template<typename L, typename V>
-    static std::string makeKey(const L& label, const V& value) {
-        return std::string(label) + "#" + demangle<V>();
+    auto makeKey(const L& l, const V& value) const {
+        auto label = std::string{l};
+        auto type = std::string{demangle<V>()};
+        return makeProductID(label.data(), label.size(), type.data(), type.size());
     }
 
     /**

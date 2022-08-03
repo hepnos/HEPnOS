@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include "hepnos/Prefetcher.hpp"
 #include "hepnos/ProductCache.hpp"
+#include "ProductKey.hpp"
 #include "DataStoreImpl.hpp"
 #include "AsyncEngineImpl.hpp"
 
@@ -29,7 +30,7 @@ class PrefetcherImpl {
     unsigned int                     m_cache_size = 16;
     unsigned int                     m_batch_size = 1;
     bool                             m_associated = false;
-    std::vector<std::string>         m_active_product_keys;
+    std::vector<ProductKey>          m_active_product_keys;
     mutable std::set<std::shared_ptr<ItemImpl>, ItemPtrComparator> m_item_cache;
     mutable ProductCache m_product_cache;
 
@@ -63,12 +64,11 @@ class PrefetcherImpl {
             size_t maxItems,
             int target=-1) const = 0;
 
-    virtual bool loadRawProduct(const ItemDescriptor& id,
-                        const std::string& productName,
+    virtual bool loadRawProduct(
+                        const ProductID& productID,
                         std::string& data) const = 0;
 
-    virtual bool loadRawProduct(const ItemDescriptor& id,
-                        const std::string& productName,
+    virtual bool loadRawProduct(const ProductID& productID,
                         char* value, size_t* vsize) const = 0;
 
     void collectStatistics(PrefetcherStatistics& stats) const {

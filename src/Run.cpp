@@ -95,87 +95,84 @@ bool Run::valid() const {
     return m_impl && m_impl->m_datastore;
 }
 
-ProductID Run::storeRawData(const std::string& key, const char* value, size_t vsize) {
+ProductID Run::makeProductID(const char* label, size_t label_size,
+                             const char* type, size_t type_size) const {
+    auto& id = m_impl->m_descriptor;
+    return DataStoreImpl::makeProductID(id, label, label_size, type, type_size);
+}
+
+ProductID Run::storeRawData(const ProductID& key, const char* value, size_t vsize) {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run object");
     }
     // forward the call to the datastore's store function
-    const ItemDescriptor& id = m_impl->m_descriptor;
-    return m_impl->m_datastore->storeRawProduct(id, key, value, vsize);
+    return m_impl->m_datastore->storeRawProduct(key, value, vsize);
 }
 
-ProductID Run::storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) {
+ProductID Run::storeRawData(WriteBatch& batch, const ProductID& key, const char* value, size_t vsize) {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run object");
     }
     // forward the call to the batch's store function
-    const ItemDescriptor& id = m_impl->m_descriptor;
     if(batch.m_impl)
-        return batch.m_impl->storeRawProduct(id, key, value, vsize);
+        return batch.m_impl->storeRawProduct(key, value, vsize);
     else
-        return m_impl->m_datastore->storeRawProduct(id, key, value, vsize);
+        return m_impl->m_datastore->storeRawProduct(key, value, vsize);
 }
 
-ProductID Run::storeRawData(AsyncEngine& async, const std::string& key, const char* value, size_t vsize) {
+ProductID Run::storeRawData(AsyncEngine& async, const ProductID& key, const char* value, size_t vsize) {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run object");
     }
     // forward the call to the async engine's store function
-    const ItemDescriptor& id = m_impl->m_descriptor;
     if(async.m_impl)
-        return async.m_impl->storeRawProduct(id, key, value, vsize);
+        return async.m_impl->storeRawProduct(key, value, vsize);
     else
-        return m_impl->m_datastore->storeRawProduct(id, key, value, vsize);
+        return m_impl->m_datastore->storeRawProduct(key, value, vsize);
 }
 
-bool Run::loadRawData(const std::string& key, std::string& buffer) const {
+bool Run::loadRawData(const ProductID& key, std::string& buffer) const {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run object");
     }
     // forward the call to the datastore's load function
-    const ItemDescriptor& id = m_impl->m_descriptor;
-    return m_impl->m_datastore->loadRawProduct(id, key, buffer);
+    return m_impl->m_datastore->loadRawProduct(key, buffer);
 }
 
-bool Run::loadRawData(const std::string& key, char* value, size_t* vsize) const {
+bool Run::loadRawData(const ProductID& key, char* value, size_t* vsize) const {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run");
     }
     // forward the call to the datastore's load function
-    const ItemDescriptor& id = m_impl->m_descriptor;
-    return m_impl->m_datastore->loadRawProduct(id, key, value, vsize);
+    return m_impl->m_datastore->loadRawProduct(key, value, vsize);
 }
 
-bool Run::loadRawData(const Prefetcher& prefetcher, const std::string& key, std::string& buffer) const {
+bool Run::loadRawData(const Prefetcher& prefetcher, const ProductID& key, std::string& buffer) const {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run object");
     }
-    const ItemDescriptor& id = m_impl->m_descriptor;
-    return prefetcher.m_impl->loadRawProduct(id, key, buffer);
+    return prefetcher.m_impl->loadRawProduct(key, buffer);
 }
 
-bool Run::loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const {
+bool Run::loadRawData(const Prefetcher& prefetcher, const ProductID& key, char* value, size_t* vsize) const {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run");
     }
-    const ItemDescriptor& id = m_impl->m_descriptor;
-    return prefetcher.m_impl->loadRawProduct(id, key, value, vsize);
+    return prefetcher.m_impl->loadRawProduct(key, value, vsize);
 }
 
-bool Run::loadRawData(const ProductCache& cache, const std::string& key, std::string& buffer) const {
+bool Run::loadRawData(const ProductCache& cache, const ProductID& key, std::string& buffer) const {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run object");
     }
-    auto& id = m_impl->m_descriptor;
-    return cache.m_impl->loadRawProduct(id, key, buffer);
+    return cache.m_impl->loadRawProduct(key, buffer);
 }
 
-bool Run::loadRawData(const ProductCache& cache, const std::string& key, char* value, size_t* vsize) const {
+bool Run::loadRawData(const ProductCache& cache, const ProductID& key, char* value, size_t* vsize) const {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run");
     }
-    auto& id = m_impl->m_descriptor;
-    return cache.m_impl->loadRawProduct(id, key, value, vsize);
+    return cache.m_impl->loadRawProduct(key, value, vsize);
 }
 
 std::vector<ProductID> Run::listProducts(const std::string& label) const {

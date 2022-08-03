@@ -56,14 +56,12 @@ class AsyncEngineImpl {
         }
     }
 
-    ProductID storeRawProduct(const ItemDescriptor& id,
-                              const std::string& productName,
+    ProductID storeRawProduct(const ProductID& product_id,
                               const char* value, size_t vsize)
     {
         // make a thread that will store the data
-        auto product_id = m_datastore->buildProductID(id, productName);
         m_pool.make_thread([this,
-                            product_id, id, productName,// passed by copy
+                            product_id,
                             ds=m_datastore, // shared pointer
                             data=std::string(value,vsize)]() { // create new string
             auto& db = ds->locateProductDb(product_id);
@@ -72,17 +70,9 @@ class AsyncEngineImpl {
                        data.data(), data.size(), YOKAN_MODE_NEW_ONLY);
             } catch(yokan::Exception& ex) {
                 std::lock_guard<tl::mutex> lock(m_errors_mtx);
-                if(ex.code() == YOKAN_ERR_KEY_EXISTS) {
-                    m_errors.push_back(
-                            std::string("Product ")
-                            +productName
-                            +" already exists for item "
-                            +id.to_string());
-                } else {
-                    m_errors.push_back(
-                            std::string("yokan::Database::put(): ")
-                            +ex.what());
-                }
+                m_errors.push_back(
+                        std::string("yokan::Database::put(): ")
+                        +ex.what());
             }
         });
         return product_id;

@@ -107,87 +107,84 @@ bool SubRun::valid() const {
     return m_impl && m_impl->m_datastore;
 }
 
-ProductID SubRun::storeRawData(const std::string& key, const char* value, size_t vsize) {
+ProductID SubRun::makeProductID(const char* label, size_t label_size,
+                                const char* type, size_t type_size) const {
+    auto& id = m_impl->m_descriptor;
+    return DataStoreImpl::makeProductID(id, label, label_size, type, type_size);
+}
+
+ProductID SubRun::storeRawData(const ProductID& key, const char* value, size_t vsize) {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
     // forward the call to the datastore's store function
-    auto& id = m_impl->m_descriptor;
-    return m_impl->m_datastore->storeRawProduct(id, key, value, vsize);
+    return m_impl->m_datastore->storeRawProduct(key, value, vsize);
 }
 
-ProductID SubRun::storeRawData(WriteBatch& batch, const std::string& key, const char* value, size_t vsize) {
+ProductID SubRun::storeRawData(WriteBatch& batch, const ProductID& key, const char* value, size_t vsize) {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
     // forward the call to the batch's store function
-    auto& id = m_impl->m_descriptor;
     if(batch.m_impl)
-        return batch.m_impl->storeRawProduct(id, key, value, vsize);
+        return batch.m_impl->storeRawProduct(key, value, vsize);
     else
-        return m_impl->m_datastore->storeRawProduct(id, key, value, vsize);
+        return m_impl->m_datastore->storeRawProduct(key, value, vsize);
 }
 
-ProductID SubRun::storeRawData(AsyncEngine& async, const std::string& key, const char* value, size_t vsize) {
+ProductID SubRun::storeRawData(AsyncEngine& async, const ProductID& key, const char* value, size_t vsize) {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
     // forward the call to async engine's store function
-    auto& id = m_impl->m_descriptor;
     if(async.m_impl)
-        return async.m_impl->storeRawProduct(id, key, value, vsize);
+        return async.m_impl->storeRawProduct(key, value, vsize);
     else
-        return m_impl->m_datastore->storeRawProduct(id, key, value, vsize);
+        return m_impl->m_datastore->storeRawProduct(key, value, vsize);
 }
 
-bool SubRun::loadRawData(const std::string& key, std::string& buffer) const {
+bool SubRun::loadRawData(const ProductID& key, std::string& buffer) const {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
-    }
-    auto& id = m_impl->m_descriptor;
-    // forward the call to the datastore's load function
-    return m_impl->m_datastore->loadRawProduct(id, key, buffer);
-}
-
-bool SubRun::loadRawData(const std::string& key, char* value, size_t* vsize) const {
-    if(!valid()) {
-        throw Exception("Calling SubRun member function on an invalid SubRun");
     }
     // forward the call to the datastore's load function
-    auto& id = m_impl->m_descriptor;
-    return m_impl->m_datastore->loadRawProduct(id, key, value, vsize);
+    return m_impl->m_datastore->loadRawProduct(key, buffer);
 }
 
-bool SubRun::loadRawData(const Prefetcher& prefetcher, const std::string& key, std::string& buffer) const {
-    if(!valid()) {
-        throw Exception("Calling SubRun member function on invalid SubRun object");
-    }
-    auto& id = m_impl->m_descriptor;
-    return prefetcher.m_impl->loadRawProduct(id, key, buffer);
-}
-
-bool SubRun::loadRawData(const Prefetcher& prefetcher, const std::string& key, char* value, size_t* vsize) const {
+bool SubRun::loadRawData(const ProductID& key, char* value, size_t* vsize) const {
     if(!valid()) {
         throw Exception("Calling SubRun member function on an invalid SubRun");
     }
-    auto& id = m_impl->m_descriptor;
-    return prefetcher.m_impl->loadRawProduct(id, key, value, vsize);
+    // forward the call to the datastore's load function
+    return m_impl->m_datastore->loadRawProduct(key, value, vsize);
 }
 
-bool SubRun::loadRawData(const ProductCache& cache, const std::string& key, std::string& buffer) const {
+bool SubRun::loadRawData(const Prefetcher& prefetcher, const ProductID& key, std::string& buffer) const {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
-    auto& id = m_impl->m_descriptor;
-    return cache.m_impl->loadRawProduct(id, key, buffer);
+    return prefetcher.m_impl->loadRawProduct(key, buffer);
 }
 
-bool SubRun::loadRawData(const ProductCache& cache, const std::string& key, char* value, size_t* vsize) const {
+bool SubRun::loadRawData(const Prefetcher& prefetcher, const ProductID& key, char* value, size_t* vsize) const {
     if(!valid()) {
         throw Exception("Calling SubRun member function on an invalid SubRun");
     }
-    auto& id = m_impl->m_descriptor;
-    return cache.m_impl->loadRawProduct(id, key, value, vsize);
+    return prefetcher.m_impl->loadRawProduct(key, value, vsize);
+}
+
+bool SubRun::loadRawData(const ProductCache& cache, const ProductID& key, std::string& buffer) const {
+    if(!valid()) {
+        throw Exception("Calling SubRun member function on invalid SubRun object");
+    }
+    return cache.m_impl->loadRawProduct(key, buffer);
+}
+
+bool SubRun::loadRawData(const ProductCache& cache, const ProductID& key, char* value, size_t* vsize) const {
+    if(!valid()) {
+        throw Exception("Calling SubRun member function on an invalid SubRun");
+    }
+    return cache.m_impl->loadRawProduct(key, value, vsize);
 }
 
 std::vector<ProductID> SubRun::listProducts(const std::string& label) const {

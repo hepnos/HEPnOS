@@ -152,12 +152,9 @@ class WriteBatchImpl {
         }
     }
 
-    ProductID storeRawProduct(const ItemDescriptor& id,
-                              const std::string& productName,
+    ProductID storeRawProduct(const ProductID& product_id,
                               const char* value, size_t vsize)
     {
-        // build the key
-        auto product_id = m_datastore->buildProductID(id, productName);
         // locate db
         auto& db = m_datastore->locateProductDb(product_id);
         // insert in the map of entries

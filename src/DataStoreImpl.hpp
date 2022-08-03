@@ -231,11 +231,33 @@ class DataStoreImpl {
     // Product access functions
     ///////////////////////////////////////////////////////////////////////////
 
-    static inline ProductID buildProductID(const ItemDescriptor& id, const std::string& productName) {
+    static inline ProductID makeProductID(
+            const ItemDescriptor& id,
+            const char* label, size_t label_len,
+            const char* type, size_t type_len) {
         ProductID result;
-        result.m_key.resize(sizeof(id)+productName.size());
+        result.m_key.resize(sizeof(id)+1+label_len+type_len);
+        size_t offset = 0;
         std::memcpy(const_cast<char*>(result.m_key.data()), &id, sizeof(id));
-        std::memcpy(const_cast<char*>(result.m_key.data()+sizeof(id)), productName.data(), productName.size());
+        offset += sizeof(id);
+        std::memcpy(const_cast<char*>(result.m_key.data())+offset, label, label_len);
+        offset += label_len;
+        result.m_key[offset] = '#';
+        offset += 1;
+        std::memcpy(const_cast<char*>(result.m_key.data())+offset, type, type_len);
+        return result;
+    }
+
+    static inline ProductID makeProductIDprefix(
+            const ItemDescriptor& id,
+            const char* label = nullptr, size_t label_len = 0) {
+        ProductID result;
+        result.m_key.resize(sizeof(id)+label_len);
+        std::memcpy(const_cast<char*>(result.m_key.data()), &id, sizeof(id));
+        if(label && label_len) {
+            size_t offset = sizeof(id);
+            std::memcpy(const_cast<char*>(result.m_key.data())+offset, label, label_len);
+        }
         return result;
     }
 
@@ -287,14 +309,6 @@ class DataStoreImpl {
         return true;
     }
 
-    bool loadRawProduct(const ItemDescriptor& id,
-                        const std::string& productName,
-                        std::string& data) const {
-        // build product id
-        auto key = buildProductID(id, productName);
-        return loadRawProduct(key, data);
-    }
-
     bool loadRawProduct(const ProductID& key,
                         char* value, size_t* vsize) const {
         // find out which DB to access
@@ -312,19 +326,8 @@ class DataStoreImpl {
         return true;
     }
 
-    bool loadRawProduct(const ItemDescriptor& id,
-                        const std::string& productName,
-                        char* value, size_t* vsize) const {
-        // build product id
-        auto key = buildProductID(id, productName);
-        return loadRawProduct(key, value, vsize);
-    }
-
-    ProductID storeRawProduct(const ItemDescriptor& id,
-                              const std::string& productName,
+    ProductID storeRawProduct(const ProductID& key,
                               const char* value, size_t vsize) const {
-        // build product id
-        auto key = buildProductID(id, productName);
         // find out which DB to access
         auto& db =  locateProductDb(key);
         // read the value
@@ -341,34 +344,13 @@ class DataStoreImpl {
         return key;
     }
 
-    ProductID storeRawProduct(const ItemDescriptor& id,
-                              const std::string& productName,
+    ProductID storeRawProduct(const ProductID& key,
                               const std::string& data) const {
-        // build product id
-        auto key = buildProductID(id, productName);
-        // find out which DB to access
-        auto& db = locateProductDb(key);
-        // store the value
-        try {
-            db.put(key.m_key.data(), key.m_key.size(),
-                   data.data(), data.size(),
-                   YOKAN_MODE_NEW_ONLY);
-        } catch(yokan::Exception& ex) {
-            if(ex.code() == YOKAN_ERR_KEY_EXISTS) {
-                return ProductID();
-            } else {
-                throw Exception("yokan::Database::put(): "+std::string(ex.what()));
-            }
-        }
-        return key;
+        return storeRawProduct(key, data.data(), data.size());
     }
 
     std::vector<ProductID> listProducts(const ItemDescriptor& id, const std::string& label) const {
-        // make the prefix for the keys associated with the products
-        // Note: normally buildProductID expects a product name (i.e. "label#type")
-        // but by providing just the label, we have a product id representing a prefix
-        auto prefix = buildProductID(id, label);
-        // locate database containing products of interest
+        auto prefix = makeProductIDprefix(id, label.data(), label.size());
         auto& db = locateProductDb(prefix);
         std::vector<ProductID> result;
         std::vector<char> buffer(10240);

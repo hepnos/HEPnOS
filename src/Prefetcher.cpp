@@ -40,12 +40,13 @@ void Prefetcher::setBatchSize(unsigned int size) {
     m_impl->m_batch_size = size;
 }
 
-void Prefetcher::fetchProductImpl(const std::string& label, bool fetch=true) const {
+void Prefetcher::fetchProductImpl(const std::string& label, const std::string& type, bool fetch=true) const {
     auto& v = m_impl->m_active_product_keys;
-    auto it = std::find(v.begin(), v.end(), label);
+    auto product_key = ProductKey{label, type};
+    auto it = std::find(v.begin(), v.end(), product_key);
     if(fetch) {
         if(it != v.end())
-            v.push_back(label);
+            v.push_back(product_key);
     } else {
         if(it != v.end())
             v.erase(it);

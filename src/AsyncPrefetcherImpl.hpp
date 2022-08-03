@@ -57,7 +57,9 @@ class AsyncPrefetcherImpl : public PrefetcherImpl {
                                            const std::shared_ptr<ItemImpl>& item) const {
         auto& descriptor = item->m_descriptor;
         for(auto& key : m_active_product_keys) {
-            auto product_id = DataStoreImpl::buildProductID(descriptor, key);
+            auto product_id = DataStoreImpl::makeProductID(
+                descriptor, key.label.c_str(), key.label.size(),
+                key.type.c_str(), key.type.size());
             {
                 std::unique_lock<tl::mutex> lock(m_product_cache_mtx);
                 auto it = m_products_loading.find(product_id.m_key);
@@ -188,10 +190,8 @@ class AsyncPrefetcherImpl : public PrefetcherImpl {
         return result.size();
     }
 
-    virtual bool loadRawProduct(const ItemDescriptor& id,
-                        const std::string& productName,
+    virtual bool loadRawProduct(const ProductID& product_id,
                         std::string& data) const override {
-        auto product_id = DataStoreImpl::buildProductID(id, productName);
         std::unique_lock<tl::mutex> lock(m_product_cache_mtx);
         if(m_product_cache.m_impl->loadRawProduct(product_id, data)) {
             // product found right away
@@ -221,10 +221,8 @@ class AsyncPrefetcherImpl : public PrefetcherImpl {
         return true;
     }
 
-    virtual bool loadRawProduct(const ItemDescriptor& id,
-                        const std::string& productName,
+    virtual bool loadRawProduct(const ProductID& product_id,
                         char* value, size_t* vsize) const override {
-        auto product_id = DataStoreImpl::buildProductID(id, productName);
         std::unique_lock<tl::mutex> lock(m_product_cache_mtx);
         std::string data;
         if(m_product_cache.m_impl->loadRawProduct(product_id, data)) {

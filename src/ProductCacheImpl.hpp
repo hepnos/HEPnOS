@@ -74,23 +74,7 @@ struct ProductCacheImpl {
             }
         }
         m_lock.unlock();
-        //spdlog::trace("[cache] Loading product {} from cache => {}",
-        //              product_id.toJSON(), found ? "found" : "not found");
         return found;
-    }
-
-    bool loadRawProduct(const ItemDescriptor& id,
-                        const std::string& productName,
-                        std::string& data) {
-        auto product_id = DataStoreImpl::buildProductID(id, productName);
-        return loadRawProduct(product_id, data);
-    }
-
-    bool loadRawProduct(const ItemDescriptor& id,
-                        const std::string& productName,
-                        char* value, size_t* vsize) {
-        auto product_id = DataStoreImpl::buildProductID(id, productName);
-        return loadRawProduct(product_id, value, vsize);
     }
 
     bool hasProduct(const ProductID& product_id) const {
@@ -98,15 +82,7 @@ struct ProductCacheImpl {
         auto it = m_map.find(product_id.m_key);
         auto found = it != m_map.end();
         m_lock.unlock();
-        //spdlog::trace("[cache] Checking product {} from cache => {}",
-        //              product_id.toJSON(), found ? "found" : "not found");
         return found;
-    }
-
-    bool hasProduct(const ItemDescriptor& id,
-                    const std::string& productName) const {
-        auto product_id = DataStoreImpl::buildProductID(id, productName);
-        return hasProduct(product_id);
     }
 
     bool checkNotFound(const ProductID& product_id) const {
@@ -117,22 +93,10 @@ struct ProductCacheImpl {
         return ok;
     }
 
-    bool checkNotFound(const ItemDescriptor& id,
-                       const std::string& productName) const {
-        auto product_id = DataStoreImpl::buildProductID(id, productName);
-        return checkNotFound(product_id);
-    }
-
     void addNotFound(const ProductID& product_id) {
         m_lock.wrlock();
         m_not_found.insert(product_id.m_key);
         m_lock.unlock();
-    }
-
-    void addNotFound(const ItemDescriptor& id,
-                     const std::string& productName) {
-        auto product_id = DataStoreImpl::buildProductID(id, productName);
-        addNotFound(product_id);
     }
 
     void addRawProduct(const ProductID& product_id,
@@ -140,15 +104,6 @@ struct ProductCacheImpl {
         m_lock.wrlock();
         m_map[product_id.m_key] = data;
         m_lock.unlock();
-        //spdlog::trace("[cache] Added product {} to cache",
-        //              product_id.toJSON());
-    }
-
-    void addRawProduct(const ItemDescriptor& id,
-                       const std::string& productName,
-                       const std::string& data) {
-        auto product_id = DataStoreImpl::buildProductID(id, productName);
-        addRawProduct(product_id, data);
     }
 
     void addRawProduct(const ProductID& product_id,
@@ -156,15 +111,6 @@ struct ProductCacheImpl {
         m_lock.wrlock();
         m_map[product_id.m_key] = std::move(data);
         m_lock.unlock();
-        //spdlog::trace("[cache] Added product {} to cache",
-        //              product_id.toJSON());
-    }
-
-    void addRawProduct(const ItemDescriptor& id,
-                       const std::string& productName,
-                       std::string&& data) {
-        auto product_id = DataStoreImpl::buildProductID(id, productName);
-        addRawProduct(product_id, std::move(data));
     }
 
     void removeRawProduct(const ProductID& product_id) {
@@ -172,14 +118,6 @@ struct ProductCacheImpl {
         m_map.erase(product_id.m_key);
         m_not_found.erase(product_id.m_key);
         m_lock.unlock();
-        //spdlog::trace("[cache] Removed product {} from cache",
-        //              product_id.toJSON());
-    }
-
-    void removeRawProduct(const ItemDescriptor& id,
-                          const std::string& productName) {
-        auto product_id = DataStoreImpl::buildProductID(id, productName);
-        removeRawProduct(product_id);
     }
 };
 

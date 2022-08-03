@@ -139,7 +139,7 @@ class Prefetcher {
      */
     template<typename V>
     void fetchProduct(const std::string& label, bool fetch=true) const {
-        fetchProductImpl(label + "#" + demangle<V>(), fetch);
+        fetchProductImpl(label, demangle<V>(), fetch);
     }
 
     /**
@@ -160,7 +160,7 @@ class Prefetcher {
 
     std::shared_ptr<PrefetcherImpl> m_impl;
 
-    void fetchProductImpl(const std::string& labelAndType, bool fetch) const;
+    void fetchProductImpl(const std::string& label, const std::string& type, bool fetch) const;
 
 };
 

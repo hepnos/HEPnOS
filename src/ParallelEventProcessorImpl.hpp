@@ -10,6 +10,7 @@
 #include <queue>
 #include <thallium.hpp>
 #include <spdlog/spdlog.h>
+#include "ProductKey.hpp"
 #include "PrefetcherImpl.hpp"
 #include "ProductCacheImpl.hpp"
 #include "hepnos/EventSet.hpp"
@@ -40,7 +41,7 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
     ParallelEventProcessorOptions     m_options;
     std::vector<int>                  m_loader_ranks;
     std::vector<int>                  m_targets;
-    std::unordered_set<std::string>   m_product_keys;
+    std::unordered_set<ProductKey, ProductKey::hash> m_product_keys;
 
     tl::remote_procedure              m_req_events_rpc_rdma;
     tl::remote_procedure              m_req_events_rpc_no_rdma;
@@ -334,7 +335,7 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
 
         size_t pks = 0;
         for(const auto& product_key : m_product_keys)
-            pks += product_key.size() + sizeof(EventDescriptor);
+            pks += sizeof(EventDescriptor) + product_key.label.size() + 1 + product_key.type.size();
 
         // buffer for packed product ids
         std::string packed_product_ids;
@@ -355,7 +356,7 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
         long current_db_idx = -1;
         for(const auto& descriptor : descriptors) {
             // build a fake product id to get the db_index
-            auto fake_product_id = DataStoreImpl::buildProductID(descriptor, "");
+            auto fake_product_id = DataStoreImpl::makeProductIDprefix(descriptor);
             auto db_idx = m_datastore->computeProductDbIndex(fake_product_id);
 
             // if the db_idx changed, we need to flush the current batch
@@ -424,7 +425,9 @@ struct ParallelEventProcessorImpl : public tl::provider<ParallelEventProcessorIm
 
             // go through all actual product keys
             for(const auto& product_key : m_product_keys) {
-                auto product_id = DataStoreImpl::buildProductID(descriptor, product_key);
+                auto product_id = DataStoreImpl::makeProductID(
+                        descriptor, product_key.label.c_str(), product_key.label.size(),
+                        product_key.type.c_str(), product_key.type.size());
                 product_ids.push_back(product_id);
                 auto key_size = product_id.m_key.size();
                 packed_product_ids.resize(offset + key_size);
