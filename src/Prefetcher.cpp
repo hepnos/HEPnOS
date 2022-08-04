@@ -66,4 +66,20 @@ void Prefetcher::collectStatistics(PrefetcherStatistics& stats) const {
     m_impl->collectStatistics(stats);
 }
 
+ProductID Prefetcher::storeRawData(const ProductID& key, const char* value, size_t vsize) {
+    return m_impl->m_datastore->storeRawProduct(key, value, vsize);
+}
+
+bool Prefetcher::loadRawData(const ProductID& key, std::string& buffer) const {
+    return m_impl->loadRawProduct(key, buffer);
+}
+
+bool Prefetcher::loadRawData(const ProductID& key, char* value, size_t* vsize) const {
+    return m_impl->loadRawProduct(key, value, vsize);
+}
+
+bool Prefetcher::valid() const {
+    return static_cast<bool>(m_impl);
+}
+
 }

@@ -7,9 +7,11 @@
 #define __HEPNOS_PRODUCT_CACHE_HPP
 
 #include <memory>
+#include <hepnos/RawStorage.hpp>
 
 namespace hepnos {
 
+class DataStore;
 class Event;
 class SubRun;
 class Run;
@@ -23,7 +25,7 @@ struct AsyncPrefetcherImpl;
  * @brief The ProductCache is used in ParallelEventProcessor to
  * cache products associated with events.
  */
-class ProductCache {
+class ProductCache : public RawStorage {
 
     friend class DataSet;
     friend class Run;
@@ -37,7 +39,7 @@ class ProductCache {
 
     public:
 
-    ProductCache();
+    ProductCache(const DataStore& ds);
 
     ~ProductCache();
 
@@ -52,6 +54,24 @@ class ProductCache {
     void clear();
 
     size_t size() const;
+
+    bool valid() const override;
+
+    protected:
+    /**
+     * @see RawStorage::storeRawData
+     */
+    ProductID storeRawData(const ProductID& key, const char* value, size_t vsize) override;
+
+    /**
+     * @see RawStorage::loadRawData
+     */
+    bool loadRawData(const ProductID& key, std::string& buffer) const override;
+
+    /**
+     * @see RawStorage::loadRawData
+     */
+    bool loadRawData(const ProductID& key, char* value, size_t* vsize) const override;
 };
 
 }

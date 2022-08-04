@@ -18,9 +18,13 @@ namespace tl = thallium;
 struct ProductCacheImpl {
 
     mutable tl::rwlock                           m_lock;
+    std::shared_ptr<DataStoreImpl>               m_datastore;
     std::unordered_map<std::string, std::string> m_map;
     std::unordered_set<std::string>              m_not_found;
     bool                                         m_erase_on_load = false;
+
+    ProductCacheImpl(std::shared_ptr<DataStoreImpl> ds)
+    : m_datastore(std::move(ds)) {}
 
     bool loadRawProduct(const ProductID& product_id, std::string& data) {
         if(!m_erase_on_load) m_lock.rdlock();
@@ -46,8 +50,6 @@ struct ProductCacheImpl {
             }
         }
         m_lock.unlock();
-        //spdlog::trace("[cache] Loading product {} from cache => {}",
-        //              product_id.toJSON(), found ? "found" : "not found");
         return found;
     }
 

@@ -12,8 +12,8 @@ namespace hepnos {
 
 namespace tl = thallium;
 
-ProductCache::ProductCache()
-: m_impl(std::make_shared<ProductCacheImpl>()) {}
+ProductCache::ProductCache(const DataStore& ds)
+: m_impl(std::make_shared<ProductCacheImpl>(ds.m_impl)) {}
 
 ProductCache::~ProductCache() = default;
 
@@ -38,6 +38,22 @@ size_t ProductCache::size() const {
     size_t s = impl.m_map.size();
     impl.m_lock.unlock();
     return s;
+}
+
+ProductID ProductCache::storeRawData(const ProductID& key, const char* value, size_t vsize) {
+    return m_impl->m_datastore->storeRawProduct(key, value, vsize);
+}
+
+bool ProductCache::loadRawData(const ProductID& key, std::string& buffer) const {
+    return m_impl->loadRawProduct(key, buffer);
+}
+
+bool ProductCache::loadRawData(const ProductID& key, char* value, size_t* vsize) const {
+    return m_impl->loadRawProduct(key, value, vsize);
+}
+
+bool ProductCache::valid() const {
+    return static_cast<bool>(m_impl);
 }
 
 }

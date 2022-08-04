@@ -35,7 +35,8 @@ class PrefetcherImpl {
     mutable ProductCache m_product_cache;
 
     PrefetcherImpl(const std::shared_ptr<DataStoreImpl>& ds)
-    : m_datastore(ds) {}
+    : m_datastore(ds)
+    , m_product_cache(DataStore(ds)) {}
 
     virtual ~PrefetcherImpl() = default;
 

@@ -32,6 +32,9 @@ class AsyncEngine;
 class ParallelEventProcessor;
 class ParallelEventProcessorImpl;
 class Prefetcher;
+class PrefetcherImpl;
+class ProductCache;
+class ProductCacheImpl;
 class KeyValueContainer;
 
 /**
@@ -53,7 +56,10 @@ class DataStore : public RawStorage {
     friend class ParallelEventProcessor;
     friend class ParallelEventProcessorImpl;
     friend class Prefetcher;
+    friend class PrefetcherImpl;
     friend class KeyValueContainer;
+    friend class ProductCache;
+    friend class ProductCacheImpl;
 
     public:
 

@@ -10,6 +10,7 @@
 #include <hepnos/Demangle.hpp>
 #include <hepnos/Prefetchable.hpp>
 #include <hepnos/Statistics.hpp>
+#include <hepnos/RawStorage.hpp>
 
 namespace hepnos {
 
@@ -33,7 +34,7 @@ struct PrefetcherStatistics {
  * @brief The Prefetcher object will actively try to prefetch
  * items from the underlying DataStore when using iterators.
  */
-class Prefetcher {
+class Prefetcher : public RawStorage {
 
     friend class RunSet;
     friend class EventSet;
@@ -155,6 +156,25 @@ class Prefetcher {
      * @param stats PrefetcherStatistics object to fill.
      */
     void collectStatistics(PrefetcherStatistics& stats) const;
+
+    bool valid() const override;
+
+    protected:
+
+    /**
+     * @see RawStorage::storeRawData
+     */
+    ProductID storeRawData(const ProductID& key, const char* value, size_t vsize) override;
+
+    /**
+     * @see RawStorage::loadRawData
+     */
+    bool loadRawData(const ProductID& key, std::string& buffer) const override;
+
+    /**
+     * @see RawStorage::loadRawData
+     */
+    bool loadRawData(const ProductID& key, char* value, size_t* vsize) const override;
 
     private:
 
