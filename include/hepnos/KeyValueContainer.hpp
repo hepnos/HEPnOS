@@ -115,8 +115,8 @@ class KeyValueContainer {
      *
      * @return a valid ProductID.
      */
-    template<typename L, typename V, typename Target>
-    ProductID store(Target& target, const L& label, const V& value,
+    template<typename L, typename V>
+    ProductID store(RawStorage& target, const L& label, const V& value,
                     StoreStatistics* stats = nullptr) {
         return storeImpl(target, label, value, std::is_pod<std::remove_reference_t<V>>(), stats);
     }
@@ -134,15 +134,16 @@ class KeyValueContainer {
     /**
      * @brief Version of store when the value is an std::vector.
      */
-    template<typename L, typename V, typename Target>
-    ProductID store(Target& target, const L& label, const std::vector<V>& value, int start=0, int end=-1,
+    template<typename L, typename V>
+    ProductID store(RawStorage& target, const L& label, const std::vector<V>& value, int start=0, int end=-1,
                     StoreStatistics* stats = nullptr) {
         auto t1 = wtime();
         auto key = makeKey(label, value);
         std::string val_str;
         serializeValueVector(std::is_pod<std::remove_reference_t<V>>(), value, val_str, start, end);
         auto t2 = wtime();
-        auto result = storeRawData(target, key, val_str.data(), val_str.size());
+        auto result = target.valid() ? target.storeRawData(key, val_str.data(), val_str.size())
+                                     : datastore().storeRawData(key, val_str.data(), val_str.size());
         auto t3 = wtime();
         if(stats) {
             stats->serialization_time.updateWith(t2-t1);
@@ -226,53 +227,6 @@ class KeyValueContainer {
      */
     virtual ProductID makeProductID(const char* label, size_t label_size,
                                     const char* type, size_t type_size) const = 0;
-
-    /**
-     * @brief Stores raw key/value data in this KeyValueContainer.
-     * This function is virtual and must be overloaded in the child class.
-     *
-     * @param datastore DataStore
-     * @param key Key
-     * @param value Value pointer
-     * @param vsize Value size (in bytes)
-     *
-     * @return A valid ProductID if the key did not already exist, an invalid one otherwise.
-     */
-    virtual ProductID storeRawData(DataStore& ds, const ProductID& key, const char* value, size_t vsize) = 0;
-
-    /**
-     * @brief Stores raw key/value data in a WriteBatch.
-     * This function is virtual and must be overloaded in the child class.
-     *
-     * Note since the WriteBatch is flushed later to the DataStore, the DataStore will
-     * not be able to check whether the product could be created or not. Hence the
-     * ProductID returned is valid but may not ultimately correspond to an actual
-     * Product in the DataStore, should the storage operation fail.
-     *
-     * @param batch Batch in which to write.
-     * @param key Key
-     * @param value Value pointer
-     * @param vsize Value size (in bytes)
-     *
-     * @return A valid ProductID.
-     */
-    virtual ProductID storeRawData(WriteBatch& batch, const ProductID& key, const char* value, size_t vsize) = 0;
-
-    /**
-     * @brief Stores binary data associated with a particular key using the AsyncEngine.
-     * Note since the AsyncEngine makes the operation happen later in the background,
-     * the DataStore will not be able to check whether the product could be created or not.
-     * Hence the ProductID returned is valid but may not ultimately correspond to an actual
-     * Product in the DataStore, should the storage operation fail.
-     *
-     * @param engine AsyncEngine to use to write asynchronously.
-     * @param key Key.
-     * @param value Binary data to write.
-     * @param vsize Size of the data (in bytes).
-     *
-     * @return a valid ProductID.
-     */
-    virtual ProductID storeRawData(AsyncEngine& async, const ProductID& key, const char* value, size_t vsize) = 0;
 
     /**
      * @brief Loads raw key/value data from this KeyValueContainer.
@@ -364,15 +318,16 @@ class KeyValueContainer {
      * @brief Implementation of the store function with WriteBatch
      * and the value type is not am std::vector and not a POD.
      */
-    template<typename L, typename V, typename Target>
-    ProductID storeImpl(Target& target, const L& label, const V& value,
+    template<typename L, typename V>
+    ProductID storeImpl(RawStorage& target, const L& label, const V& value,
             const std::integral_constant<bool, false>&, StoreStatistics* stats) {
         auto t1 = wtime();
         auto key = makeKey(label, value);
         std::string val_str;
         serializeValue(value, val_str);
         auto t2 = wtime();
-        auto result = storeRawData(target, key, val_str.data(), val_str.size());
+        auto result = target.valid() ? target.storeRawData(key, val_str.data(), val_str.size())
+                                     : datastore().storeRawData(key, val_str.data(), val_str.size());
         auto t3 = wtime();
         if(stats) {
             stats->serialization_time.updateWith(t2-t1);
@@ -385,13 +340,14 @@ class KeyValueContainer {
      * @brief Implementation of the store function with WriteBatch
      * when the value type is a POD.
      */
-    template<typename L, typename V, typename Target>
-    ProductID storeImpl(Target& target, const L& label, const V& value,
+    template<typename L, typename V>
+    ProductID storeImpl(RawStorage& target, const L& label, const V& value,
             const std::integral_constant<bool, true>&, StoreStatistics* stats) {
         auto t1 = wtime();
         auto key = makeKey(label, value);
         auto t2 = wtime();
-        auto result = storeRawData(target, key, reinterpret_cast<const char*>(&value), sizeof(value));
+        auto result = target.valid() ? target.storeRawData(key, reinterpret_cast<const char*>(&value), sizeof(value))
+                                     : datastore().storeRawData(key, reinterpret_cast<const char*>(&value), sizeof(value));
         auto t3 = wtime();
         if(stats) {
             stats->serialization_time.updateWith(t2-t1);

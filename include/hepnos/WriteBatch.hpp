@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 
+#include <hepnos/RawStorage.hpp>
 #include <hepnos/KeyValueContainer.hpp>
 #include <hepnos/ProductID.hpp>
 #include <hepnos/DataStore.hpp>
@@ -38,7 +39,7 @@ struct WriteBatchStatistics {
  * operations such as creating Runs, SubRuns, and Events,
  * as well as storing products into the underlying DataStore.
  */
-class WriteBatch {
+class WriteBatch : public RawStorage {
 
     friend class DataStore;
     friend class DataSet;
@@ -127,6 +128,26 @@ class WriteBatch {
      * @param stats WriteBatchStatistics object to fill.
      */
     void collectStatistics(WriteBatchStatistics& stats) const;
+
+    bool valid() const override;
+
+    protected:
+
+    /**
+     * @see RawStorage::storeRawData
+     */
+    ProductID storeRawData(const ProductID& key, const char* value, size_t vsize) override;
+
+    /**
+     * @see RawStorage::loadRawData
+     */
+    bool loadRawData(const ProductID& key, std::string& buffer) const override;
+
+    /**
+     * @see RawStorage::loadRawData
+     */
+    bool loadRawData(const ProductID& key, char* value, size_t* vsize) const override;
+
 };
 
 }

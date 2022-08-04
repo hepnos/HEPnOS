@@ -51,14 +51,21 @@ void DataStore::shutdown() {
     }
 }
 
-bool DataStore::loadRawProduct(const ProductID& productID, std::string& buffer) {
+ProductID DataStore::storeRawData(const ProductID& productID, const char* value, size_t vsize) {
+    if(!m_impl) {
+        throw Exception("Calling DataStore member function on an invalid DataStore object");
+    }
+    return m_impl->storeRawProduct(productID, value, vsize);
+}
+
+bool DataStore::loadRawData(const ProductID& productID, std::string& buffer) const {
     if(!m_impl) {
         throw Exception("Calling DataStore member function on an invalid DataStore object");
     }
     return m_impl->loadRawProduct(productID, buffer);
 }
 
-bool DataStore::loadRawProduct(const ProductID& productID, char* data, size_t* size) {
+bool DataStore::loadRawData(const ProductID& productID, char* data, size_t* size) const {
     if(!m_impl) {
         throw Exception("Calling DataStore member function on an invalid DataStore object");
     }

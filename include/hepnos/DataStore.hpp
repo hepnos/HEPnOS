@@ -11,6 +11,7 @@
 #include <sstream>
 #include <memory>
 #include <hepnos/ItemType.hpp>
+#include <hepnos/RawStorage.hpp>
 
 namespace hepnos {
 
@@ -31,12 +32,13 @@ class AsyncEngine;
 class ParallelEventProcessor;
 class ParallelEventProcessorImpl;
 class Prefetcher;
+class KeyValueContainer;
 
 /**
  * The DataStore class is the main handle referencing an HEPnOS service.
  * It provides functionalities to navigate DataSets.
  */
-class DataStore {
+class DataStore : public RawStorage {
 
     friend class ProductID;
     friend class DataSet;
@@ -51,6 +53,7 @@ class DataStore {
     friend class ParallelEventProcessor;
     friend class ParallelEventProcessorImpl;
     friend class Prefetcher;
+    friend class KeyValueContainer;
 
     public:
 
@@ -192,6 +195,11 @@ class DataStore {
     DataStore(const std::shared_ptr<DataStoreImpl>& impl);
 
     /**
+     * @see RawStorage::storeRawData
+     */
+    ProductID storeRawData(const ProductID& productID, const char* value, size_t vsize);
+
+    /**
      * @brief Loads the raw data corresponding to a product.
      *
      * @param productID Product id.
@@ -199,7 +207,7 @@ class DataStore {
      *
      * @return true if the data was loaded successfuly, false otherwise.
      */
-    bool loadRawProduct(const ProductID& productID, std::string& buffer);
+    bool loadRawData(const ProductID& productID, std::string& buffer) const;
 
     /**
      * @brief Loads the raw data corresponding to a product into a buffer.
@@ -210,7 +218,7 @@ class DataStore {
      *
      * @return true if the data was loaded successfuly, false otherwise.
      */
-    bool loadRawProduct(const ProductID& productID, char* value, size_t* value_size);
+    bool loadRawData(const ProductID& productID, char* value, size_t* value_size) const;
 
     /**
      * @brief Loads the raw data of a product directly into the product itself,
@@ -299,12 +307,13 @@ bool DataStore::loadProduct(const ProductID& productID, std::vector<T>& t) {
 template<typename T>
 bool DataStore::loadProductImpl(const ProductID& productID, T& t, const std::integral_constant<bool, false>&) {
     std::string buffer;
-    if(!loadRawProduct(productID, buffer)) {
+    if(!loadRawData(productID, buffer)) {
         return false;
     }
-    std::stringstream ss(buffer);
-    InputArchive ia(*this, ss);
     try {
+        InputStringWrapper value_wrapper(buffer.data(), buffer.size());
+        InputStream value_stream(value_wrapper);
+        InputArchive ia(*this, value_stream);
         ia >> t;
     } catch(const std::exception& e) {
         throw Exception(std::string("Exception occured during serialization: ") + e.what());
@@ -315,7 +324,7 @@ bool DataStore::loadProductImpl(const ProductID& productID, T& t, const std::int
 template<typename T>
 bool DataStore::loadProductImpl(const ProductID& productID, T& t, const std::integral_constant<bool, true>&) {
     size_t value_size = sizeof(t);
-    if(loadRawProduct(productID, reinterpret_cast<char*>(&t), &value_size)) {
+    if(loadRawData(productID, reinterpret_cast<char*>(&t), &value_size)) {
         return value_size == sizeof(t);
     } else {
         return false;
@@ -325,12 +334,13 @@ bool DataStore::loadProductImpl(const ProductID& productID, T& t, const std::int
 template<typename T>
 bool DataStore::loadProductImpl(const ProductID& productID, std::vector<T>& t, const std::integral_constant<bool, false>&) {
     std::string buffer;
-    if(!loadRawProduct(productID, buffer)) {
+    if(!loadRawData(productID, buffer)) {
         return false;
     }
-    std::stringstream ss(buffer);
-    InputArchive ia(*this, ss);
     try {
+        InputStringWrapper value_wrapper(buffer.data(), buffer.size());
+        InputStream value_stream(value_wrapper);
+        InputArchive ia(*this, value_stream);
         size_t count = 0;
         ia >> count;
         t.resize(count);
@@ -346,7 +356,7 @@ bool DataStore::loadProductImpl(const ProductID& productID, std::vector<T>& t, c
 template<typename T>
 bool DataStore::loadProductImpl(const ProductID& productID, std::vector<T>& t, const std::integral_constant<bool, true>&) {
     std::string buffer;
-    if(!loadRawProduct(productID, buffer)) {
+    if(!loadRawData(productID, buffer)) {
         return false;
     }
     size_t count = 0;

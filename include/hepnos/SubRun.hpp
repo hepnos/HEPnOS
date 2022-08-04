@@ -403,21 +403,6 @@ class SubRun : public KeyValueContainer {
                             const char* type, size_t type_size) const override;
 
     /**
-     * @see KeyValueContainer::storeRawData()
-     */
-    ProductID storeRawData(DataStore& ds, const ProductID& key, const char* value, size_t vsize) override;
-
-    /**
-     * @see KeyValueContainer::storeRawData()
-     */
-    ProductID storeRawData(WriteBatch& batch, const ProductID& key, const char* value, size_t vsize) override;
-
-    /**
-     * @see KeyValueContainer::storeRawData()
-     */
-    ProductID storeRawData(AsyncEngine& async, const ProductID& key, const char* value, size_t vsize) override;
-
-    /**
      * @brief KeyValueContainer::loadRawData()
      */
     bool loadRawData(const DataStore& ds, const ProductID& key, std::string& buffer) const override;

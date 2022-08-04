@@ -87,37 +87,6 @@ ProductID DataSet::makeProductID(const char* label, size_t label_size,
     return DataStoreImpl::makeProductID(id, label, label_size, type, type_size);
 }
 
-ProductID DataSet::storeRawData(DataStore& ds, const ProductID& key, const char* value, size_t vsize) {
-    if(!valid()) {
-        throw Exception("Calling DataSet member function on an invalid DataSet");
-    }
-    // forward the call to the datastore's store function
-    return ds.m_impl->storeRawProduct(key, value, vsize);
-}
-
-ProductID DataSet::storeRawData(WriteBatch& batch, const ProductID& key, const char* value, size_t vsize) {
-    if(!valid()) {
-        throw Exception("Calling DataSet member function on an invalid DataSet");
-    }
-    // forward the call to the datastore's store function
-    ItemDescriptor id(m_impl->m_uuid);
-    if(batch.m_impl)
-        return batch.m_impl->storeRawProduct(key, value, vsize);
-    else
-        return m_impl->m_datastore->storeRawProduct(key, value, vsize);
-}
-
-ProductID DataSet::storeRawData(AsyncEngine& async, const ProductID& key, const char* value, size_t vsize) {
-    if(!valid()) {
-        throw Exception("Calling DataSet member function on an invalid DataSet");
-    }
-    // forward the call to the async engine's store function
-    if(async.m_impl)
-        return async.m_impl->storeRawProduct(key, value, vsize);
-    else
-        return m_impl->m_datastore->storeRawProduct(key, value, vsize);
-}
-
 bool DataSet::loadRawData(const DataStore& ds, const ProductID& key, std::string& buffer) const {
     if(!valid()) {
         throw Exception("Calling DataSet member function on an invalid DataSet");

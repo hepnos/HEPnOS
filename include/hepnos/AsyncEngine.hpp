@@ -8,6 +8,7 @@
 
 #include <memory>
 #include <vector>
+#include <hepnos/RawStorage.hpp>
 
 namespace hepnos {
 
@@ -34,7 +35,7 @@ class ParallelEventProcessorImpl;
  * Mercury's non-blocking functions, but the rest of the processing
  * will happen synchronously.
  */
-class AsyncEngine {
+class AsyncEngine : public RawStorage {
 
     friend class DataStore;
     friend class DataSet;
@@ -129,6 +130,24 @@ class AsyncEngine {
      * @return a vector of ranks.
      */
     std::vector<int> getXstreamRanks() const;
+
+    bool valid() const override;
+
+    protected:
+    /**
+     * @see RawStorage::storeRawData
+     */
+    ProductID storeRawData(const ProductID& key, const char* value, size_t vsize) override;
+
+    /**
+     * @see RawStorage::loadRawData
+     */
+    bool loadRawData(const ProductID& key, std::string& buffer) const override;
+
+    /**
+     * @see RawStorage::loadRawData
+     */
+    bool loadRawData(const ProductID& key, char* value, size_t* vsize) const override;
 };
 
 }

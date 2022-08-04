@@ -49,6 +49,22 @@ void WriteBatch::collectStatistics(WriteBatchStatistics& stats) const {
         m_impl->collectStatistics(stats);
 }
 
+ProductID WriteBatch::storeRawData(const ProductID& key, const char* value, size_t vsize) {
+    return m_impl->storeRawProduct(key, value, vsize);
+}
+
+bool WriteBatch::loadRawData(const ProductID& key, std::string& buffer) const {
+    return m_impl->m_datastore->loadRawProduct(key, buffer);
+}
+
+bool WriteBatch::loadRawData(const ProductID& key, char* value, size_t* vsize) const {
+    return m_impl->m_datastore->loadRawProduct(key, value, vsize);
+}
+
+bool WriteBatch::valid() const {
+    return static_cast<bool>(m_impl);
+}
+
 }
 
 std::ostream& operator<<(std::ostream& os, const hepnos::WriteBatchStatistics& stats)
