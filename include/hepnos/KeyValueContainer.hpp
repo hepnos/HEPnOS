@@ -98,52 +98,26 @@ class KeyValueContainer {
     }
 
     /**
-     * @brief Stores a key/value pair into the WriteBatch.
-     * The type of the key should have operator<< available
-     * to stream it into a std::stringstream for the purpose
-     * of converting it into an std::string. The resulting
-     * string must not have the "/", or "%" characters. The
-     * type of the value must be serializable using Boost.
+     * @brief Stores a key/value pair into the Target
+     * (WriteBatch, AsyncEngine, etc.).
      *
-     * Note that since the WriteBatch will delay the operation,
+     * Note that since the Target may delay the operation,
      * the returned ProductID is valid even though the operation
      * may not ultimately succeed.
      *
      * @tparam L type of the label.
      * @tparam V type of the value.
+     * @tparam Target type of target.
+     * @param target Target (WriteBatch, AsyncEngine, etc.).
      * @param label Label to store.
      * @param value Value to store.
      *
      * @return a valid ProductID.
      */
-    template<typename L, typename V>
-    ProductID store(WriteBatch& batch, const L& label, const V& value,
+    template<typename L, typename V, typename Target>
+    ProductID store(Target& target, const L& label, const V& value,
                     StoreStatistics* stats = nullptr) {
-        return storeImpl(batch, label, value, std::is_pod<std::remove_reference_t<V>>(), stats);
-    }
-
-    /**
-     * @brief Stores a key/value pair into the WriteBatch.
-     * The type of the key should have operator<< available
-     * to stream it into a std::stringstream for the purpose
-     * of converting it into an std::string. The resulting
-     * string must not have the "/", or "%" characters. The
-     * type of the value must be serializable using Boost.
-     *
-     * Note that since the WriteBatch will delay the operation,
-     * the returned ProductID is valid even though the operation
-     * may not ultimately succeed.
-     *
-     * @tparam L type of the label.
-     * @tparam V type of the value.
-     * @param label Label to store.
-     * @param value Value to store.
-     *
-     * @return a valid ProductID.
-     */
-    template<typename L, typename V>
-    ProductID store(AsyncEngine& async, const L& label, const V& value, StoreStatistics* stats = nullptr) {
-        return storeImpl(async, label, value, std::is_pod<std::remove_reference_t<V>>(), stats);
+        return storeImpl(target, label, value, std::is_pod<std::remove_reference_t<V>>(), stats);
     }
 
     /**
@@ -169,35 +143,15 @@ class KeyValueContainer {
     /**
      * @brief Version of store when the value is an std::vector.
      */
-    template<typename L, typename V>
-    ProductID store(WriteBatch& batch, const L& label, const std::vector<V>& value, int start=0, int end=-1,
+    template<typename L, typename V, typename Target>
+    ProductID store(Target& target, const L& label, const std::vector<V>& value, int start=0, int end=-1,
                     StoreStatistics* stats = nullptr) {
         auto t1 = wtime();
         auto key = makeKey(label, value);
         std::string val_str;
         serializeValueVector(std::is_pod<std::remove_reference_t<V>>(), value, val_str, start, end);
         auto t2 = wtime();
-        auto result = storeRawData(batch, key, val_str.data(), val_str.size());
-        auto t3 = wtime();
-        if(stats) {
-            stats->serialization_time.updateWith(t2-t1);
-            stats->raw_storage_time.updateWith(t3-t2);
-        }
-        return result;
-    }
-
-    /**
-     * @brief Version of store when the value is an std::vector.
-     */
-    template<typename L, typename V>
-    ProductID store(AsyncEngine& async, const L& label, const std::vector<V>& value, int start=0, int end=-1,
-                    StoreStatistics* stats = nullptr) {
-        auto t1 = wtime();
-        auto key = makeKey(label, value);
-        std::string val_str;
-        serializeValueVector(std::is_pod<std::remove_reference_t<V>>(), value, val_str, start, end);
-        auto t2 = wtime();
-        auto result = storeRawData(async, key, val_str.data(), val_str.size());
+        auto result = storeRawData(target, key, val_str.data(), val_str.size());
         auto t3 = wtime();
         if(stats) {
             stats->serialization_time.updateWith(t2-t1);
@@ -454,36 +408,15 @@ class KeyValueContainer {
      * @brief Implementation of the store function with WriteBatch
      * and the value type is not am std::vector and not a POD.
      */
-    template<typename L, typename V>
-    ProductID storeImpl(WriteBatch& batch, const L& label, const V& value,
+    template<typename L, typename V, typename Target>
+    ProductID storeImpl(Target& target, const L& label, const V& value,
             const std::integral_constant<bool, false>&, StoreStatistics* stats) {
         auto t1 = wtime();
         auto key = makeKey(label, value);
         std::string val_str;
         serializeValue(value, val_str);
         auto t2 = wtime();
-        auto result = storeRawData(batch, key, val_str.data(), val_str.size());
-        auto t3 = wtime();
-        if(stats) {
-            stats->serialization_time.updateWith(t2-t1);
-            stats->raw_storage_time.updateWith(t3-t2);
-        }
-        return result;
-    }
-
-    /**
-     * @brief Implementation of the store function with AsyncEngine
-     * and the value type is not am std::vector and not a POD.
-     */
-    template<typename L, typename V>
-    ProductID storeImpl(AsyncEngine& async, const L& label, const V& value,
-            const std::integral_constant<bool, false>&, StoreStatistics* stats) {
-        auto t1 = wtime();
-        auto key = makeKey(label, value);
-        std::string val_str;
-        serializeValue(value, val_str);
-        auto t2 = wtime();
-        auto result = storeRawData(async, key, val_str.data(), val_str.size());
+        auto result = storeRawData(target, key, val_str.data(), val_str.size());
         auto t3 = wtime();
         if(stats) {
             stats->serialization_time.updateWith(t2-t1);
@@ -515,32 +448,13 @@ class KeyValueContainer {
      * @brief Implementation of the store function with WriteBatch
      * when the value type is a POD.
      */
-    template<typename L, typename V>
-    ProductID storeImpl(WriteBatch& batch, const L& label, const V& value,
+    template<typename L, typename V, typename Target>
+    ProductID storeImpl(Target& target, const L& label, const V& value,
             const std::integral_constant<bool, true>&, StoreStatistics* stats) {
         auto t1 = wtime();
         auto key = makeKey(label, value);
         auto t2 = wtime();
-        auto result = storeRawData(batch, key, reinterpret_cast<const char*>(&value), sizeof(value));
-        auto t3 = wtime();
-        if(stats) {
-            stats->serialization_time.updateWith(t2-t1);
-            stats->raw_storage_time.updateWith(t3-t2);
-        }
-        return result;
-    }
-
-    /**
-     * @brief Implementation of the store function with AsyncEngine
-     * when the value type is a POD.
-     */
-    template<typename L, typename V>
-    ProductID storeImpl(AsyncEngine& async, const L& label, const V& value,
-            const std::integral_constant<bool, true>&, StoreStatistics* stats) {
-        auto t1 = wtime();
-        auto key = makeKey(label, value);
-        auto t2 = wtime();
-        auto result = storeRawData(async, key, reinterpret_cast<const char*>(&value), sizeof(value));
+        auto result = storeRawData(target, key, reinterpret_cast<const char*>(&value), sizeof(value));
         auto t3 = wtime();
         if(stats) {
             stats->serialization_time.updateWith(t2-t1);
