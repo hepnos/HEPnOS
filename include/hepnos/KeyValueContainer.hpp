@@ -77,148 +77,6 @@ class KeyValueContainer {
     virtual DataStore datastore() const = 0;
 
     /**
-     * @brief Create the full product key for this container from the label
-     * and type name.
-     *
-     * @param label Label
-     * @param label_size Label size
-     * @param type Type name
-     * @param type_size Size of type name
-     *
-     * @return Full product key.
-     */
-    virtual ProductID makeProductID(const char* label, size_t label_size,
-                                    const char* type, size_t type_size) const = 0;
-
-    /**
-     * @brief Stores raw key/value data in this KeyValueContainer.
-     * This function is virtual and must be overloaded in the child class.
-     *
-     * @param key Key
-     * @param value Value pointer
-     * @param vsize Value size (in bytes)
-     *
-     * @return A valid ProductID if the key did not already exist, an invalid one otherwise.
-     */
-    virtual ProductID storeRawData(const ProductID& key, const char* value, size_t vsize) = 0;
-
-    /**
-     * @brief Stores raw key/value data in a WriteBatch.
-     * This function is virtual and must be overloaded in the child class.
-     *
-     * Note since the WriteBatch is flushed later to the DataStore, the DataStore will
-     * not be able to check whether the product could be created or not. Hence the
-     * ProductID returned is valid but may not ultimately correspond to an actual
-     * Product in the DataStore, should the storage operation fail.
-     *
-     * @param batch Batch in which to write.
-     * @param key Key
-     * @param value Value pointer
-     * @param vsize Value size (in bytes)
-     *
-     * @return A valid ProductID.
-     */
-    virtual ProductID storeRawData(WriteBatch& batch, const ProductID& key, const char* value, size_t vsize) = 0;
-
-    /**
-     * @brief Stores binary data associated with a particular key using the AsyncEngine.
-     * Note since the AsyncEngine makes the operation happen later in the background,
-     * the DataStore will not be able to check whether the product could be created or not.
-     * Hence the ProductID returned is valid but may not ultimately correspond to an actual
-     * Product in the DataStore, should the storage operation fail.
-     *
-     * @param engine AsyncEngine to use to write asynchronously.
-     * @param key Key.
-     * @param value Binary data to write.
-     * @param vsize Size of the data (in bytes).
-     *
-     * @return a valid ProductID.
-     */
-    virtual ProductID storeRawData(AsyncEngine& async, const ProductID& key, const char* value, size_t vsize) = 0;
-
-    /**
-     * @brief Loads raw key/value data from this KeyValueContainer.
-     * This function is virtual and must be overloaded in the child class.
-     *
-     * @param key Key
-     * @param buffer Buffer used to hold the value.
-     *
-     * @return true if the key exists, false otherwise.
-     */
-    virtual bool loadRawData(const ProductID& key, std::string& buffer) const = 0;
-
-    /**
-     * @brief Loads binary data associated with a particular key from the container.
-     * This function will return true if the key exists and the read succeeded.
-     * It will return false otherwise.
-     *
-     * @param key Key.
-     * @param value Buffer in which to put the binary data.
-     * @param vsize in: size of the buffer, out: actual size of the data.
-     *
-     * @return true if the key exists and the read succeeded, false otherwise.
-     */
-    virtual bool loadRawData(const ProductID& key, char* value, size_t* vsize) const = 0;
-
-    /**
-     * @brief Loads binary data associated with a particular key from the container.
-     * This function will look in the prefetcher if the object has been prefetched
-     * (or scheduled to be prefetched) and fall back to looking up in the underlying
-     * DataStore if it hasn't.
-     *
-     * @param prefetcher Prefetcher to look into first.
-     * @param key Key.
-     * @param buffer Buffer in which to put the binary data.
-     *
-     * @return true if the key exists and the read succeeded, false otherwise.
-     */
-    virtual bool loadRawData(const Prefetcher& prefetcher, const ProductID& key, std::string& buffer) const = 0;
-
-    /**
-     * @brief Loads binary data associated with a particular key from the container.
-     * This function will look in the prefetcher if the object has been prefetched
-     * (or scheduled to be prefetched) and fall back to looking up in the underlying
-     * DataStore if it hasn't.
-     *
-     * @param prefetcher Prefetcher to look into first.
-     * @param key Key.
-     * @param value Buffer in which to put the binary data.
-     * @param vsize in: size of the buffer, out: size of the actual data.
-     *
-     * @return true if the key exists and the read succeeded, false otherwise.
-     */
-    virtual bool loadRawData(const Prefetcher& prefetcher, const ProductID& key, char* value, size_t* vsize) const = 0;
-
-    /**
-     * @brief Loads binary data associated with a particular key from the container.
-     * This function will look in the product cache for the requested object.
-     * Note that contrary to the Prefetcher, this function will NOT fall back to looking
-     * up into the DataStore.
-     *
-     * @param cache ProductCache to look into first.
-     * @param key Key.
-     * @param buffer Buffer in which to put the binary data.
-     *
-     * @return true if the key exists and the read succeeded, false otherwise.
-     */
-    virtual bool loadRawData(const ProductCache& cache, const ProductID& key, std::string& buffer) const = 0;
-
-    /**
-     * @brief Loads binary data associated with a particular key from the container.
-     * This function will look in the product cache for the requested object.
-     * Note that contrary to the Prefetcher, this function will NOT fall back to looking
-     * up into the DataStore.
-     *
-     * @param cache ProductCache to look into first.
-     * @param key Key.
-     * @param value Buffer in which to put the binary data.
-     * @param vsize in: size of the buffer, out: size of the actual data.
-     *
-     * @return true if the key exists and the read succeeded, false otherwise.
-     */
-    virtual bool loadRawData(const ProductCache& cache, const ProductID& key, char* value, size_t* vsize) const = 0;
-
-    /**
      * @brief Stores a key/value pair into the KeyValueContainer.
      * The type of the key should have operator<< available
      * to stream it into a std::stringstream for the purpose
@@ -424,6 +282,150 @@ class KeyValueContainer {
      * @return List of product ids.
      */
     virtual std::vector<ProductID> listProducts(const std::string& label="") const = 0;
+
+    protected:
+
+    /**
+     * @brief Create the full product key for this container from the label
+     * and type name.
+     *
+     * @param label Label
+     * @param label_size Label size
+     * @param type Type name
+     * @param type_size Size of type name
+     *
+     * @return Full product key.
+     */
+    virtual ProductID makeProductID(const char* label, size_t label_size,
+                                    const char* type, size_t type_size) const = 0;
+
+    /**
+     * @brief Stores raw key/value data in this KeyValueContainer.
+     * This function is virtual and must be overloaded in the child class.
+     *
+     * @param key Key
+     * @param value Value pointer
+     * @param vsize Value size (in bytes)
+     *
+     * @return A valid ProductID if the key did not already exist, an invalid one otherwise.
+     */
+    virtual ProductID storeRawData(const ProductID& key, const char* value, size_t vsize) = 0;
+
+    /**
+     * @brief Stores raw key/value data in a WriteBatch.
+     * This function is virtual and must be overloaded in the child class.
+     *
+     * Note since the WriteBatch is flushed later to the DataStore, the DataStore will
+     * not be able to check whether the product could be created or not. Hence the
+     * ProductID returned is valid but may not ultimately correspond to an actual
+     * Product in the DataStore, should the storage operation fail.
+     *
+     * @param batch Batch in which to write.
+     * @param key Key
+     * @param value Value pointer
+     * @param vsize Value size (in bytes)
+     *
+     * @return A valid ProductID.
+     */
+    virtual ProductID storeRawData(WriteBatch& batch, const ProductID& key, const char* value, size_t vsize) = 0;
+
+    /**
+     * @brief Stores binary data associated with a particular key using the AsyncEngine.
+     * Note since the AsyncEngine makes the operation happen later in the background,
+     * the DataStore will not be able to check whether the product could be created or not.
+     * Hence the ProductID returned is valid but may not ultimately correspond to an actual
+     * Product in the DataStore, should the storage operation fail.
+     *
+     * @param engine AsyncEngine to use to write asynchronously.
+     * @param key Key.
+     * @param value Binary data to write.
+     * @param vsize Size of the data (in bytes).
+     *
+     * @return a valid ProductID.
+     */
+    virtual ProductID storeRawData(AsyncEngine& async, const ProductID& key, const char* value, size_t vsize) = 0;
+
+    /**
+     * @brief Loads raw key/value data from this KeyValueContainer.
+     * This function is virtual and must be overloaded in the child class.
+     *
+     * @param key Key
+     * @param buffer Buffer used to hold the value.
+     *
+     * @return true if the key exists, false otherwise.
+     */
+    virtual bool loadRawData(const ProductID& key, std::string& buffer) const = 0;
+
+    /**
+     * @brief Loads binary data associated with a particular key from the container.
+     * This function will return true if the key exists and the read succeeded.
+     * It will return false otherwise.
+     *
+     * @param key Key.
+     * @param value Buffer in which to put the binary data.
+     * @param vsize in: size of the buffer, out: actual size of the data.
+     *
+     * @return true if the key exists and the read succeeded, false otherwise.
+     */
+    virtual bool loadRawData(const ProductID& key, char* value, size_t* vsize) const = 0;
+
+    /**
+     * @brief Loads binary data associated with a particular key from the container.
+     * This function will look in the prefetcher if the object has been prefetched
+     * (or scheduled to be prefetched) and fall back to looking up in the underlying
+     * DataStore if it hasn't.
+     *
+     * @param prefetcher Prefetcher to look into first.
+     * @param key Key.
+     * @param buffer Buffer in which to put the binary data.
+     *
+     * @return true if the key exists and the read succeeded, false otherwise.
+     */
+    virtual bool loadRawData(const Prefetcher& prefetcher, const ProductID& key, std::string& buffer) const = 0;
+
+    /**
+     * @brief Loads binary data associated with a particular key from the container.
+     * This function will look in the prefetcher if the object has been prefetched
+     * (or scheduled to be prefetched) and fall back to looking up in the underlying
+     * DataStore if it hasn't.
+     *
+     * @param prefetcher Prefetcher to look into first.
+     * @param key Key.
+     * @param value Buffer in which to put the binary data.
+     * @param vsize in: size of the buffer, out: size of the actual data.
+     *
+     * @return true if the key exists and the read succeeded, false otherwise.
+     */
+    virtual bool loadRawData(const Prefetcher& prefetcher, const ProductID& key, char* value, size_t* vsize) const = 0;
+
+    /**
+     * @brief Loads binary data associated with a particular key from the container.
+     * This function will look in the product cache for the requested object.
+     * Note that contrary to the Prefetcher, this function will NOT fall back to looking
+     * up into the DataStore.
+     *
+     * @param cache ProductCache to look into first.
+     * @param key Key.
+     * @param buffer Buffer in which to put the binary data.
+     *
+     * @return true if the key exists and the read succeeded, false otherwise.
+     */
+    virtual bool loadRawData(const ProductCache& cache, const ProductID& key, std::string& buffer) const = 0;
+
+    /**
+     * @brief Loads binary data associated with a particular key from the container.
+     * This function will look in the product cache for the requested object.
+     * Note that contrary to the Prefetcher, this function will NOT fall back to looking
+     * up into the DataStore.
+     *
+     * @param cache ProductCache to look into first.
+     * @param key Key.
+     * @param value Buffer in which to put the binary data.
+     * @param vsize in: size of the buffer, out: size of the actual data.
+     *
+     * @return true if the key exists and the read succeeded, false otherwise.
+     */
+    virtual bool loadRawData(const ProductCache& cache, const ProductID& key, char* value, size_t* vsize) const = 0;
 
     private:
 

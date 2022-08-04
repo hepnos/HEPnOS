@@ -108,57 +108,6 @@ class Run : public KeyValueContainer {
     bool valid() const;
 
     /**
-     * @see KeyValueContainer::makeProductID
-     */
-    ProductID makeProductID(const char* label, size_t label_size,
-                            const char* type, size_t type_size) const override;
-
-    /**
-     * @see KeyValueContainer::storeRawData()
-     */
-    ProductID storeRawData(const ProductID& key, const char* value, size_t vsize) override;
-
-    /**
-     * @see KeyValueContainer::storeRawData()
-     */
-    ProductID storeRawData(AsyncEngine& async, const ProductID& key, const char* value, size_t vsize) override;
-
-    /**
-     * @see KeyValueContainer::storeRawData()
-     */
-    ProductID storeRawData(WriteBatch& batch, const ProductID& key, const char* value, size_t vsize) override;
-
-    /**
-     * @see KeyValueContainer::loadRawData()
-     */
-    bool loadRawData(const ProductID& key, std::string& buffer) const override;
-
-    /**
-     * @see KeyValueContainer::loadRawData()
-     */
-    bool loadRawData(const ProductID& key, char* value, size_t* vsize) const override;
-
-    /**
-     * @see KeyValueContainer::loadRawData()
-     */
-    bool loadRawData(const Prefetcher& prefetcher, const ProductID& key, std::string& buffer) const override;
-
-    /**
-     * @see KeyValueContainer::loadRawData()
-     */
-    bool loadRawData(const Prefetcher& prefetcher, const ProductID& key, char* value, size_t* vsize) const override;
-
-    /**
-     * @see KeyValueContainer::loadRawData()
-     */
-    bool loadRawData(const ProductCache& cache, const ProductID& key, std::string& buffer) const override;
-
-    /**
-     * @see KeyValueContainer::loadRawData()
-     */
-    bool loadRawData(const ProductCache& cache, const ProductID& key, char* value, size_t* vsize) const override;
-
-    /**
      * @see KeyValueContainer::listProducts()
      */
     std::vector<ProductID> listProducts(const std::string& label="") const;
@@ -464,6 +413,60 @@ class Run : public KeyValueContainer {
      * @return A Run object.
      */
     static Run fromDescriptor(const DataStore& ds, const RunDescriptor& descriptor, bool validate=true);
+
+    protected:
+
+    /**
+     * @see KeyValueContainer::makeProductID
+     */
+    ProductID makeProductID(const char* label, size_t label_size,
+                            const char* type, size_t type_size) const override;
+
+    /**
+     * @see KeyValueContainer::storeRawData()
+     */
+    ProductID storeRawData(const ProductID& key, const char* value, size_t vsize) override;
+
+    /**
+     * @see KeyValueContainer::storeRawData()
+     */
+    ProductID storeRawData(AsyncEngine& async, const ProductID& key, const char* value, size_t vsize) override;
+
+    /**
+     * @see KeyValueContainer::storeRawData()
+     */
+    ProductID storeRawData(WriteBatch& batch, const ProductID& key, const char* value, size_t vsize) override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
+    bool loadRawData(const ProductID& key, std::string& buffer) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
+    bool loadRawData(const ProductID& key, char* value, size_t* vsize) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
+    bool loadRawData(const Prefetcher& prefetcher, const ProductID& key, std::string& buffer) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
+    bool loadRawData(const Prefetcher& prefetcher, const ProductID& key, char* value, size_t* vsize) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
+    bool loadRawData(const ProductCache& cache, const ProductID& key, std::string& buffer) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
+    bool loadRawData(const ProductCache& cache, const ProductID& key, char* value, size_t* vsize) const override;
+
 };
 
 class Run::const_iterator {

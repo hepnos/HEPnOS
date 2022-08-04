@@ -141,57 +141,6 @@ class DataSet : public KeyValueContainer {
     bool valid() const;
 
     /**
-     * @see KeyValueContainer::makeProductID
-     */
-    ProductID makeProductID(const char* label, size_t label_size,
-                            const char* type, size_t type_size) const override;
-
-    /**
-     * @see KeyValueContainer::storeRawData()
-     */
-    ProductID storeRawData(const ProductID& key, const char* value, size_t vsize) override;
-
-    /**
-     * @see KeyValueContainer::storeRawData()
-     */
-    ProductID storeRawData(WriteBatch& batch, const ProductID& key, const char* value, size_t vsize) override;
-
-    /**
-     * @see KeyValueContainer::storeRawData()
-     */
-    ProductID storeRawData(AsyncEngine& engine, const ProductID& key, const char* value, size_t vsize) override;
-
-    /**
-     * @see KeyValueContainer::loadRawData()
-     */
-    bool loadRawData(const ProductID& key, std::string& value) const override;
-
-    /**
-     * @see KeyValueContainer::loadRawData()
-     */
-    bool loadRawData(const ProductID& key, char* value, size_t* vsize) const override;
-
-    /**
-     * @see KeyValueContainer::loadRawData()
-     */
-    bool loadRawData(const Prefetcher& prefetcher, const ProductID& key, std::string& value) const override;
-
-    /**
-     * @see KeyValueContainer::loadRawData()
-     */
-    bool loadRawData(const Prefetcher& prefetcher, const ProductID& key, char* value, size_t* vsize) const override;
-
-    /**
-     * @see KeyValueContainer::loadRawData()
-     */
-    bool loadRawData(const ProductCache& cache, const ProductID& key, std::string& buffer) const override;
-
-    /**
-     * @see KeyValueContainer::loadRawData()
-     */
-    bool loadRawData(const ProductCache& cache, const ProductID& key, char* value, size_t* vsize) const override;
-
-    /**
      * @see KeyValueContainer::listProducts()
      */
     std::vector<ProductID> listProducts(const std::string& label="") const;
@@ -473,6 +422,60 @@ class DataSet : public KeyValueContainer {
                             std::string name,
                             std::string parent,
                             const UUID& uuid);
+
+    protected:
+
+    /**
+     * @see KeyValueContainer::makeProductID
+     */
+    ProductID makeProductID(const char* label, size_t label_size,
+                            const char* type, size_t type_size) const override;
+
+    /**
+     * @see KeyValueContainer::storeRawData()
+     */
+    ProductID storeRawData(const ProductID& key, const char* value, size_t vsize) override;
+
+    /**
+     * @see KeyValueContainer::storeRawData()
+     */
+    ProductID storeRawData(WriteBatch& batch, const ProductID& key, const char* value, size_t vsize) override;
+
+    /**
+     * @see KeyValueContainer::storeRawData()
+     */
+    ProductID storeRawData(AsyncEngine& engine, const ProductID& key, const char* value, size_t vsize) override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
+    bool loadRawData(const ProductID& key, std::string& value) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
+    bool loadRawData(const ProductID& key, char* value, size_t* vsize) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
+    bool loadRawData(const Prefetcher& prefetcher, const ProductID& key, std::string& value) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
+    bool loadRawData(const Prefetcher& prefetcher, const ProductID& key, char* value, size_t* vsize) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
+    bool loadRawData(const ProductCache& cache, const ProductID& key, std::string& buffer) const override;
+
+    /**
+     * @see KeyValueContainer::loadRawData()
+     */
+    bool loadRawData(const ProductCache& cache, const ProductID& key, char* value, size_t* vsize) const override;
+
 };
 
 class DataSet::const_iterator {
