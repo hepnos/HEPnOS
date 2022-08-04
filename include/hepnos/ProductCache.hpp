@@ -20,6 +20,7 @@ struct ProductCacheImpl;
 struct ParallelEventProcessorImpl;
 struct SyncPrefetcherImpl;
 struct AsyncPrefetcherImpl;
+class KeyValudContainer;
 
 /**
  * @brief The ProductCache is used in ParallelEventProcessor to
@@ -34,6 +35,7 @@ class ProductCache : public RawStorage {
     friend struct ParallelEventProcessorImpl;
     friend struct SyncPrefetcherImpl;
     friend struct AsyncPrefetcherImpl;
+    friend class KeyValueContainer;
 
     std::shared_ptr<ProductCacheImpl> m_impl;
 

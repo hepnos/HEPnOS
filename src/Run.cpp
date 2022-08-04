@@ -101,50 +101,6 @@ ProductID Run::makeProductID(const char* label, size_t label_size,
     return DataStoreImpl::makeProductID(id, label, label_size, type, type_size);
 }
 
-bool Run::loadRawData(const DataStore& ds, const ProductID& key, std::string& buffer) const {
-    if(!valid()) {
-        throw Exception("Calling Run member function on an invalid Run object");
-    }
-    // forward the call to the datastore's load function
-    return ds.m_impl->loadRawProduct(key, buffer);
-}
-
-bool Run::loadRawData(const DataStore& ds, const ProductID& key, char* value, size_t* vsize) const {
-    if(!valid()) {
-        throw Exception("Calling Run member function on an invalid Run");
-    }
-    // forward the call to the datastore's load function
-    return ds.m_impl->loadRawProduct(key, value, vsize);
-}
-
-bool Run::loadRawData(const Prefetcher& prefetcher, const ProductID& key, std::string& buffer) const {
-    if(!valid()) {
-        throw Exception("Calling Run member function on an invalid Run object");
-    }
-    return prefetcher.m_impl->loadRawProduct(key, buffer);
-}
-
-bool Run::loadRawData(const Prefetcher& prefetcher, const ProductID& key, char* value, size_t* vsize) const {
-    if(!valid()) {
-        throw Exception("Calling Run member function on an invalid Run");
-    }
-    return prefetcher.m_impl->loadRawProduct(key, value, vsize);
-}
-
-bool Run::loadRawData(const ProductCache& cache, const ProductID& key, std::string& buffer) const {
-    if(!valid()) {
-        throw Exception("Calling Run member function on an invalid Run object");
-    }
-    return cache.m_impl->loadRawProduct(key, buffer);
-}
-
-bool Run::loadRawData(const ProductCache& cache, const ProductID& key, char* value, size_t* vsize) const {
-    if(!valid()) {
-        throw Exception("Calling Run member function on an invalid Run");
-    }
-    return cache.m_impl->loadRawProduct(key, value, vsize);
-}
-
 std::vector<ProductID> Run::listProducts(const std::string& label) const {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run object");

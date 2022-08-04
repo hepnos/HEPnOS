@@ -113,50 +113,6 @@ ProductID SubRun::makeProductID(const char* label, size_t label_size,
     return DataStoreImpl::makeProductID(id, label, label_size, type, type_size);
 }
 
-bool SubRun::loadRawData(const DataStore& ds, const ProductID& key, std::string& buffer) const {
-    if(!valid()) {
-        throw Exception("Calling SubRun member function on invalid SubRun object");
-    }
-    // forward the call to the datastore's load function
-    return ds.m_impl->loadRawProduct(key, buffer);
-}
-
-bool SubRun::loadRawData(const DataStore& ds, const ProductID& key, char* value, size_t* vsize) const {
-    if(!valid()) {
-        throw Exception("Calling SubRun member function on an invalid SubRun");
-    }
-    // forward the call to the datastore's load function
-    return ds.m_impl->loadRawProduct(key, value, vsize);
-}
-
-bool SubRun::loadRawData(const Prefetcher& prefetcher, const ProductID& key, std::string& buffer) const {
-    if(!valid()) {
-        throw Exception("Calling SubRun member function on invalid SubRun object");
-    }
-    return prefetcher.m_impl->loadRawProduct(key, buffer);
-}
-
-bool SubRun::loadRawData(const Prefetcher& prefetcher, const ProductID& key, char* value, size_t* vsize) const {
-    if(!valid()) {
-        throw Exception("Calling SubRun member function on an invalid SubRun");
-    }
-    return prefetcher.m_impl->loadRawProduct(key, value, vsize);
-}
-
-bool SubRun::loadRawData(const ProductCache& cache, const ProductID& key, std::string& buffer) const {
-    if(!valid()) {
-        throw Exception("Calling SubRun member function on invalid SubRun object");
-    }
-    return cache.m_impl->loadRawProduct(key, buffer);
-}
-
-bool SubRun::loadRawData(const ProductCache& cache, const ProductID& key, char* value, size_t* vsize) const {
-    if(!valid()) {
-        throw Exception("Calling SubRun member function on an invalid SubRun");
-    }
-    return cache.m_impl->loadRawProduct(key, value, vsize);
-}
-
 std::vector<ProductID> SubRun::listProducts(const std::string& label) const {
     if(!valid()) {
         throw Exception("Calling SubRun member function on an invalid SubRun object");

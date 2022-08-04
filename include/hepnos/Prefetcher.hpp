@@ -22,6 +22,7 @@ class EventSet;
 class Run;
 class SubRun;
 class Event;
+class KeyValueContainer;
 
 struct PrefetcherStatistics {
     Statistics<size_t,double> batch_sizes;
@@ -41,6 +42,7 @@ class Prefetcher : public RawStorage {
     friend class Run;
     friend class SubRun;
     friend class Event;
+    friend class KeyValueContainer;
 
     public:
 

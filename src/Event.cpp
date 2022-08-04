@@ -62,50 +62,6 @@ ProductID Event::makeProductID(const char* label, size_t label_size,
     return DataStoreImpl::makeProductID(id, label, label_size, type, type_size);
 }
 
-bool Event::loadRawData(const DataStore& ds, const ProductID& key, std::string& buffer) const {
-    if(!valid()) {
-        throw Exception("Calling Event member function on an invalid Event object");
-    }
-    // forward the call to the datastore's load function
-    return ds.m_impl->loadRawProduct(key, buffer);
-}
-
-bool Event::loadRawData(const DataStore& ds, const ProductID& key, char* value, size_t* vsize) const {
-    if(!valid()) {
-        throw Exception("Calling DataSet member function on an invalid DataSet");
-    }
-    // forward the call to the datastore's load function
-    return ds.m_impl->loadRawProduct(key, value, vsize);
-}
-
-bool Event::loadRawData(const Prefetcher& prefetcher, const ProductID& key, std::string& buffer) const {
-    if(!valid()) {
-        throw Exception("Calling Event member function on an invalid Event object");
-    }
-    return prefetcher.m_impl->loadRawProduct(key, buffer);
-}
-
-bool Event::loadRawData(const Prefetcher& prefetcher, const ProductID& key, char* value, size_t* vsize) const {
-    if(!valid()) {
-        throw Exception("Calling Event member function on an invalid Event");
-    }
-    return prefetcher.m_impl->loadRawProduct(key, value, vsize);
-}
-
-bool Event::loadRawData(const ProductCache& cache, const ProductID& key, std::string& buffer) const {
-    if(!valid()) {
-        throw Exception("Calling Event member function on an invalid Event object");
-    }
-    return cache.m_impl->loadRawProduct(key, buffer);
-}
-
-bool Event::loadRawData(const ProductCache& cache, const ProductID& key, char* value, size_t* vsize) const {
-    if(!valid()) {
-        throw Exception("Calling Event member function on an invalid Event");
-    }
-    return cache.m_impl->loadRawProduct(key, value, vsize);
-}
-
 std::vector<ProductID> Event::listProducts(const std::string& label) const {
     if(!valid()) {
         throw Exception("Calling Event member function on an invalid Event object");

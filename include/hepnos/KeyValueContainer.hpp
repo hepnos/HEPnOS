@@ -228,90 +228,6 @@ class KeyValueContainer {
     virtual ProductID makeProductID(const char* label, size_t label_size,
                                     const char* type, size_t type_size) const = 0;
 
-    /**
-     * @brief Loads raw key/value data from this KeyValueContainer.
-     * This function is virtual and must be overloaded in the child class.
-     *
-     * @param ds DataStore
-     * @param key Key
-     * @param buffer Buffer used to hold the value.
-     *
-     * @return true if the key exists, false otherwise.
-     */
-    virtual bool loadRawData(const DataStore& ds, const ProductID& key, std::string& buffer) const = 0;
-
-    /**
-     * @brief Loads binary data associated with a particular key from the container.
-     * This function will return true if the key exists and the read succeeded.
-     * It will return false otherwise.
-     *
-     * @param ds DataStore
-     * @param key Key.
-     * @param value Buffer in which to put the binary data.
-     * @param vsize in: size of the buffer, out: actual size of the data.
-     *
-     * @return true if the key exists and the read succeeded, false otherwise.
-     */
-    virtual bool loadRawData(const DataStore& ds, const ProductID& key, char* value, size_t* vsize) const = 0;
-
-    /**
-     * @brief Loads binary data associated with a particular key from the container.
-     * This function will look in the prefetcher if the object has been prefetched
-     * (or scheduled to be prefetched) and fall back to looking up in the underlying
-     * DataStore if it hasn't.
-     *
-     * @param prefetcher Prefetcher to look into first.
-     * @param key Key.
-     * @param buffer Buffer in which to put the binary data.
-     *
-     * @return true if the key exists and the read succeeded, false otherwise.
-     */
-    virtual bool loadRawData(const Prefetcher& prefetcher, const ProductID& key, std::string& buffer) const = 0;
-
-    /**
-     * @brief Loads binary data associated with a particular key from the container.
-     * This function will look in the prefetcher if the object has been prefetched
-     * (or scheduled to be prefetched) and fall back to looking up in the underlying
-     * DataStore if it hasn't.
-     *
-     * @param prefetcher Prefetcher to look into first.
-     * @param key Key.
-     * @param value Buffer in which to put the binary data.
-     * @param vsize in: size of the buffer, out: size of the actual data.
-     *
-     * @return true if the key exists and the read succeeded, false otherwise.
-     */
-    virtual bool loadRawData(const Prefetcher& prefetcher, const ProductID& key, char* value, size_t* vsize) const = 0;
-
-    /**
-     * @brief Loads binary data associated with a particular key from the container.
-     * This function will look in the product cache for the requested object.
-     * Note that contrary to the Prefetcher, this function will NOT fall back to looking
-     * up into the DataStore.
-     *
-     * @param cache ProductCache to look into first.
-     * @param key Key.
-     * @param buffer Buffer in which to put the binary data.
-     *
-     * @return true if the key exists and the read succeeded, false otherwise.
-     */
-    virtual bool loadRawData(const ProductCache& cache, const ProductID& key, std::string& buffer) const = 0;
-
-    /**
-     * @brief Loads binary data associated with a particular key from the container.
-     * This function will look in the product cache for the requested object.
-     * Note that contrary to the Prefetcher, this function will NOT fall back to looking
-     * up into the DataStore.
-     *
-     * @param cache ProductCache to look into first.
-     * @param key Key.
-     * @param value Buffer in which to put the binary data.
-     * @param vsize in: size of the buffer, out: size of the actual data.
-     *
-     * @return true if the key exists and the read succeeded, false otherwise.
-     */
-    virtual bool loadRawData(const ProductCache& cache, const ProductID& key, char* value, size_t* vsize) const = 0;
-
     private:
 
     /**
@@ -366,7 +282,8 @@ class KeyValueContainer {
         auto key = makeKey(label, value);
         size_t vsize = sizeof(value);
         auto t1 = wtime();
-        auto b = loadRawData(source, key, reinterpret_cast<char*>(&value), &vsize);
+        auto b = source.valid() ? source.loadRawData(key, reinterpret_cast<char*>(&value), &vsize)
+                                : datastore().loadRawData(key, reinterpret_cast<char*>(&value), &vsize);
         auto t2 = wtime();
         if(b && stats) {
             stats->deserialization_time.updateWith(0.0);
@@ -385,7 +302,9 @@ class KeyValueContainer {
         std::string buffer;
         auto key = makeKey(label, value);
         auto t1 = wtime();
-        if(!loadRawData(source, key, buffer)) {
+        auto b = source.valid() ? source.loadRawData(key, buffer)
+                                : datastore().loadRawData(key, buffer);
+        if(!b) {
             return false;
         }
         auto t2 = wtime();
@@ -414,7 +333,9 @@ class KeyValueContainer {
         std::string buffer;
         auto key = makeKey(label, value);
         auto t1 = wtime();
-        if(!loadRawData(source, key, buffer)) {
+        auto b = source.valid() ? source.loadRawData(key, buffer)
+                                : datastore().loadRawData(key, buffer);
+        if(!b) {
             return false;
         }
         auto t2 = wtime();
@@ -445,7 +366,9 @@ class KeyValueContainer {
         std::string buffer;
         auto key = makeKey(label, value);
         auto t1 = wtime();
-        if(!loadRawData(source, key, buffer)) {
+        auto b = source.valid() ? source.loadRawData(key, buffer)
+                                : datastore().loadRawData(key, buffer);
+        if(!b) {
             return false;
         }
         auto t2 = wtime();
