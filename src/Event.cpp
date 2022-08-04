@@ -62,12 +62,12 @@ ProductID Event::makeProductID(const char* label, size_t label_size,
     return DataStoreImpl::makeProductID(id, label, label_size, type, type_size);
 }
 
-ProductID Event::storeRawData(const ProductID& key, const char* value, size_t vsize) {
+ProductID Event::storeRawData(DataStore& ds, const ProductID& key, const char* value, size_t vsize) {
     if(!valid()) {
         throw Exception("Calling Event member function on an invalid Event object");
     }
     // forward the call to the datastore's store function
-    return m_impl->m_datastore->storeRawProduct(key, value, vsize);
+    return ds.m_impl->storeRawProduct(key, value, vsize);
 }
 
 ProductID Event::storeRawData(WriteBatch& batch, const ProductID& key, const char* value, size_t vsize) {

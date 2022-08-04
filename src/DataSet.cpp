@@ -87,12 +87,12 @@ ProductID DataSet::makeProductID(const char* label, size_t label_size,
     return DataStoreImpl::makeProductID(id, label, label_size, type, type_size);
 }
 
-ProductID DataSet::storeRawData(const ProductID& key, const char* value, size_t vsize) {
+ProductID DataSet::storeRawData(DataStore& ds, const ProductID& key, const char* value, size_t vsize) {
     if(!valid()) {
         throw Exception("Calling DataSet member function on an invalid DataSet");
     }
     // forward the call to the datastore's store function
-    return m_impl->m_datastore->storeRawProduct(key, value, vsize);
+    return ds.m_impl->storeRawProduct(key, value, vsize);
 }
 
 ProductID DataSet::storeRawData(WriteBatch& batch, const ProductID& key, const char* value, size_t vsize) {

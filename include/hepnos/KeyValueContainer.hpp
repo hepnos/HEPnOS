@@ -94,7 +94,8 @@ class KeyValueContainer {
      */
     template<typename L, typename V>
     ProductID store(const L& label, const V& value, StoreStatistics* stats = nullptr) {
-        return storeImpl(label, value, std::is_pod<std::remove_reference_t<V>>(), stats);
+        auto ds = datastore();
+        return store(ds, label, value, stats);
     }
 
     /**
@@ -126,18 +127,8 @@ class KeyValueContainer {
     template<typename L, typename V>
     ProductID store(const L& label, const std::vector<V>& value, int start=0, int end=-1,
                     StoreStatistics* stats = nullptr) {
-        auto t1 = wtime();
-        auto key = makeKey(label, value);
-        std::string val_str;
-        serializeValueVector(std::is_pod<std::remove_reference_t<V>>(), value, val_str, start, end);
-        auto t2 = wtime();
-        auto result = storeRawData(key, val_str.data(), val_str.size());
-        auto t3 = wtime();
-        if(stats) {
-            stats->serialization_time.updateWith(t2-t1);
-            stats->raw_storage_time.updateWith(t3-t2);
-        }
-        return result;
+        auto ds = datastore();
+        return store(ds, label, value, start, end, stats);
     }
 
     /**
@@ -257,13 +248,14 @@ class KeyValueContainer {
      * @brief Stores raw key/value data in this KeyValueContainer.
      * This function is virtual and must be overloaded in the child class.
      *
+     * @param datastore DataStore
      * @param key Key
      * @param value Value pointer
      * @param vsize Value size (in bytes)
      *
      * @return A valid ProductID if the key did not already exist, an invalid one otherwise.
      */
-    virtual ProductID storeRawData(const ProductID& key, const char* value, size_t vsize) = 0;
+    virtual ProductID storeRawData(DataStore& ds, const ProductID& key, const char* value, size_t vsize) = 0;
 
     /**
      * @brief Stores raw key/value data in a WriteBatch.

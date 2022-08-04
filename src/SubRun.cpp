@@ -113,12 +113,12 @@ ProductID SubRun::makeProductID(const char* label, size_t label_size,
     return DataStoreImpl::makeProductID(id, label, label_size, type, type_size);
 }
 
-ProductID SubRun::storeRawData(const ProductID& key, const char* value, size_t vsize) {
+ProductID SubRun::storeRawData(DataStore& ds, const ProductID& key, const char* value, size_t vsize) {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
     // forward the call to the datastore's store function
-    return m_impl->m_datastore->storeRawProduct(key, value, vsize);
+    return ds.m_impl->storeRawProduct(key, value, vsize);
 }
 
 ProductID SubRun::storeRawData(WriteBatch& batch, const ProductID& key, const char* value, size_t vsize) {

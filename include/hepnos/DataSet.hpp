@@ -434,7 +434,7 @@ class DataSet : public KeyValueContainer {
     /**
      * @see KeyValueContainer::storeRawData()
      */
-    ProductID storeRawData(const ProductID& key, const char* value, size_t vsize) override;
+    ProductID storeRawData(DataStore& ds, const ProductID& key, const char* value, size_t vsize) override;
 
     /**
      * @see KeyValueContainer::storeRawData()
