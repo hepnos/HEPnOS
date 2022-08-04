@@ -440,12 +440,12 @@ class Run : public KeyValueContainer {
     /**
      * @see KeyValueContainer::loadRawData()
      */
-    bool loadRawData(const ProductID& key, std::string& buffer) const override;
+    bool loadRawData(const DataStore& ds, const ProductID& key, std::string& buffer) const override;
 
     /**
      * @see KeyValueContainer::loadRawData()
      */
-    bool loadRawData(const ProductID& key, char* value, size_t* vsize) const override;
+    bool loadRawData(const DataStore& ds, const ProductID& key, char* value, size_t* vsize) const override;
 
     /**
      * @see KeyValueContainer::loadRawData()

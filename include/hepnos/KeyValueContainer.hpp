@@ -168,7 +168,8 @@ class KeyValueContainer {
      */
     template<typename L, typename V>
     bool load(const L& label, V& value, LoadStatistics* stats = nullptr) const {
-        return loadImpl(label, value, std::is_pod<std::remove_reference_t<V>>(), stats);
+        auto ds = datastore();
+        return load(ds, label, value, stats);
     }
 
     /**
@@ -176,47 +177,29 @@ class KeyValueContainer {
      */
     template<typename L, typename V>
     bool load(const L& label, std::vector<V>& value, LoadStatistics* stats = nullptr) const {
-        return loadVectorImpl(label, value, std::is_pod<std::remove_reference_t<V>>(), stats);
+        auto ds = datastore();
+        return load(ds, label, value,  stats);
     }
 
     /**
-     * @brief Version of load that will first look into the Prefetcher
+     * @brief Version of load that will first look into the Source
      * argument for the requested key.
      */
-    template<typename L, typename V>
-    bool load(const Prefetcher& prefetcher, const L& label, V& value,
+    template<typename L, typename V, typename Source>
+    bool load(const Source& source, const L& label, V& value,
               LoadStatistics* stats = nullptr) const {
-        return loadImpl(prefetcher, label, value, std::is_pod<std::remove_reference_t<V>>(), stats);
+        return loadImpl(source, label, value, std::is_pod<std::remove_reference_t<V>>(), stats);
     }
 
     /**
      * @brief Version of load for vectors, looking first into the
-     * Prefetcher argument for the requested key.
+     * Source argument for the requested key.
      */
-    template<typename L, typename V>
-    bool load(const Prefetcher& prefetcher, const L& label, std::vector<V>& value,
+    template<typename L, typename V, typename Source>
+    bool load(const Source& source, const L& label, std::vector<V>& value,
               LoadStatistics* stats = nullptr) const {
-        return loadVectorImpl(prefetcher, label, value,
+        return loadVectorImpl(source, label, value,
                 std::is_pod<std::remove_reference_t<V>>(), stats);
-    }
-
-    /**
-     * @brief Version of load that will first look into the Prefetcher
-     * argument for the requested key.
-     */
-    template<typename L, typename V>
-    bool load(const ProductCache& cache, const L& label, V& value, LoadStatistics* stats = nullptr) const {
-        return loadImpl(cache, label, value, std::is_pod<std::remove_reference_t<V>>(), stats);
-    }
-
-    /**
-     * @brief Version of load for vectors, looking first into the
-     * Prefetcher argument for the requested key.
-     */
-    template<typename L, typename V>
-    bool load(const ProductCache& cache, const L& label, std::vector<V>& value,
-              LoadStatistics* stats = nullptr) const {
-        return loadVectorImpl(cache, label, value, std::is_pod<std::remove_reference_t<V>>(), stats);
     }
 
     /**
@@ -295,25 +278,27 @@ class KeyValueContainer {
      * @brief Loads raw key/value data from this KeyValueContainer.
      * This function is virtual and must be overloaded in the child class.
      *
+     * @param ds DataStore
      * @param key Key
      * @param buffer Buffer used to hold the value.
      *
      * @return true if the key exists, false otherwise.
      */
-    virtual bool loadRawData(const ProductID& key, std::string& buffer) const = 0;
+    virtual bool loadRawData(const DataStore& ds, const ProductID& key, std::string& buffer) const = 0;
 
     /**
      * @brief Loads binary data associated with a particular key from the container.
      * This function will return true if the key exists and the read succeeded.
      * It will return false otherwise.
      *
+     * @param ds DataStore
      * @param key Key.
      * @param value Buffer in which to put the binary data.
      * @param vsize in: size of the buffer, out: actual size of the data.
      *
      * @return true if the key exists and the read succeeded, false otherwise.
      */
-    virtual bool loadRawData(const ProductID& key, char* value, size_t* vsize) const = 0;
+    virtual bool loadRawData(const DataStore& ds, const ProductID& key, char* value, size_t* vsize) const = 0;
 
     /**
      * @brief Loads binary data associated with a particular key from the container.
@@ -376,27 +361,6 @@ class KeyValueContainer {
     private:
 
     /**
-     * @brief Implementation of the store function when the value is
-     * not an std::vector and not a POD.
-     */
-    template<typename L, typename V>
-    ProductID storeImpl(const L& label, const V& value,
-            const std::integral_constant<bool, false>&, StoreStatistics* stats) {
-        auto t1 = wtime();
-        auto key = makeKey(label, value);
-        std::string val_str;
-        serializeValue(value, val_str);
-        auto t2 = wtime();
-        auto result = storeRawData(key, val_str.data(), val_str.size());
-        auto t3 = wtime();
-        if(stats) {
-            stats->serialization_time.updateWith(t2-t1);
-            stats->raw_storage_time.updateWith(t3-t2);
-        }
-        return result;
-    }
-
-    /**
      * @brief Implementation of the store function with WriteBatch
      * and the value type is not am std::vector and not a POD.
      */
@@ -409,25 +373,6 @@ class KeyValueContainer {
         serializeValue(value, val_str);
         auto t2 = wtime();
         auto result = storeRawData(target, key, val_str.data(), val_str.size());
-        auto t3 = wtime();
-        if(stats) {
-            stats->serialization_time.updateWith(t2-t1);
-            stats->raw_storage_time.updateWith(t3-t2);
-        }
-        return result;
-    }
-
-    /**
-     * @brief Implementation of the store function when the value
-     * type is a POD.
-     */
-    template<typename L, typename V>
-    ProductID storeImpl(const L& label, const V& value,
-            const std::integral_constant<bool, true>&, StoreStatistics* stats) {
-        auto t1 = wtime();
-        auto key = makeKey(label, value);
-        auto t2 = wtime();
-        auto result = storeRawData(key, reinterpret_cast<const char*>(&value), sizeof(value));
         auto t3 = wtime();
         if(stats) {
             stats->serialization_time.updateWith(t2-t1);
@@ -458,14 +403,14 @@ class KeyValueContainer {
     /**
      * @brief Implementation of the load function when the value type is a POD.
      */
-    template<typename L, typename V>
-    bool loadImpl(const L& label, V& value,
+    template<typename L, typename V, typename Source>
+    bool loadImpl(const Source& source, const L& label, V& value,
             const std::integral_constant<bool, true>&, LoadStatistics* stats) const {
         std::string buffer;
         auto key = makeKey(label, value);
         size_t vsize = sizeof(value);
         auto t1 = wtime();
-        auto b = loadRawData(key, reinterpret_cast<char*>(&value), &vsize);
+        auto b = loadRawData(source, key, reinterpret_cast<char*>(&value), &vsize);
         auto t2 = wtime();
         if(b && stats) {
             stats->deserialization_time.updateWith(0.0);
@@ -477,81 +422,14 @@ class KeyValueContainer {
     /**
      * @brief Implementation of the load function with a prefetcher.
      */
-    template<typename L, typename V>
-    bool loadImpl(const Prefetcher& prefetcher, const L& label, V& value,
-            const std::integral_constant<bool, true>&, LoadStatistics* stats) const {
-        std::string buffer;
-        auto key = makeKey(label, value);
-        size_t vsize = sizeof(value);
-        auto t1 = wtime();
-        bool b = loadRawData(prefetcher, key, reinterpret_cast<char*>(&value), &vsize);
-        auto t2 = wtime();
-        if(b && stats) {
-            stats->deserialization_time.updateWith(0.0);
-            stats->raw_loading_time.updateWith(t2-t1);
-        }
-        return b && (vsize == sizeof(value));
-    }
-
-    /**
-     * @brief Implementation of the load function with a cache.
-     */
-    template<typename L, typename V>
-    bool loadImpl(const ProductCache& cache, const L& label, V& value,
-            const std::integral_constant<bool, true>&, LoadStatistics* stats) const {
-        std::string buffer;
-        auto key = makeKey(label, value);
-        size_t vsize = sizeof(value);
-        auto t1 = wtime();
-        auto b = loadRawData(cache, key, reinterpret_cast<char*>(&value), &vsize);
-        auto t2 = wtime();
-        if(b && stats) {
-            stats->deserialization_time.updateWith(0.0);
-            stats->raw_loading_time.updateWith(t2-t1);
-        }
-        return b && (vsize == sizeof(value));
-    }
-
-    /**
-     * @brief Implementation of the load function when the value type is not a POD.
-     */
-    template<typename L, typename V>
-    bool loadImpl(const L& label, V& value,
+    template<typename L, typename V, typename Source>
+    bool loadImpl(const Source& source, const L& label, V& value,
             const std::integral_constant<bool, false>&,
             LoadStatistics* stats) const {
         std::string buffer;
         auto key = makeKey(label, value);
         auto t1 = wtime();
-        auto b = loadRawData(key, buffer);
-        auto t2 = wtime();
-        if(!b) return false;
-        try {
-            InputStringWrapper value_wrapper(buffer.data(), buffer.size());
-            InputStream value_stream(value_wrapper);
-            InputArchive ia(datastore(), value_stream);
-            ia >> value;
-        } catch(const std::exception& e) {
-            throw Exception(std::string("Exception occured during serialization: ") + e.what());
-        }
-        auto t3 = wtime();
-        if(stats) {
-            stats->deserialization_time.updateWith(t2-t1);
-            stats->raw_loading_time.updateWith(t3-t2);
-        }
-        return true;
-    }
-
-    /**
-     * @brief Implementation of the load function with a prefetcher.
-     */
-    template<typename L, typename V>
-    bool loadImpl(const Prefetcher& prefetcher, const L& label, V& value,
-            const std::integral_constant<bool, false>&,
-            LoadStatistics* stats) const {
-        std::string buffer;
-        auto key = makeKey(label, value);
-        auto t1 = wtime();
-        if(!loadRawData(prefetcher, key, buffer)) {
+        if(!loadRawData(source, key, buffer)) {
             return false;
         }
         auto t2 = wtime();
@@ -572,44 +450,15 @@ class KeyValueContainer {
     }
 
     /**
-     * @brief Implementation of the load function with a prefetcher.
+     * @brief Implementation of the load function.
      */
-    template<typename L, typename V>
-    bool loadImpl(const ProductCache& cache, const L& label, V& value,
-            const std::integral_constant<bool, false>&, LoadStatistics* stats) const {
-        std::string buffer;
-        auto key = makeKey(label, value);
-        auto t1 = wtime();
-        if(!loadRawData(cache, key, buffer)) {
-            return false;
-        }
-        auto t2 = wtime();
-        try {
-            InputStringWrapper value_wrapper(buffer.data(), buffer.size());
-            InputStream value_stream(value_wrapper);
-            InputArchive ia(datastore(), value_stream);
-            ia >> value;
-        } catch(const std::exception& e) {
-            throw Exception(std::string("Exception occured during serialization: ") + e.what());
-        }
-        auto t3 = wtime();
-        if(stats) {
-            stats->deserialization_time.updateWith(t2-t1);
-            stats->raw_loading_time.updateWith(t3-t2);
-        }
-        return true;
-    }
-
-    /**
-     * @brief Implementation of the load function when the value type is a vector of POD.
-     */
-    template<typename L, typename V>
-    bool loadVectorImpl(const L& label, std::vector<V>& value,
+    template<typename L, typename V, typename Source>
+    bool loadVectorImpl(const Source& source, const L& label, std::vector<V>& value,
             const std::integral_constant<bool, true>&, LoadStatistics* stats) const {
         std::string buffer;
         auto key = makeKey(label, value);
         auto t1 = wtime();
-        if(!loadRawData(key, buffer)) {
+        if(!loadRawData(source, key, buffer)) {
             return false;
         }
         auto t2 = wtime();
@@ -632,145 +481,15 @@ class KeyValueContainer {
     }
 
     /**
-     * @brief Implementation of the load function with a prefetcher.
+     * @brief Implementation of the load function.
      */
-    template<typename L, typename V>
-    bool loadVectorImpl(const Prefetcher& prefetcher, const L& label, std::vector<V>& value,
-            const std::integral_constant<bool, true>&, LoadStatistics* stats) const {
-        std::string buffer;
-        auto key = makeKey(label, value);
-        auto t1 = wtime();
-        if(!loadRawData(prefetcher, key, buffer)) {
-            return false;
-        }
-        auto t2 = wtime();
-        size_t count = 0;
-        if(buffer.size() < sizeof(count)) {
-            return false;
-        }
-        std::memcpy(&count, buffer.data(), sizeof(count));
-        if(buffer.size() != sizeof(count) + count*sizeof(V)) {
-            return false;
-        }
-        value.resize(count);
-        std::memcpy(value.data(), buffer.data()+sizeof(count), count*sizeof(V));
-        auto t3 = wtime();
-        if(stats) {
-            stats->deserialization_time.updateWith(t2-t1);
-            stats->raw_loading_time.updateWith(t3-t2);
-        }
-        return true;
-    }
-
-    /**
-     * @brief Implementation of the load function with a cache.
-     */
-    template<typename L, typename V>
-    bool loadVectorImpl(const ProductCache& cache, const L& label, std::vector<V>& value,
-            const std::integral_constant<bool, true>&, LoadStatistics* stats) const {
-        std::string buffer;
-        auto key = makeKey(label, value);
-        auto t1 = wtime();
-        if(!loadRawData(cache, key, buffer)) {
-            return false;
-        }
-        auto t2 = wtime();
-        size_t count = 0;
-        if(buffer.size() < sizeof(count)) {
-            return false;
-        }
-        std::memcpy(&count, buffer.data(), sizeof(count));
-        if(buffer.size() != sizeof(count) + count*sizeof(V)) {
-            return false;
-        }
-        value.resize(count);
-        std::memcpy(value.data(), buffer.data()+sizeof(count), count*sizeof(V));
-        auto t3 = wtime();
-        if(stats) {
-            stats->deserialization_time.updateWith(t2-t1);
-            stats->raw_loading_time.updateWith(t3-t2);
-        }
-        return true;
-    }
-
-    /**
-     * @brief Implementation of the load function when the value type is a vector of non-POD.
-     */
-    template<typename L, typename V>
-    bool loadVectorImpl(const L& label, std::vector<V>& value,
+    template<typename L, typename V, typename Source>
+    bool loadVectorImpl(const Source& source, const L& label, std::vector<V>& value,
             const std::integral_constant<bool, false>&, LoadStatistics* stats) const {
         std::string buffer;
         auto key = makeKey(label, value);
         auto t1 = wtime();
-        if(!loadRawData(key, buffer)) {
-            return false;
-        }
-        auto t2 = wtime();
-        try {
-            InputStringWrapper value_wrapper(buffer.data(), buffer.size());
-            InputStream value_stream(value_wrapper);
-            InputArchive ia(datastore(), value_stream);
-            size_t count = 0;
-            ia >> count;
-            value.resize(count);
-            for(unsigned i=0; i<count; i++) {
-                ia >> value[i];
-            }
-        } catch(const std::exception& e) {
-            throw Exception(std::string("Exception occured during serialization: ") + e.what());
-        }
-        auto t3 = wtime();
-        if(stats) {
-            stats->deserialization_time.updateWith(t2-t1);
-            stats->raw_loading_time.updateWith(t3-t2);
-        }
-        return true;
-    }
-
-    /**
-     * @brief Implementation of the load function with a prefetcher.
-     */
-    template<typename L, typename V>
-    bool loadVectorImpl(const Prefetcher& prefetcher, const L& label, std::vector<V>& value,
-            const std::integral_constant<bool, false>&, LoadStatistics* stats) const {
-        std::string buffer;
-        auto key = makeKey(label, value);
-        auto t1 = wtime();
-        if(!loadRawData(prefetcher, key, buffer)) {
-            return false;
-        }
-        auto t2 = wtime();
-        try {
-            InputStringWrapper value_wrapper(buffer.data(), buffer.size());
-            InputStream value_stream(value_wrapper);
-            InputArchive ia(datastore(), value_stream);
-            size_t count = 0;
-            ia >> count;
-            value.resize(count);
-            for(unsigned i=0; i<count; i++) {
-                ia >> value[i];
-            }
-        } catch(const std::exception& e) {
-            throw Exception(std::string("Exception occured during serialization: ") + e.what());
-        }
-        auto t3 = wtime();
-        if(stats) {
-            stats->deserialization_time.updateWith(t2-t1);
-            stats->raw_loading_time.updateWith(t3-t2);
-        }
-        return true;
-    }
-
-    /**
-     * @brief Implementation of the load function with a prefetcher.
-     */
-    template<typename L, typename V>
-    bool loadVectorImpl(const ProductCache& cache, const L& label, std::vector<V>& value,
-            const std::integral_constant<bool, false>&, LoadStatistics* stats) const {
-        std::string buffer;
-        auto key = makeKey(label, value);
-        auto t1 = wtime();
-        if(!loadRawData(cache, key, buffer)) {
+        if(!loadRawData(source, key, buffer)) {
             return false;
         }
         auto t2 = wtime();

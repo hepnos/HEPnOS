@@ -131,20 +131,20 @@ ProductID Run::storeRawData(AsyncEngine& async, const ProductID& key, const char
         return m_impl->m_datastore->storeRawProduct(key, value, vsize);
 }
 
-bool Run::loadRawData(const ProductID& key, std::string& buffer) const {
+bool Run::loadRawData(const DataStore& ds, const ProductID& key, std::string& buffer) const {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run object");
     }
     // forward the call to the datastore's load function
-    return m_impl->m_datastore->loadRawProduct(key, buffer);
+    return ds.m_impl->loadRawProduct(key, buffer);
 }
 
-bool Run::loadRawData(const ProductID& key, char* value, size_t* vsize) const {
+bool Run::loadRawData(const DataStore& ds, const ProductID& key, char* value, size_t* vsize) const {
     if(!valid()) {
         throw Exception("Calling Run member function on an invalid Run");
     }
     // forward the call to the datastore's load function
-    return m_impl->m_datastore->loadRawProduct(key, value, vsize);
+    return ds.m_impl->loadRawProduct(key, value, vsize);
 }
 
 bool Run::loadRawData(const Prefetcher& prefetcher, const ProductID& key, std::string& buffer) const {

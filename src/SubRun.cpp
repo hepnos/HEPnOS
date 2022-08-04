@@ -143,20 +143,20 @@ ProductID SubRun::storeRawData(AsyncEngine& async, const ProductID& key, const c
         return m_impl->m_datastore->storeRawProduct(key, value, vsize);
 }
 
-bool SubRun::loadRawData(const ProductID& key, std::string& buffer) const {
+bool SubRun::loadRawData(const DataStore& ds, const ProductID& key, std::string& buffer) const {
     if(!valid()) {
         throw Exception("Calling SubRun member function on invalid SubRun object");
     }
     // forward the call to the datastore's load function
-    return m_impl->m_datastore->loadRawProduct(key, buffer);
+    return ds.m_impl->loadRawProduct(key, buffer);
 }
 
-bool SubRun::loadRawData(const ProductID& key, char* value, size_t* vsize) const {
+bool SubRun::loadRawData(const DataStore& ds, const ProductID& key, char* value, size_t* vsize) const {
     if(!valid()) {
         throw Exception("Calling SubRun member function on an invalid SubRun");
     }
     // forward the call to the datastore's load function
-    return m_impl->m_datastore->loadRawProduct(key, value, vsize);
+    return ds.m_impl->loadRawProduct(key, value, vsize);
 }
 
 bool SubRun::loadRawData(const Prefetcher& prefetcher, const ProductID& key, std::string& buffer) const {

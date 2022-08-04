@@ -192,12 +192,12 @@ class Event : public KeyValueContainer {
     /**
      * @see KeyValueContainer::loadRawData()
      */
-    bool loadRawData(const ProductID& key, std::string& value) const override;
+    bool loadRawData(const DataStore& ds, const ProductID& key, std::string& value) const override;
 
     /**
      * @see KeyValueContainer::loadRawData()
      */
-    bool loadRawData(const ProductID& key, char* value, size_t* vsize) const override;
+    bool loadRawData(const DataStore& ds, const ProductID& key, char* value, size_t* vsize) const override;
 
     /**
      * @see KeyValueContainer::loadRawData()
