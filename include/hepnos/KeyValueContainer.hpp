@@ -415,6 +415,12 @@ class KeyValueContainer {
         OutputSizer value_sizer;
         OutputSizeEvaluator value_size_evaluator(value_sizer);
         OutputArchive sizing_oa(value_size_evaluator);
+        try {
+            sizing_oa << value;
+        } catch(const std::exception& e) {
+            throw Exception(std::string("Exception occured during product size estimation: ") + e.what());
+        }
+
         value_str.reserve(value_sizer.size());
 
         OutputStringWrapper value_wrapper(value_str);
@@ -442,6 +448,11 @@ class KeyValueContainer {
         OutputSizer value_sizer;
         OutputSizeEvaluator value_size_evaluator(value_sizer);
         OutputArchive sizing_oa(value_size_evaluator);
+        try {
+            sizing_oa << value;
+        } catch(const std::exception& e) {
+            throw Exception(std::string("Exception occured during product size estimation: ") + e.what());
+        }
         value_str.reserve(value_sizer.size());
 
         OutputStringWrapper value_wrapper(value_str);
