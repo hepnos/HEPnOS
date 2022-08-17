@@ -28,7 +28,7 @@ class SyncPrefetcherImpl : public PrefetcherImpl {
         for(auto& key : m_active_product_keys) {
             auto product_id = DataStoreImpl::makeProductID(
                 descriptor, key.label.c_str(), key.label.size(),
-                key.type.c_str(), key.label.size());
+                key.type.c_str(), key.type.size());
             if(m_product_cache.m_impl->hasProduct(product_id))
                 continue;
             std::string data;

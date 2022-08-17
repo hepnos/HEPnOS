@@ -513,7 +513,7 @@ void LoadStoreTest::testAsyncPrefetchLoadStore() {
         // iterate through the dataset with a prefetcher
         AsyncEngine async(*datastore, 1);
         Prefetcher p(async);
-        //p.fetchProduct<TestObjectA>(label);
+        p.fetchProduct<TestObjectA>(label);
         p.fetchProduct<TestObjectB>(label);
         unsigned i = 0;
         for(auto& run : p(mds.runs())) {
