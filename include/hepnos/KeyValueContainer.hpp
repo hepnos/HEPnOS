@@ -39,6 +39,20 @@ class KeyValueContainer {
 
     public:
 
+    template<typename T, typename _ = void>
+    struct IsVector {
+        static const bool value = false;
+    };
+
+    template<typename T>
+    struct IsVector<T,
+        std::enable_if_t<
+            std::is_same<T, std::vector<typename T::value_type, typename T::allocator_type>>::value
+        >> {
+        static const bool value = true;
+    };
+
+
     /**
      * @brief Default constructor.
      */
@@ -78,11 +92,9 @@ class KeyValueContainer {
 
     /**
      * @brief Stores a key/value pair into the KeyValueContainer.
-     * The type of the key should have operator<< available
-     * to stream it into a std::stringstream for the purpose
-     * of converting it into an std::string. The resulting
-     * string must not have the "/", or "%" characters. The
-     * type of the value must be serializable using Boost.
+     * The type of key should be convertible into an std::string.
+     * The resulting string must not have the "/", or "%" characters.
+     * The type of the value must be serializable using Boost.
      *
      * @tparam L type of the label.
      * @tparam V type of the value.
@@ -93,7 +105,8 @@ class KeyValueContainer {
      * @return a valid ProductID if the key was found, an invalid one otherwise.
      */
     template<typename L, typename V>
-    ProductID store(const L& label, const V& value, StoreStatistics* stats = nullptr) {
+    std::enable_if_t<!IsVector<V>::value, ProductID>
+    store(const L& label, const V& value, StoreStatistics* stats = nullptr) {
         auto ds = datastore();
         return store(ds, label, value, stats);
     }
@@ -116,7 +129,8 @@ class KeyValueContainer {
      * @return a valid ProductID.
      */
     template<typename L, typename V>
-    ProductID store(RawStorage& target, const L& label, const V& value,
+    std::enable_if_t<!IsVector<V>::value, ProductID>
+    store(RawStorage& target, const L& label, const V& value,
                     StoreStatistics* stats = nullptr) {
         return storeImpl(target, label, value, std::is_pod<std::remove_reference_t<V>>(), stats);
     }
@@ -168,7 +182,8 @@ class KeyValueContainer {
      * @return true if the key exists and was loaded. False otherwise.
      */
     template<typename L, typename V>
-    bool load(const L& label, V& value, LoadStatistics* stats = nullptr) const {
+    std::enable_if_t<!IsVector<V>::value, bool>
+    load(const L& label, V& value, LoadStatistics* stats = nullptr) const {
         auto ds = datastore();
         return load(ds, label, value, stats);
     }
@@ -187,7 +202,8 @@ class KeyValueContainer {
      * argument for the requested key.
      */
     template<typename L, typename V, typename Source>
-    bool load(const Source& source, const L& label, V& value,
+    std::enable_if_t<!IsVector<V>::value, bool>
+    load(const Source& source, const L& label, V& value,
               LoadStatistics* stats = nullptr) const {
         return loadImpl(source, label, value, std::is_pod<std::remove_reference_t<V>>(), stats);
     }
