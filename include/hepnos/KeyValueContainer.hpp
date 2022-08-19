@@ -111,6 +111,13 @@ class KeyValueContainer {
         return store(ds, label, value, stats);
     }
 
+    template<typename L, typename V>
+    std::enable_if_t<IsVector<V>::value, ProductID>
+    store(const L& label, const V& value, StoreStatistics* stats = nullptr) {
+        auto ds = datastore();
+        return store(ds, label, value, 0, -1, stats);
+    }
+
     /**
      * @brief Stores a key/value pair into the Target
      * (WriteBatch, AsyncEngine, etc.).
@@ -133,6 +140,13 @@ class KeyValueContainer {
     store(RawStorage& target, const L& label, const V& value,
                     StoreStatistics* stats = nullptr) {
         return storeImpl(target, label, value, std::is_pod<std::remove_reference_t<V>>(), stats);
+    }
+
+    template<typename L, typename V>
+    std::enable_if_t<IsVector<V>::value, ProductID>
+    store(RawStorage& target, const L& label, const V& value,
+                    StoreStatistics* stats = nullptr) {
+        return store(target, label, value, 0, -1, stats);
     }
 
     /**
