@@ -333,7 +333,7 @@ class DataStoreImpl {
         // read the value
         try {
             db.put(key.m_key.data(), key.m_key.size(), value, vsize,
-                   YOKAN_MODE_NEW_ONLY);
+                   YOKAN_MODE_DEFAULT);
         } catch(yokan::Exception& ex) {
             if(ex.code() == YOKAN_ERR_KEY_EXISTS) {
                 return ProductID();
@@ -543,7 +543,7 @@ class DataStoreImpl {
         uuid.randomize();
         try {
             db.put(key.data(), key.size(), uuid.data, sizeof(uuid),
-                   YOKAN_MODE_NEW_ONLY|YOKAN_MODE_NO_RDMA);
+                   YOKAN_MODE_NO_RDMA);
         } catch(yokan::Exception& ex) {
             if(ex.code() == YOKAN_ERR_KEY_EXISTS) {
                 return false;
@@ -705,7 +705,7 @@ class DataStoreImpl {
         auto& db = locateItemDb(type, k);
         try {
             db.put(&k, sizeof(k), nullptr, 0,
-                   YOKAN_MODE_NEW_ONLY|YOKAN_MODE_NO_RDMA);
+                   YOKAN_MODE_NO_RDMA);
         } catch(yokan::Exception& ex) {
             if(ex.code() == YOKAN_ERR_KEY_EXISTS) {
                 return false;

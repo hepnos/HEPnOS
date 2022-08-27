@@ -81,7 +81,7 @@ class WriteBatchImpl {
                 auto count = batch.m_packed_key_sizes.size();
                 db->putPacked(count, batch.m_packed_keys.data(), batch.m_packed_key_sizes.data(),
                               batch.m_packed_vals.data(), batch.m_packed_val_sizes.data(),
-                              YOKAN_MODE_NEW_ONLY);
+                              YOKAN_MODE_DEFAULT);
             } catch(yokan::Exception& ex) {
                 if(ex.code() != YOKAN_ERR_KEY_EXISTS) {
                     *ok = 0;

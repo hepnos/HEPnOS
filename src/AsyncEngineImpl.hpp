@@ -67,7 +67,7 @@ class AsyncEngineImpl {
             auto& db = ds->locateProductDb(product_id);
             try {
                 db.put(product_id.m_key.data(), product_id.m_key.size(),
-                       data.data(), data.size(), YOKAN_MODE_NEW_ONLY);
+                       data.data(), data.size(), YOKAN_MODE_DEFAULT);
             } catch(yokan::Exception& ex) {
                 std::lock_guard<tl::mutex> lock(m_errors_mtx);
                 m_errors.push_back(
@@ -100,7 +100,7 @@ class AsyncEngineImpl {
             // locate db
             auto& db = ds->locateItemDb(type, id);
             try {
-                db.put(&id, sizeof(id), nullptr, 0, YOKAN_MODE_NEW_ONLY);
+                db.put(&id, sizeof(id), nullptr, 0, YOKAN_MODE_DEFAULT);
             } catch(yokan::Exception& ex) {
                 if(ex.code() != YOKAN_ERR_KEY_EXISTS) {
                     std::lock_guard<tl::mutex> lock(m_errors_mtx);
