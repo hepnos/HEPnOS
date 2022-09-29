@@ -48,8 +48,8 @@ void LoadStoreVectorsTest::testLoadStoreDataSet() {
     // we can store obj_a
     CPPUNIT_ASSERT(mds.store(key1, out_obj_a));
     // we cannot store at that key again something of the same type
-    std::vector<TestObjectA> tmpa(4);
-    CPPUNIT_ASSERT(!mds.store(key1, tmpa));
+    //std::vector<TestObjectA> tmpa(4);
+    //CPPUNIT_ASSERT(!mds.store(key1, tmpa));
     // we can store obj_b at the same key because it's not the same type
     CPPUNIT_ASSERT(mds.store(key1, out_obj_b));
 
@@ -102,8 +102,8 @@ void LoadStoreVectorsTest::testLoadStoreRun() {
     // we can store obj_a
     CPPUNIT_ASSERT(run.store(key1, out_obj_a));
     // we cannot store at that key again something of the same type
-    std::vector<TestObjectA> tmpa(4);
-    CPPUNIT_ASSERT(!run.store(key1, tmpa));
+    //std::vector<TestObjectA> tmpa(4);
+    //CPPUNIT_ASSERT(!run.store(key1, tmpa));
     // we can store obj_b at the same key because it's not the same type
     CPPUNIT_ASSERT(run.store(key1, out_obj_b));
 
@@ -156,8 +156,8 @@ void LoadStoreVectorsTest::testLoadStoreSubRun() {
     // we can store obj_a
     CPPUNIT_ASSERT(subrun.store(key1, out_obj_a));
     // we cannot store at that key again something of the same type
-    std::vector<TestObjectA> tmpa(4);
-    CPPUNIT_ASSERT(!subrun.store(key1, tmpa));
+    //std::vector<TestObjectA> tmpa(4);
+    //CPPUNIT_ASSERT(!subrun.store(key1, tmpa));
     // we can store obj_b at the same key because it's not the same type
     CPPUNIT_ASSERT(subrun.store(key1, out_obj_b));
 
@@ -210,8 +210,8 @@ void LoadStoreVectorsTest::testLoadStoreEvent() {
     // we can store obj_a
     CPPUNIT_ASSERT(event.store(key1, out_obj_a));
     // we cannot store at that key again something of the same type
-    std::vector<TestObjectA> tmpa(4);
-    CPPUNIT_ASSERT(!event.store(key1, tmpa));
+    //std::vector<TestObjectA> tmpa(4);
+    //CPPUNIT_ASSERT(!event.store(key1, tmpa));
     // we can store obj_b at the same key because it's not the same type
     CPPUNIT_ASSERT(event.store(key1, out_obj_b));
 

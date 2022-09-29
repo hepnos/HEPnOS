@@ -54,8 +54,9 @@ void LoadStoreTest::testLoadStoreDataSet() {
     // we can store obj_a
     CPPUNIT_ASSERT(mds.store(key1, out_obj_a));
     // we cannot store at that key again something of the same type
-    TestObjectA tmpa;
-    CPPUNIT_ASSERT(!mds.store(key1, tmpa));
+    // TestObjectA tmpa;
+    // CPPUNIT_ASSERT(!mds.store(key1, tmpa));
+    // NOTE: HEPnOS now allows overwritting
     // we can store obj_b at the same key because it's not the same type
     CPPUNIT_ASSERT(mds.store(key1, out_obj_b));
 
@@ -98,8 +99,9 @@ void LoadStoreTest::testLoadStoreRun() {
     // we can store obj_a
     CPPUNIT_ASSERT(run.store(key1, out_obj_a));
     // we cannot store at that key again something of the same type
-    TestObjectA tmpa;
-    CPPUNIT_ASSERT(!run.store(key1, tmpa));
+    // TestObjectA tmpa;
+    // CPPUNIT_ASSERT(!run.store(key1, tmpa));
+    // NOTE: HEPnOS now allows overwritting
     // we can store obj_b at the same key because it's not the same type
     CPPUNIT_ASSERT(run.store(key1, out_obj_b));
 
@@ -142,8 +144,9 @@ void LoadStoreTest::testLoadStoreSubRun() {
     // we can store obj_a
     CPPUNIT_ASSERT(subrun.store(key1, out_obj_a));
     // we cannot store at that key again something of the same type
-    TestObjectA tmpa;
-    CPPUNIT_ASSERT(!subrun.store(key1, tmpa));
+    // TestObjectA tmpa;
+    // CPPUNIT_ASSERT(!subrun.store(key1, tmpa));
+    // NOTE: HEPnOS now allows overwritting
     // we can store obj_b at the same key because it's not the same type
     CPPUNIT_ASSERT(subrun.store(key1, out_obj_b));
 
@@ -186,8 +189,9 @@ void LoadStoreTest::testLoadStoreEvent() {
     // we can store obj_a
     CPPUNIT_ASSERT(event.store(key1, out_obj_a));
     // we cannot store at that key again something of the same type
-    TestObjectA tmpa;
-    CPPUNIT_ASSERT(!event.store(key1, tmpa));
+    // TestObjectA tmpa;
+    // CPPUNIT_ASSERT(!event.store(key1, tmpa));
+    // NOTE: HEPnOS now allows overwritting
     // we can store obj_b at the same key because it's not the same type
     CPPUNIT_ASSERT(event.store(key1, out_obj_b));
 
@@ -279,14 +283,15 @@ void LoadStoreTest::testAsyncLoadStoreDataSet() {
     // we cannot store at that key again something of the same type,
     // but we will know that only when checking the async engine
     // for errors
-    TestObjectA tmpa;
-    CPPUNIT_ASSERT(mds.store(async, key1, tmpa));
+    // TestObjectA tmpa;
+    // CPPUNIT_ASSERT(mds.store(async, key1, tmpa));
     // we can store obj_b at the same key because it's not the same type
     CPPUNIT_ASSERT(mds.store(async, key1, out_obj_b));
 
     async.wait();
     // there should be one error logged
-    CPPUNIT_ASSERT(async.errors().size() == 1);
+    // CPPUNIT_ASSERT(async.errors().size() == 1);
+    CPPUNIT_ASSERT(async.errors().size() == 0);
 
     TestObjectA in_obj_a;
     TestObjectB in_obj_b;
@@ -329,14 +334,15 @@ void LoadStoreTest::testAsyncLoadStoreRun() {
     CPPUNIT_ASSERT(run.store(async, key1, out_obj_a));
     // we cannot store at that key again something of the same type
     // but we will know about it only later when checking for errors
-    TestObjectA tmpa;
-    CPPUNIT_ASSERT(run.store(async, key1, tmpa));
+    //TestObjectA tmpa;
+    //CPPUNIT_ASSERT(run.store(async, key1, tmpa));
     // we can store obj_b at the same key because it's not the same type
     CPPUNIT_ASSERT(run.store(async, key1, out_obj_b));
 
     async.wait();
     // there should be one error logged
-    CPPUNIT_ASSERT(async.errors().size() == 1);
+    //CPPUNIT_ASSERT(async.errors().size() == 1);
+    CPPUNIT_ASSERT(async.errors().size() == 0);
 
     TestObjectA in_obj_a;
     TestObjectB in_obj_b;
@@ -379,14 +385,15 @@ void LoadStoreTest::testAsyncLoadStoreSubRun() {
     CPPUNIT_ASSERT(subrun.store(async, key1, out_obj_a));
     // we cannot store at that key again something of the same type
     // but we will know about it only when checking for errors
-    TestObjectA tmpa;
-    CPPUNIT_ASSERT(subrun.store(async, key1, tmpa));
+    //TestObjectA tmpa;
+    //CPPUNIT_ASSERT(subrun.store(async, key1, tmpa));
     // we can store obj_b at the same key because it's not the same type
     CPPUNIT_ASSERT(subrun.store(async, key1, out_obj_b));
 
     async.wait();
     // there should be one error logged
-    CPPUNIT_ASSERT(async.errors().size() == 1);
+    //CPPUNIT_ASSERT(async.errors().size() == 1);
+    CPPUNIT_ASSERT(async.errors().size() == 0);
 
     TestObjectA in_obj_a;
     TestObjectB in_obj_b;
@@ -429,13 +436,14 @@ void LoadStoreTest::testAsyncLoadStoreEvent() {
     CPPUNIT_ASSERT(event.store(async, key1, out_obj_a));
     // we cannot store at that key again something of the same type
     // but we will know about it later when checking for errors
-    TestObjectA tmpa;
-    CPPUNIT_ASSERT(event.store(async, key1, tmpa));
+    //TestObjectA tmpa;
+    //CPPUNIT_ASSERT(event.store(async, key1, tmpa));
     // we can store obj_b at the same key because it's not the same type
     CPPUNIT_ASSERT(event.store(async, key1, out_obj_b));
 
     async.wait();
-    CPPUNIT_ASSERT(async.errors().size() == 1);
+    //CPPUNIT_ASSERT(async.errors().size() == 1);
+    CPPUNIT_ASSERT(async.errors().size() == 0);
 
     TestObjectA in_obj_a;
     TestObjectB in_obj_b;
