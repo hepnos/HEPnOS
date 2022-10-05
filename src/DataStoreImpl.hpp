@@ -540,10 +540,10 @@ class DataStoreImpl {
         auto key = buildDataSetKey(level, containerName, objectName);
         // find out which DB to access
         auto& db = locateDataSetDb(containerName);
-        uuid.randomize();
+        uuid = UUID::fromStringHash(key);
         try {
             db.put(key.data(), key.size(), uuid.data, sizeof(uuid),
-                   YOKAN_MODE_NEW_ONLY|YOKAN_MODE_NO_RDMA);
+                   YOKAN_MODE_NO_RDMA);
         } catch(yokan::Exception& ex) {
             if(ex.code() == YOKAN_ERR_KEY_EXISTS) {
                 return false;

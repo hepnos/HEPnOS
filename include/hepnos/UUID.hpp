@@ -99,6 +99,16 @@ struct UUID {
     static UUID generate();
 
     /**
+     * @brief Creates a UUID by consistently hashing the
+     * provided string.
+     *
+     * @param str Strinf to hash.
+     *
+     * @return A UUID.
+     */
+    static UUID fromStringHash(const std::string& str);
+
+    /**
      * @brief randomize the current UUID.
      */
     void randomize();
