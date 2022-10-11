@@ -27,7 +27,7 @@ class Queue {
     bool empty() const;
 
     template<typename T>
-    void pop(T& object);
+    bool pop(T& object);
 
     DataStore datastore() const;
 
@@ -46,7 +46,7 @@ class Queue {
 
     Queue(std::shared_ptr<QueueImpl> impl);
 
-    void popImpl(std::string& data);
+    bool popImpl(std::string& data);
     void pushImpl(const std::string& data);
     bool checkTypeImpl(const std::type_info& type_info);
 
@@ -72,7 +72,7 @@ void Queue::push(const T& value) {
     auto value_str = std::string{};
 
     OutputSizer value_sizer;
-    OutputSizeEvaluator value_size_evaluator(value_sizer, 0, 0);
+    OutputSizeEvaluator value_size_evaluator(value_sizer, 0);
     OutputArchive sizing_oa(value_size_evaluator);
     try {
         sizing_oa << value;
@@ -84,7 +84,7 @@ void Queue::push(const T& value) {
     value_str.reserve(value_sizer.size());
 
     OutputStringWrapper value_wrapper(value_str);
-    OutputStream value_stream(value_wrapper, 0, 0);
+    OutputStream value_stream(value_wrapper, 0);
     OutputArchive output_oa(value_stream);
     try {
         output_oa << value;
@@ -98,12 +98,13 @@ void Queue::push(const T& value) {
 }
 
 template<typename T>
-void Queue::pop(T& value) {
+bool Queue::pop(T& value) {
     if(!checkTypeImpl(typeid(T))) {
         throw Exception("Invalid object type");
     }
     std::string buffer;
-    popImpl(buffer);
+    bool b = popImpl(buffer);
+    if(!b) return false;
     try {
         InputStringWrapper value_wrapper(buffer.data(), buffer.size());
         InputStream value_stream(value_wrapper);
@@ -112,6 +113,7 @@ void Queue::pop(T& value) {
     } catch(const std::exception& e) {
         throw Exception(std::string("Exception occured during serialization: ") + e.what());
     }
+    return true;
 }
 
 }

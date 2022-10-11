@@ -13,6 +13,7 @@ class QueueTest : public CppUnit::TestFixture
     CPPUNIT_TEST( testQueueCreate );
     CPPUNIT_TEST( testQueueOpen );
     CPPUNIT_TEST( testQueueEmpty );
+    CPPUNIT_TEST( testQueuePushPop );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -23,6 +24,7 @@ class QueueTest : public CppUnit::TestFixture
     void testQueueCreate();
     void testQueueOpen();
     void testQueueEmpty();
+    void testQueuePushPop();
 };
 
 #endif

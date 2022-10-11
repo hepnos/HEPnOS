@@ -195,7 +195,6 @@ class QueueProvider : public tl::provider<QueueProvider> {
                 result.second = it->second.pop();
             } catch(const no_producer&) {
                 result.first = false;
-                result.second = "No producer";
             }
         }
         req.respond(result);

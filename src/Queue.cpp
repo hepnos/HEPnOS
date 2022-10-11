@@ -73,7 +73,7 @@ void Queue::close() {
         throw Exception(result.second);
 }
 
-void Queue::popImpl(std::string& data) {
+bool Queue::popImpl(std::string& data) {
     if(!valid()) {
         throw Exception("Calling Queue member function on an invalid Queue object");
     }
@@ -86,9 +86,14 @@ void Queue::popImpl(std::string& data) {
     } catch(std::exception& e) {
         throw Exception(e.what());
     }
-    if(!result.first)
-        throw Exception(result.second);
+    if(!result.first) {
+        if(result.second.empty())
+            return false;
+        else
+            throw Exception(result.second);
+    }
     data = std::move(result.second);
+    return true;
 }
 
 void Queue::pushImpl(const std::string& data) {

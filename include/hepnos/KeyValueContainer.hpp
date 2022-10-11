@@ -443,7 +443,7 @@ class KeyValueContainer {
         value_str.resize(0);
 
         OutputSizer value_sizer;
-        OutputSizeEvaluator value_size_evaluator(value_sizer, 0, 0);
+        OutputSizeEvaluator value_size_evaluator(value_sizer, 0);
         OutputArchive sizing_oa(value_size_evaluator);
         try {
             sizing_oa << value;
@@ -478,7 +478,7 @@ class KeyValueContainer {
 
         value_str.resize(0);
         OutputSizer value_sizer;
-        OutputSizeEvaluator value_size_evaluator(value_sizer, 0, 0);
+        OutputSizeEvaluator value_size_evaluator(value_sizer, 0);
         OutputArchive sizing_oa(value_size_evaluator);
         try {
             sizing_oa << value;

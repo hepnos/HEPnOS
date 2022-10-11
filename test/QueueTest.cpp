@@ -93,3 +93,46 @@ void QueueTest::testQueueEmpty() {
     // check that the queue is empty
     CPPUNIT_ASSERT(queue.empty());
 }
+
+void QueueTest::testQueuePushPop() {
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    hepnos::Queue queue;
+    int num_reads = 0;
+    if(rank < 2) { // producers
+        // open a queue
+        CPPUNIT_ASSERT_NO_THROW(
+            queue = datastore->openQueue<TestObjectB>(
+                "queue_b", hepnos::QueueAccessMode::PRODUCER));
+        MPI_Barrier(MPI_COMM_WORLD);
+        // initialize data
+        std::vector<TestObjectB> vec(10);
+        for(int i = 0; i < vec.size(); ++i) {
+            vec[i].a() = i;
+        }
+        // push data
+        for(int i = 0; i < vec.size(); ++i) {
+            queue.push(vec[i]);
+        }
+    } else { // consumers
+        // open a queue
+        CPPUNIT_ASSERT_NO_THROW(
+            queue = datastore->openQueue<TestObjectB>(
+                "queue_b", hepnos::QueueAccessMode::CONSUMER));
+        MPI_Barrier(MPI_COMM_WORLD);
+        // consume
+        std::vector<TestObjectB> vec;
+        TestObjectB b;
+        while(queue.pop(b)) {
+            vec.push_back(b);
+        }
+        num_reads = vec.size();
+    }
+    // close the queue
+    CPPUNIT_ASSERT_NO_THROW(queue.close());
+    int total_reads = 0;
+    MPI_Allreduce(&num_reads, &total_reads, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    CPPUNIT_ASSERT(total_reads == 20);
+    MPI_Barrier(MPI_COMM_WORLD);
+}
