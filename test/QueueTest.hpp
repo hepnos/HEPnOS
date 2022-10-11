@@ -10,7 +10,9 @@ extern hepnos::DataStore* datastore;
 class QueueTest : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE( QueueTest );
-    CPPUNIT_TEST( testQueue );
+    CPPUNIT_TEST( testQueueCreate );
+    CPPUNIT_TEST( testQueueOpen );
+    CPPUNIT_TEST( testQueueEmpty );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -18,7 +20,9 @@ class QueueTest : public CppUnit::TestFixture
     void setUp();
     void tearDown();
 
-    void testQueue();
+    void testQueueCreate();
+    void testQueueOpen();
+    void testQueueEmpty();
 };
 
 #endif

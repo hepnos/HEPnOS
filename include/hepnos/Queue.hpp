@@ -35,6 +35,13 @@ class Queue {
 
     bool valid() const;
 
+    Queue();
+    Queue(const Queue&);
+    Queue(Queue&&);
+    Queue& operator=(const Queue&);
+    Queue& operator=(Queue&&);
+    ~Queue();
+
     private:
 
     Queue(std::shared_ptr<QueueImpl> impl);
@@ -65,7 +72,7 @@ void Queue::push(const T& value) {
     auto value_str = std::string{};
 
     OutputSizer value_sizer;
-    OutputSizeEvaluator value_size_evaluator(value_sizer);
+    OutputSizeEvaluator value_size_evaluator(value_sizer, 0, 0);
     OutputArchive sizing_oa(value_size_evaluator);
     try {
         sizing_oa << value;
@@ -77,10 +84,11 @@ void Queue::push(const T& value) {
     value_str.reserve(value_sizer.size());
 
     OutputStringWrapper value_wrapper(value_str);
-    OutputStream value_stream(value_wrapper);
+    OutputStream value_stream(value_wrapper, 0, 0);
     OutputArchive output_oa(value_stream);
     try {
         output_oa << value;
+        value_stream.flush();
     } catch(const std::exception& e) {
         throw Exception(
             std::string("Exception occured during serialization: ") + e.what());

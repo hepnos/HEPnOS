@@ -443,10 +443,11 @@ class KeyValueContainer {
         value_str.resize(0);
 
         OutputSizer value_sizer;
-        OutputSizeEvaluator value_size_evaluator(value_sizer);
+        OutputSizeEvaluator value_size_evaluator(value_sizer, 0, 0);
         OutputArchive sizing_oa(value_size_evaluator);
         try {
             sizing_oa << value;
+            value_size_evaluator.flush();
         } catch(const std::exception& e) {
             throw Exception(std::string("Exception occured during product size estimation: ") + e.what());
         }
@@ -458,6 +459,7 @@ class KeyValueContainer {
         OutputArchive output_oa(value_stream);
         try {
             output_oa << value;
+            value_stream.flush();
         } catch(const std::exception& e) {
             throw Exception(std::string("Exception occured during serialization: ") + e.what());
         }
@@ -476,10 +478,11 @@ class KeyValueContainer {
 
         value_str.resize(0);
         OutputSizer value_sizer;
-        OutputSizeEvaluator value_size_evaluator(value_sizer);
+        OutputSizeEvaluator value_size_evaluator(value_sizer, 0, 0);
         OutputArchive sizing_oa(value_size_evaluator);
         try {
             sizing_oa << value;
+            value_size_evaluator.flush();
         } catch(const std::exception& e) {
             throw Exception(std::string("Exception occured during product size estimation: ") + e.what());
         }
@@ -493,6 +496,7 @@ class KeyValueContainer {
             oa << count;
             for(auto i = start; i < end; i++)
                 oa << value[i];
+            value_stream.flush();
         } catch(const std::exception& e) {
             throw Exception(std::string("Exception occured during serialization: ") + e.what());
         }

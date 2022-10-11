@@ -764,8 +764,6 @@ class DataStoreImpl : public std::enable_shared_from_this<DataStoreImpl> {
         auto hash = hashString(full_name.c_str(), full_name.size());
         ch_placement_find_closest(m_queue_providers.chi, hash, 1, &db_idx);
         const auto& provider_handle = m_queue_providers.qps[db_idx];
-        std::cerr << "Sending to " << static_cast<std::string>(provider_handle)
-            << " with provider id " << provider_handle.provider_id() << std::endl;
         std::pair<bool, std::string> response
             = m_queue_create_rpc.on(provider_handle)(full_name);
         if(!response.first)
