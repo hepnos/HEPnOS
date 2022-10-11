@@ -106,6 +106,11 @@ void QueueTest::testQueuePushPop() {
             queue = datastore->openQueue<TestObjectB>(
                 "queue_b", hepnos::QueueAccessMode::PRODUCER));
         MPI_Barrier(MPI_COMM_WORLD);
+        // Try to produce an invalid type
+        TestObjectA a;
+        CPPUNIT_ASSERT_THROW(
+            queue.push(a),
+            hepnos::Exception);
         // initialize data
         std::vector<TestObjectB> vec(10);
         for(int i = 0; i < vec.size(); ++i) {
@@ -121,9 +126,18 @@ void QueueTest::testQueuePushPop() {
             queue = datastore->openQueue<TestObjectB>(
                 "queue_b", hepnos::QueueAccessMode::CONSUMER));
         MPI_Barrier(MPI_COMM_WORLD);
+        // try to read an invalid type
+        TestObjectA a;
+        CPPUNIT_ASSERT_THROW(
+            queue.pop(a),
+            hepnos::Exception);
+        // try to produce data while not being a producer
+        TestObjectB b;
+        CPPUNIT_ASSERT_THROW(
+            queue.push(b),
+            hepnos::Exception);
         // consume
         std::vector<TestObjectB> vec;
-        TestObjectB b;
         while(queue.pop(b)) {
             vec.push_back(b);
         }

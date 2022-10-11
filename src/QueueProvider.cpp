@@ -50,7 +50,7 @@ class QueueProvider : public tl::provider<QueueProvider> {
             std::unique_lock<tl::mutex> guard(m_mutex);
             while(m_content.empty() && m_producers != 0)
                 m_cv.wait(guard);
-            if(m_producers == 0)
+            if(m_producers == 0 && m_content.empty())
                 throw no_producer{};
             auto result = std::move(m_content.front());
             m_content.pop();
