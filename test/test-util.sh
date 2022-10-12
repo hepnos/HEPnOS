@@ -26,7 +26,10 @@ function hepnos_test_start_servers()
     launcher=${7:-mpirun}
     rm -rf ${cfile}
 
-    run_to $maxtime $launcher -n $nservers bedrock na+sm -c $config &
+    #export LD_LIBRARY_PATH=`pwd`/src:`pwd`:`pwd`/../src:$LD_LIBRARY_PATH
+    export LD_LIBRARY_PATH=`pwd`/../src:$LD_LIBRARY_PATH
+
+    run_to $maxtime $launcher -n $nservers bedrock na+sm -c $config -v trace > hepnos.log 2>&1 &
     if [ $? -ne 0 ]; then
         # TODO: this doesn't actually work; can't check return code of
         # something executing in background.  We have to rely on the

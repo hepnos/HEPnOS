@@ -14,6 +14,8 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <thallium.hpp>
+#include <thallium/serialization/stl/pair.hpp>
+#include <thallium/serialization/stl/string.hpp>
 #include <yokan/cxx/database.hpp>
 #include <yokan/cxx/client.hpp>
 #include <ch-placement.h>
@@ -24,6 +26,7 @@
 #include "StringHash.hpp"
 #include "DataSetImpl.hpp"
 #include "ItemImpl.hpp"
+#include "QueueImpl.hpp"
 
 namespace hepnos {
 
@@ -53,11 +56,16 @@ struct DistributedDBInfo {
     struct ch_placement_instance* chi = nullptr;
 };
 
+struct QueueProvidersInfo {
+    std::vector<thallium::provider_handle> qps;
+    struct ch_placement_instance* chi = nullptr;
+};
+
 using nlohmann::json;
 using namespace std::string_literals;
 namespace tl = thallium;
 
-class DataStoreImpl {
+class DataStoreImpl : public std::enable_shared_from_this<DataStoreImpl> {
     public:
 
     tl::engine                                   m_engine;       // Thallium engine
@@ -69,6 +77,15 @@ class DataStoreImpl {
     DistributedDBInfo                            m_subrun_dbs;   // list of Yokan databases for SubRuns
     DistributedDBInfo                            m_event_dbs;    // list of Yokan databases for Events
     DistributedDBInfo                            m_product_dbs;  // list of Yokan databases for Products
+    QueueProvidersInfo                           m_queue_providers; // list of provider handles to QueueProviders
+
+    tl::remote_procedure                         m_queue_create_rpc;
+    tl::remote_procedure                         m_queue_open_rpc;
+    tl::remote_procedure                         m_queue_close_rpc;
+    tl::remote_procedure                         m_queue_destroy_rpc;
+    tl::remote_procedure                         m_queue_push_rpc;
+    tl::remote_procedure                         m_queue_pop_rpc;
+    tl::remote_procedure                         m_queue_empty_rpc;
 
     DataStoreImpl()
     {}
@@ -104,6 +121,14 @@ class DataStoreImpl {
             cleanup();
             throw Exception("Could not create Yokan client: "+std::string(ex.what()));
         }
+        // initialize RPCs for Queue management
+        m_queue_create_rpc  = m_engine.define("hepnos_create_queue");
+        m_queue_open_rpc    = m_engine.define("hepnos_open_queue");
+        m_queue_close_rpc   = m_engine.define("hepnos_close_queue");
+        m_queue_destroy_rpc = m_engine.define("hepnos_destroy_queue");
+        m_queue_push_rpc    = m_engine.define("hepnos_queue_push");
+        m_queue_pop_rpc     = m_engine.define("hepnos_queue_pop");
+        m_queue_empty_rpc   = m_engine.define("hepnos_queue_empty");
         // parse hepnosFile
         json serviceConfig;
         {
@@ -123,6 +148,7 @@ class DataStoreImpl {
         //       "subruns" : [ ... ],
         //       "events" : [ ... ],
         //       "products" : [ ... ]
+        //       "queues" : [ ... ]
         //   },
         //   "address2" : ...
         // }
@@ -153,11 +179,16 @@ class DataStoreImpl {
                 }
             };
 
-            populate_db_entries(nodeConfig["datasets"], m_dataset_dbs);
-            populate_db_entries(nodeConfig["runs"],     m_run_dbs);
-            populate_db_entries(nodeConfig["subruns"],  m_subrun_dbs);
-            populate_db_entries(nodeConfig["events"],   m_event_dbs);
-            populate_db_entries(nodeConfig["products"], m_product_dbs);
+            populate_db_entries(nodeConfig["datasets"],  m_dataset_dbs);
+            populate_db_entries(nodeConfig["runs"],      m_run_dbs);
+            populate_db_entries(nodeConfig["subruns"],   m_subrun_dbs);
+            populate_db_entries(nodeConfig["events"],    m_event_dbs);
+            populate_db_entries(nodeConfig["products"],  m_product_dbs);
+
+            for(auto& entry : nodeConfig["queues"]) {
+                auto provider_id = entry.get<uint16_t>();
+                m_queue_providers.qps.emplace_back(addr, provider_id);
+            }
         }
         // Build ch-placement instances
         if (m_dataset_dbs.dbs.empty()) {
@@ -190,6 +221,10 @@ class DataStoreImpl {
         } else {
             m_product_dbs.chi = ch_placement_initialize("hash_lookup3", m_product_dbs.dbs.size(), 4, 0);
         }
+        if (!m_queue_providers.qps.empty()) {
+            m_queue_providers.chi = ch_placement_initialize("hash_lookup3",
+                m_queue_providers.qps.size(), 4, 0);
+        }
     }
 
     void cleanup() {
@@ -198,12 +233,15 @@ class DataStoreImpl {
         m_subrun_dbs.dbs.clear();
         m_event_dbs.dbs.clear();
         m_product_dbs.dbs.clear();
+        m_queue_providers.qps.clear();
         m_yokan_client = yokan::Client();
         if(m_dataset_dbs.chi) ch_placement_finalize(m_dataset_dbs.chi);
         if(m_run_dbs.chi)     ch_placement_finalize(m_run_dbs.chi);
         if(m_subrun_dbs.chi)  ch_placement_finalize(m_subrun_dbs.chi);
         if(m_event_dbs.chi)   ch_placement_finalize(m_event_dbs.chi);
         if(m_product_dbs.chi) ch_placement_finalize(m_product_dbs.chi);
+        if(m_queue_providers.chi) ch_placement_finalize(m_queue_providers.chi);
+        m_queue_providers.qps.clear();
         m_addrs.clear();
         if(m_engine_initialized) m_engine.finalize();
         m_engine_initialized = false;
@@ -716,6 +754,57 @@ class DataStoreImpl {
         return true;
     }
 
+    void createQueue(const std::string& name,
+                     const std::string& type_name) {
+        if(!m_queue_providers.chi) {
+            throw Exception("No queue provider found in HEPnOS deployment");
+        }
+        auto full_name = name + "#" + type_name;
+        long unsigned db_idx = 0;
+        auto hash = hashString(full_name.c_str(), full_name.size());
+        ch_placement_find_closest(m_queue_providers.chi, hash, 1, &db_idx);
+        const auto& provider_handle = m_queue_providers.qps[db_idx];
+        std::pair<bool, std::string> response
+            = m_queue_create_rpc.on(provider_handle)(full_name);
+        if(!response.first)
+            throw Exception(response.second);
+    }
+
+    std::shared_ptr<QueueImpl> openQueue(const std::string& name,
+                                         const std::string& type_name,
+                                         const std::type_info& type_info,
+                                         QueueAccessMode mode) {
+        if(!m_queue_providers.chi) {
+            throw Exception("No queue provider found in HEPnOS deployment");
+        }
+        auto full_name = name + "#" + type_name;
+        long unsigned db_idx = 0;
+        auto hash = hashString(full_name.c_str(), full_name.size());
+        ch_placement_find_closest(m_queue_providers.chi, hash, 1, &db_idx);
+        const auto& provider_handle = m_queue_providers.qps[db_idx];
+        std::pair<bool, std::string> response
+            = m_queue_open_rpc.on(provider_handle)(full_name, static_cast<bool>(mode));
+        if(!response.first)
+            throw Exception(response.second);
+        return std::make_shared<QueueImpl>(
+            shared_from_this(), full_name, type_info, mode, provider_handle);
+    }
+
+    void destroyQueue(const std::string& name,
+                      const std::string& type_name) {
+        if(!m_queue_providers.chi) {
+            throw Exception("No queue provider found in HEPnOS deployment");
+        }
+        auto full_name = name + "#" + type_name;
+        long unsigned db_idx = 0;
+        auto hash = hashString(full_name.c_str(), full_name.size());
+        ch_placement_find_closest(m_queue_providers.chi, hash, 1, &db_idx);
+        const auto& provider_handle = m_queue_providers.qps[db_idx];
+        std::pair<bool, std::string> response
+            = m_queue_destroy_rpc.on(provider_handle)(full_name);
+        if(!response.first)
+            throw Exception(response.second);
+    }
 };
 
 }

@@ -12,6 +12,7 @@
 #include <memory>
 #include <hepnos/ItemType.hpp>
 #include <hepnos/RawStorage.hpp>
+#include <hepnos/QueueAccessMode.hpp>
 
 namespace hepnos {
 
@@ -36,6 +37,8 @@ class PrefetcherImpl;
 class ProductCache;
 class ProductCacheImpl;
 class KeyValueContainer;
+class Queue;
+class QueueImpl;
 
 /**
  * The DataStore class is the main handle referencing an HEPnOS service.
@@ -60,6 +63,8 @@ class DataStore : public RawStorage {
     friend class KeyValueContainer;
     friend class ProductCache;
     friend class ProductCacheImpl;
+    friend class Queue;
+    friend class QueueImpl;
 
     public:
 
@@ -188,6 +193,33 @@ class DataStore : public RawStorage {
      */
     size_t numTargets(const ItemType& type) const;
 
+    /**
+     * @brief Creates a queue with the specified name.
+     *
+     * @param name Name of the queue.
+     */
+    template<typename T>
+    void createQueue(const std::string& name);
+
+    /**
+     * @brief Opens a queue with the speficied name.
+     *
+     * @param name Name of the queue.
+     * @param mode Mode (producer or consumer)
+     *
+     * @return a Queue instance.
+     */
+    template<typename T>
+    Queue openQueue(const std::string& name, QueueAccessMode mode);
+
+    /**
+     * @brief Destroys the queue with the specified name.
+     *
+     * @param name Name of the queue.
+     */
+    template<typename T>
+    void destroyQueue(const std::string& name);
+
     private:
 
     std::shared_ptr<DataStoreImpl> m_impl; /*!< Pointer to implementation */
@@ -281,12 +313,46 @@ class DataStore : public RawStorage {
      */
     template<typename T>
     bool loadProductImpl(const ProductID& productID, std::vector<T>& t, const std::integral_constant<bool, true>&);
+
+    /**
+     * @brief Creates a queue with the speficied name
+     * for the give type of objects.
+     *
+     * @param name Name of the queue.
+     * @param type_name Name of the type of objects stored
+     */
+    void createQueueImpl(const std::string& name,
+                         const std::string& type_name);
+
+    /**
+     * @brief Opens a queue with the speficied name.
+     *
+     * @param name Name of the queue.
+     * @param type_name Name of the type of objects stored
+     * @param type_info Type info the type of objects stored
+     * @param mode Mode (producer or consumer)
+     *
+     * @return a Queue instance.
+     */
+    Queue openQueueImpl(const std::string& name,
+                        const std::string& type_name,
+                        const std::type_info& type_info,
+                        QueueAccessMode mode);
+
+    /**
+     * @brief Destroys the queue with the specified name.
+     *
+     * @param name Name of the queue.
+     */
+    void destroyQueueImpl(const std::string& name,
+                          const std::string& type_name);
 };
 
 }
 
 #include <hepnos/ProductID.hpp>
 #include <hepnos/Ptr.hpp>
+#include <hepnos/Queue.hpp>
 
 namespace hepnos {
 
@@ -372,6 +438,21 @@ bool DataStore::loadProductImpl(const ProductID& productID, std::vector<T>& t, c
     t.resize(count);
     std::memcpy(t.data(), buffer.data() + sizeof(count), sizeof(T)*count);
     return true;
+}
+
+template<typename T>
+void DataStore::createQueue(const std::string& name) {
+    createQueueImpl(name, demangle<T>());
+}
+
+template<typename T>
+Queue DataStore::openQueue(const std::string& name, QueueAccessMode mode) {
+    return openQueueImpl(name, demangle<T>(), typeid(T), mode);
+}
+
+template<typename T>
+void DataStore::destroyQueue(const std::string& name) {
+    destroyQueueImpl(name, demangle<T>());
 }
 
 }

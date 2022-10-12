@@ -79,5 +79,31 @@ size_t DataStore::numTargets(const ItemType& type) const {
     return m_impl->numTargets(type);
 }
 
+void DataStore::createQueueImpl(const std::string& name,
+                                const std::string& type_name) {
+    if(!m_impl) {
+        throw Exception("Calling DataStore member function on an invalid DataStore object");
+    }
+    m_impl->createQueue(name, type_name);
+}
+
+Queue DataStore::openQueueImpl(const std::string& name,
+                               const std::string& type_name,
+                               const std::type_info& type_info,
+                               QueueAccessMode mode) {
+    if(!m_impl) {
+        throw Exception("Calling DataStore member function on an invalid DataStore object");
+    }
+    return Queue(m_impl->openQueue(name, type_name, type_info, mode));
+}
+
+void DataStore::destroyQueueImpl(const std::string& name,
+                                 const std::string& type_name) {
+    if(!m_impl) {
+        throw Exception("Calling DataStore member function on an invalid DataStore object");
+    }
+    return m_impl->destroyQueue(name, type_name);
+}
+
 }
 

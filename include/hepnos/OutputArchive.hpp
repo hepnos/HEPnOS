@@ -56,17 +56,25 @@ class OutputSizer {
 
     std::streamsize write(const char_type* s, std::streamsize n) {
         (void)s;
-        m_size += n;
+        *m_size += n;
         return n;
     }
 
     size_t size() const {
-        return m_size;
+        return *m_size;
     }
+
+    OutputSizer()
+    : m_size(std::make_shared<size_t>(0)) {}
+
+    OutputSizer(const OutputSizer&) = default;
+    OutputSizer(OutputSizer&&) = default;
+    OutputSizer& operator=(const OutputSizer&) = default;
+    OutputSizer& operator=(OutputSizer&&) = default;
 
     private:
 
-    size_t m_size = 0;
+    std::shared_ptr<size_t> m_size;
 };
 
 using OutputStringWrapper = boost::iostreams::back_insert_device<std::string>;
