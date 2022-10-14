@@ -38,7 +38,7 @@ bool Queue::empty() const {
     auto& rpc = m_impl->m_datastore->m_queue_empty_rpc;
     std::pair<bool, std::string> result;
     try {
-        result = rpc.on(provider_handle)(full_name);
+        result = static_cast<decltype(result)>(rpc.on(provider_handle)(full_name));
     } catch(std::exception& e) {
         throw Exception(e.what());
     }
@@ -65,7 +65,7 @@ void Queue::close() {
     auto& rpc = m_impl->m_datastore->m_queue_close_rpc;
     std::pair<bool, std::string> result;
     try {
-        result = rpc.on(provider_handle)(full_name, true);
+        result = static_cast<decltype(result)>(rpc.on(provider_handle)(full_name, true));
     } catch(std::exception& e) {
         throw Exception(e.what());
     }
@@ -82,7 +82,7 @@ bool Queue::popImpl(std::string& data) {
     auto& rpc = m_impl->m_datastore->m_queue_pop_rpc;
     std::pair<bool, std::string> result;
     try {
-        result = rpc.on(provider_handle)(full_name);
+        result = static_cast<decltype(result)>(rpc.on(provider_handle)(full_name));
     } catch(std::exception& e) {
         throw Exception(e.what());
     }
@@ -107,7 +107,7 @@ void Queue::pushImpl(const std::string& data) {
     auto& rpc = m_impl->m_datastore->m_queue_push_rpc;
     std::pair<bool, std::string> result;
     try {
-        result = rpc.on(provider_handle)(full_name, data);
+        result = static_cast<decltype(result)>(rpc.on(provider_handle)(full_name, data));
     } catch(std::exception& e) {
         throw Exception(e.what());
     }
