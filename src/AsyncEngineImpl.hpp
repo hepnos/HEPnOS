@@ -32,13 +32,13 @@ class AsyncEngineImpl {
     : m_datastore(ds) {
         if(num_threads > 0) {
             ABT_pool p = ABT_POOL_NULL;
-            int ret = ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC, ABT_TRUE, &p);
+            int ret = ABT_pool_create_basic(ABT_POOL_FIFO_WAIT, ABT_POOL_ACCESS_MPMC, ABT_TRUE, &p);
             if(ret != ABT_SUCCESS) {
                 throw Exception("Could not create Argobots thread pool");
             }
             m_pool = tl::pool(p);
             for(size_t i=0; i < num_threads; i++) {
-                m_xstreams.push_back(tl::xstream::create(tl::scheduler::predef::deflt, m_pool));
+                m_xstreams.push_back(tl::xstream::create(tl::scheduler::predef::basic_wait, m_pool));
             }
         } else {
             auto current_es = tl::xstream::self();
