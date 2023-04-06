@@ -46,4 +46,4 @@ jobs:
     - name: Show test results
       if: ${{ failure() }}
       run: |
-        cat Testing/Temporary/LastTest.log
+        cd build && cat Testing/Temporary/LastTest.log
