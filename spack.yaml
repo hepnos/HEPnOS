@@ -9,8 +9,8 @@ spack:
   - nlohmann-json
   - mochi-thallium+cereal
   - mochi-ch-placement
-  - mochi-bedrock@main+mpi
-  - mochi-yokan@main+bedrock
+  - mochi-bedrock+mpi
+  - mochi-yokan+bedrock
   - py-hepnos-wizard
   - mercury~boostsys ^libfabric fabrics=tcp,rxm
   concretizer:
@@ -19,3 +19,8 @@ spack:
     prefix_inspections:
       lib: [LD_LIBRARY_PATH]
       lib64: [LD_LIBRARY_PATH]
+  packages:
+    mochi-bedrock:
+      require: "@:0.14.2"
+    mochi-yokan:
+      require: "@:0.3.0"
