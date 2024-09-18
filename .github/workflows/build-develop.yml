@@ -13,4 +13,5 @@ jobs:
     - uses: actions/checkout@v4
     - uses: mochi-hpc/mochi-test-build-action@v1
       with:
+        package-name: hepnos
         package-version: "@develop"
