@@ -21,6 +21,6 @@ spack:
       lib64: [LD_LIBRARY_PATH]
   packages:
     mochi-bedrock:
-      require: "@:0.14.2"
+      require: "@:0.11.0"
     mochi-yokan:
       require: "@:0.3.0"
