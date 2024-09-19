@@ -15,4 +15,3 @@ jobs:
       with:
         package-name: hepnos
         package-version: "@main"
-        build-cache-token: ${{ secrets.GITHUB_TOKEN }}
