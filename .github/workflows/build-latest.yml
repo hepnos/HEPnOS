@@ -14,4 +14,3 @@ jobs:
     - uses: mochi-hpc/mochi-test-build-action@v1
       with:
         package-name: hepnos
-        build-cache-token: ${{ secrets.GITHUB_TOKEN }}
