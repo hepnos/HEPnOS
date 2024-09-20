@@ -1,9 +1,12 @@
 name: Build the develop version using Spack
 
+# This workflow is disabled because Bedrock hasn't been adapted to
+# the develop version of current Mochi packages
+
 on:
   workflow_dispatch: {}
-  schedule:
-  - cron: "0 0 * * *"
+#  schedule:
+#  - cron: "0 0 * * *"
 
 jobs:
   build:
